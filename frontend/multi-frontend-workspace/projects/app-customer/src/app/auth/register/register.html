@@ -1,0 +1,60 @@
+<div class="auth-page register-page">
+  <section class="auth-card" aria-labelledby="register-title">
+    <img
+      class="company-logo"
+      src="/assets/bharat-companion-logo.svg"
+      alt="Bharat Companion"
+    />
+
+    <div class="auth-heading">
+      <p class="eyebrow">GET STARTED</p>
+      <h1 id="register-title">Create your account</h1>
+      <p>A few details and you’ll be on your way.</p>
+    </div>
+
+    <form (ngSubmit)="onSubmit()">
+      <label for="register-name">Full name</label>
+      <input
+        id="register-name"
+        name="name"
+        type="text"
+        autocomplete="name"
+        placeholder="Your name"
+        required
+      />
+
+      <label for="register-email">Email address</label>
+      <input
+        id="register-email"
+        name="email"
+        type="email"
+        autocomplete="email"
+        placeholder="you@example.com"
+        required
+      />
+
+      <label for="register-password">Password</label>
+      <input
+        id="register-password"
+        name="password"
+        type="password"
+        autocomplete="new-password"
+        placeholder="At least 8 characters"
+        minlength="8"
+        required
+      />
+
+      <button class="primary-button" type="submit">Create account</button>
+    </form>
+
+    @if (submitted) {
+      <p class="form-message" role="status">
+        Your details are ready to be connected to the registration service.
+      </p>
+    }
+
+    <p class="auth-footer">
+      Already have an account? <a routerLink="/login">Log in</a>
+    </p>
+  </section>
+</div>
