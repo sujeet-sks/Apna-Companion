@@ -23,6 +23,16 @@
               {
                 "glob": "**/*",
                 "input": "projects/app-customer/public"
+              },
+              {
+                "glob": "bharat-companion-logo.svg",
+                "input": "projects/app-customer/src/Images",
+                "output": "assets"
+              },
+              {
+                "glob": "favicon.svg",
+                "input": "projects/app-customer/src/Images",
+                "output": "assets"
               }
             ],
             "styles": ["projects/app-customer/src/styles.css"]
