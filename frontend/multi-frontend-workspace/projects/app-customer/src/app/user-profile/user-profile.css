@@ -1,0 +1,130 @@
+:host {
+  display: block;
+  color: #183329;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.profile-page {
+  width: min(820px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: clamp(40px, 7vw, 72px) 0;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #19764e;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+}
+
+h1 {
+  margin: 0;
+  color: #193b2d;
+  font-size: clamp(32px, 5vw, 44px);
+  letter-spacing: -1px;
+}
+
+.intro {
+  margin: 12px 0 24px;
+  color: #68796f;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.profile-card {
+  overflow: hidden;
+  border: 1px solid #e2ebe3;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.profile-summary {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 24px;
+  background: #f2f7f2;
+}
+
+.profile-avatar {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  flex: 0 0 56px;
+  place-items: center;
+  border-radius: 50%;
+  background: #1e7b51;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.profile-summary h2 {
+  margin: 0;
+  color: #244534;
+  font-size: 19px;
+}
+
+.profile-summary p {
+  margin: 4px 0 0;
+  color: #68796f;
+  font-size: 13px;
+}
+
+.profile-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  padding: 8px 24px;
+}
+
+.profile-details > div {
+  padding: 17px 8px 17px 0;
+  border-bottom: 1px solid #edf1ed;
+}
+
+.profile-details > div:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+dt {
+  margin-bottom: 6px;
+  color: #718077;
+  font-size: 12px;
+}
+
+dd {
+  margin: 0;
+  color: #304638;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+dd.not-provided {
+  color: #8a9790;
+  font-weight: 400;
+}
+
+@media (max-width: 600px) {
+  .profile-page {
+    width: calc(100% - 36px);
+  }
+
+  .profile-summary {
+    padding: 19px;
+  }
+
+  .profile-details {
+    grid-template-columns: 1fr;
+    padding-inline: 19px;
+  }
+
+  .profile-details > div:nth-last-child(2) {
+    border-bottom: 1px solid #edf1ed;
+  }
+
+  .profile-details > div:last-child {
+    border-bottom: 0;
+  }
+}
