@@ -18,4 +18,5 @@ from django.urls import include, path
 
 urlpatterns = [
     path("api/", include("portal.urls")),
+    path("api/v1/", include("portal.role_urls")),
 ]

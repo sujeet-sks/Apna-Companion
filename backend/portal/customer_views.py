@@ -1,4 +1,4 @@
-# Customer registration, login and password reset API endpoints
+# Customer registration/authentiction APIs
 from datetime import date
 import hmac
 import logging
@@ -271,3 +271,12 @@ def me(request):
     if customer is None:
         return _error("Missing or expired customer token.", 401)
     return Response({"customer": _public_customer(customer)})
+
+
+@api_view(["POST"])
+def logout(request):
+    # Stateless logout: frontend discards the token after this response
+    customer = customer_from_bearer(request)
+    if customer is None:
+        return _error("Missing or expired customer token.", 401)
+    return Response({"message": "Logged out"})
