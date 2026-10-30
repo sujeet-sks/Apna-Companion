@@ -1,4 +1,4 @@
-# Customer registration/authentiction APIs
+# Customer registration/authentication APIs
 from datetime import date
 import hmac
 import logging
