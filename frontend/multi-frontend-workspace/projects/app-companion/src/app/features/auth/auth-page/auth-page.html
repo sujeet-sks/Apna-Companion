@@ -1,0 +1,31 @@
+<div class="preview">MOCK PREVIEW · No real accounts or emails · Email code: <strong>012345</strong></div>
+<div class="layout"><aside><a class="brand" routerLink="/login"><span class="mark">a<span>c</span></span> apna companion</a><div class="story"><span class="eyebrow">{{organization ? 'ORGANIZATION PORTAL' : 'COMPANION PORTAL'}}</span><h1>A little support.<br>A world of<br><em>difference.</em></h1><p>{{organization ? 'Bring your people, services and care together in one thoughtful space.' : 'Be there for the moments that matter. Your next meaningful day starts here.'}}</p><div class="illustration"><div class="sun"></div><div class="arch"></div><span class="person one"></span><span class="person two"></span><span class="ground"></span><span class="spark">✦</span></div></div><p class="foot">Everyday assistance. Human connection.</p></aside>
+<main><div class="top"><div class="portal-badge"><span class="portal-icon" aria-hidden="true">✦</span><div><strong>For companions</strong></div></div><span class="secure-label">● Secure account access</span></div><section><span class="eyebrow">WELCOME TO APNA COMPANION</span><h2>{{title}}</h2><p class="description">{{description}}</p>
+@if(error){<div class="alert error" role="alert">{{error}}</div>} @if(message){<div class="alert" role="status">{{message}} <a routerLink="/login">Back to login</a></div>}
+@if(page==='approval' || page==='account'){
+<div class="account"><strong>{{auth.session()?.email}}</strong>
+@if(organization){<p>Approval: <span class="badge">{{auth.session()?.approval_status}}</span></p>
+@if(auth.session()?.approval_status==='pending'){<p>Your registration is awaiting admin review. Profile viewing, password change and logout remain available.</p>}
+@if(auth.session()?.approval_status==='rejected'){<p>Your registration needs corrections. Use the verified link in your review email to resubmit.</p><a routerLink="/resubmit">Resubmit details →</a>}
+@if(auth.session()?.approval_status==='approved'){<p>Your organization is approved. Booking and management screens are coming next.</p>}
+<div class="demo"><label>Preview approval state <select [ngModel]="auth.session()?.approval_status" (ngModelChange)="auth.setStatus($event)"><option>pending</option><option>approved</option><option>rejected</option></select></label></div>
+}@else{<p>Your profile is maintained by your organization. You can change your password here.</p>}
+<a routerLink="/change-password">Change password →</a><button class="secondary" (click)="logout()">Sign out</button></div>
+}@else{
+<form #form="ngForm" (ngSubmit)="form.valid && submit()">
+@if(page==='register'){<label>Organization name<input name="name" [(ngModel)]="name" required maxlength="150" placeholder="e.g. Sunrise Hospital"></label><label>Organization type<select name="type" [(ngModel)]="type"><option value="bank">Bank</option><option value="hospital">Hospital</option><option value="ngo">NGO</option><option value="rto">RTO</option><option value="others">Others</option></select></label>}
+@if(['login','register','forgot'].includes(page)){<label>Email address<input type="email" name="email" [(ngModel)]="email" required email autocomplete="email" placeholder="you@example.com"></label>}
+@if(page==='resubmit'){<label>Email resubmission token<input name="token" [(ngModel)]="token" required placeholder="Token from your review email"></label><p class="hint">Organization name and type cannot be changed here.</p>}
+@if(page==='register'||page==='resubmit'){<label>Address<textarea name="address" [(ngModel)]="address" required placeholder="Street, city and location"></textarea></label><label>Document type<input name="documentType" [(ngModel)]="documentType" required></label><label>Verification document<input type="file" name="document" required (change)="selectFile($event)"></label><p class="hint">Mock preview: only the filename is used. Documents are not uploaded.</p>}
+@if(page==='verify'||page==='reset'){<label>Email verification code<input name="code" [(ngModel)]="code" required pattern="[0-9]{6}" maxlength="6" inputmode="numeric" autocomplete="one-time-code" placeholder="000000"></label>}
+@if(page==='password'){<label>Current password<input type="password" name="current" [(ngModel)]="current" required autocomplete="current-password"></label>}
+@if(['login','register','reset','password'].includes(page)){<label>{{page==='login'?'Password':'New password'}}<div class="password"><input [type]="show?'text':'password'" name="password" [(ngModel)]="password" required [autocomplete]="page==='login'?'current-password':'new-password'"><button type="button" (click)="show=!show" [attr.aria-label]="show?'Hide password':'Show password'">{{show?'Hide':'Show'}}</button></div></label>}
+@if(['register','reset','password'].includes(page)){<label>Confirm password<input type="password" name="confirm" [(ngModel)]="confirm" required autocomplete="new-password"></label>}
+@if(page==='login'){<a class="forgot" routerLink="/forgot-password">Forgot password?</a>}
+<button class="primary" type="submit" [disabled]="form.invalid || busy || ((page==='register'||page==='resubmit')&&!file)">{{busy?'Please wait…': page==='login'?'Sign in →':page==='register'?'Continue to email verification →':page==='verify'?'Verify email':page==='forgot'?'Send reset code →':page==='resubmit'?'Submit for review':'Update password'}}</button>
+</form>
+@if(page==='login'&&organization){<p class="below">New to Apna Companion? <a routerLink="/register">Register your organization</a></p>}
+@if(page==='login'&&!organization){<p class="below">Your organization creates your account.<br>Contact them if you need access.</p>}
+@if(page!=='login'){<a class="back" routerLink="/login">← Back to login</a>}
+}
+</section><footer>Care starts with connection. <span>Apna Companion</span></footer></main></div>

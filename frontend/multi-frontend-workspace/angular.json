@@ -129,7 +129,7 @@
         }
       }
     },
-    "app-client": {
+    "app-org": {
       "projectType": "application",
       "schematics": {},
       "root": "projects/app-org",
@@ -177,10 +177,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "app-client:build:production"
+              "buildTarget": "app-org:build:production"
             },
             "development": {
-              "buildTarget": "app-client:build:development"
+              "buildTarget": "app-org:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -190,7 +190,7 @@
         }
       }
     },
-    "app-companioon": {
+    "app-companion": {
       "projectType": "application",
       "schematics": {},
       "root": "projects/app-companion",
@@ -238,10 +238,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "app-companioon:build:production"
+              "buildTarget": "app-companion:build:production"
             },
             "development": {
-              "buildTarget": "app-companioon:build:development"
+              "buildTarget": "app-companion:build:development"
             }
           },
           "defaultConfiguration": "development"

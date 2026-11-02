@@ -1,5 +1,4 @@
-import { CanActivateFn } from '@angular/router';
-
-// Scaffold only: denies access until real authentication is implemented.
-// Register on protected routes after connecting AuthService.
-export const authGuard: CanActivateFn = () => false;
+import { inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
+import { AuthService } from '../services/auth.service';
+export const authGuard:CanActivateFn=()=>inject(AuthService).signedIn || inject(Router).createUrlTree(['/login']);
