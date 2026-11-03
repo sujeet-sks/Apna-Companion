@@ -1,45 +1,21 @@
-import { Component } from '@angular/core';
-import {
-  AbstractControl,
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  ValidationErrors,
-  ValidatorFn,
-  Validators,
-} from '@angular/forms';
-import { RouterLink } from '@angular/router';
-
-const emailOrMobileValidator: ValidatorFn = (
-  control: AbstractControl,
-): ValidationErrors | null => {
-  const value = String(control.value ?? '').trim();
-  if (!value) {
-    return null;
-  }
-
-  if (Validators.email(new FormControl(value)) === null) {
-    return null;
-  }
-
-  const normalizedMobile = value.replace(/[\s()-]/g, '');
-  return /^\+?[1-9]\d{9}$/.test(normalizedMobile)
-    ? null
-    : { emailOrMobile: true };
-};
+import { Component, inject } from '@angular/core';
+import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 
 @Component({
   imports: [ReactiveFormsModule, RouterLink],
   selector: 'app-login',
-  styleUrls: ['../login-common.css', './login.css'],
+  styleUrl: './login.css',
   templateUrl: './login.html',
 })
 export class Login {
-  protected submitted = false;
+  private readonly router = inject(Router);
+
+  protected showPassword = false;
   protected readonly loginForm = new FormGroup({
     username: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, emailOrMobileValidator],
+      validators: [Validators.required],
     }),
     password: new FormControl('', {
       nonNullable: true,
@@ -47,12 +23,16 @@ export class Login {
     }),
   });
 
+  protected togglePassword(): void {
+    this.showPassword = !this.showPassword;
+  }
+
   protected onSubmit(): void {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
       return;
     }
 
-    this.submitted = true;
+    void this.router.navigate(['/admin/dashboard']);
   }
 }

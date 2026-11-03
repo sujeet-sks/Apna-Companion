@@ -1,17 +1,24 @@
 import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 @Component({
-  imports: [FormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink],
   selector: 'app-forgot-password',
-  styleUrls: ['../login-common.css', './forgot-password.css'],
+  styleUrl: '../login/login.css',
   templateUrl: './forgot-password.html',
 })
 export class ForgotPassword {
-  protected submitted = false;
+  protected readonly forgotPasswordForm = new FormGroup({
+    email: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.email],
+    }),
+  });
 
   protected onSubmit(): void {
-    this.submitted = true;
+    if (this.forgotPasswordForm.invalid) {
+      this.forgotPasswordForm.markAllAsTouched();
+    }
   }
 }
