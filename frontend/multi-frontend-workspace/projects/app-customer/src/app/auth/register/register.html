@@ -9,48 +9,179 @@
     <div class="auth-heading">
       <p class="eyebrow">GET STARTED</p>
       <h1 id="register-title">Create your account</h1>
-      <p>A few details and you’ll be on your way.</p>
+      <p>Enter your details and verify your mobile number to register.</p>
     </div>
 
-    <form (ngSubmit)="onSubmit()">
+    <form [formGroup]="registrationForm" (ngSubmit)="sendOtp()" novalidate>
       <label for="register-name">Full name</label>
       <input
         id="register-name"
-        name="name"
+        formControlName="fullName"
         type="text"
-        autocomplete="name"
-        placeholder="Your name"
+        placeholder="Your full name"
         required
+        aria-describedby="register-name-error"
       />
+      @if (
+        registrationForm.controls.fullName.touched &&
+        registrationForm.controls.fullName.invalid
+      ) {
+        <p id="register-name-error" class="field-error" role="alert">Enter your full name.</p>
+      }
+
+      <label for="register-dob">Date of birth</label>
+      <input
+        id="register-dob"
+        formControlName="dob"
+        type="date"
+        [max]="latestDateOfBirth"
+        required
+        aria-describedby="register-dob-error"
+      />
+      @if (
+        registrationForm.controls.dob.touched &&
+        registrationForm.controls.dob.invalid
+      ) {
+        <p id="register-dob-error" class="field-error" role="alert">
+          Enter your date of birth.
+        </p>
+      }
+
+      <label for="register-gender">Gender</label>
+      <select
+        id="register-gender"
+        formControlName="gender"
+        required
+        aria-describedby="register-gender-error"
+      >
+        <option value="" disabled>Select your gender</option>
+        <option value="female">Female</option>
+        <option value="male">Male</option>
+        <option value="prefer-not-to-say">Prefer not to say</option>
+      </select>
+      @if (
+        registrationForm.controls.gender.touched &&
+        registrationForm.controls.gender.invalid
+      ) {
+        <p id="register-gender-error" class="field-error" role="alert">Select your gender.</p>
+      }
 
       <label for="register-email">Email address</label>
       <input
         id="register-email"
-        name="email"
+        formControlName="email"
         type="email"
         autocomplete="email"
         placeholder="you@example.com"
         required
+        aria-describedby="register-email-error"
       />
+      @if (
+        registrationForm.controls.email.touched &&
+        registrationForm.controls.email.invalid
+      ) {
+        <p id="register-email-error" class="field-error" role="alert">
+          @if (registrationForm.controls.email.hasError('required')) {
+            Enter your email address.
+          } @else {
+            Enter a valid email address.
+          }
+        </p>
+      }
 
-      <label for="register-password">Password</label>
-      <input
-        id="register-password"
-        name="password"
-        type="password"
-        autocomplete="new-password"
-        placeholder="At least 8 characters"
-        minlength="8"
-        required
-      />
+      <label for="register-mobile">Mobile number</label>
+      <div class="mobile-number-input">
+        <span class="mobile-country-code" aria-hidden="true">+91</span>
+        <input
+          id="register-mobile"
+          formControlName="mobile"
+          type="tel"
+          inputmode="numeric"
+          autocomplete="tel-national"
+          placeholder="10-digit mobile number"
+          maxlength="10"
+          required
+          aria-label="Mobile number"
+          aria-describedby="register-mobile-error"
+        />
+      </div>
+      @if (
+        registrationForm.controls.mobile.touched &&
+        registrationForm.controls.mobile.invalid
+      ) {
+        <p id="register-mobile-error" class="field-error" role="alert">
+          @if (registrationForm.controls.mobile.hasError('required')) {
+            Enter your mobile number.
+          } @else {
+            Enter a valid mobile number.
+          }
+        </p>
+      }
 
-      <button class="primary-button" type="submit">Create account</button>
+      @if (!otpVerified) {
+        <button
+          class="primary-button"
+          type="submit"
+          [disabled]="
+            registrationForm.invalid ||
+            isSendingOtp ||
+            isVerifyingOtp ||
+            isRegistering ||
+            registered
+          "
+        >
+          {{ isSendingOtp ? 'Sending OTP…' : otpSent ? 'Resend OTP' : 'Send OTP' }}
+        </button>
+      }
     </form>
 
-    @if (submitted) {
+    @if (otpSent && !otpVerified) {
+      <p class="form-message" role="status">An OTP was sent to +91 {{ otpMobile }}.</p>
+      <form [formGroup]="otpForm" (ngSubmit)="verifyOtp()" novalidate>
+        <label for="register-otp">Mobile verification code</label>
+        <input
+          id="register-otp"
+          formControlName="otp"
+          type="text"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          placeholder="Enter the 6-digit OTP"
+          maxlength="6"
+          required
+          aria-describedby="register-otp-error"
+        />
+        @if (otpForm.controls.otp.touched && otpForm.controls.otp.invalid) {
+          <p id="register-otp-error" class="field-error" role="alert">Enter the 6-digit OTP.</p>
+        }
+        <button
+          class="primary-button"
+          type="submit"
+          [disabled]="!canVerifyOtp"
+        >
+          {{ isVerifyingOtp ? 'Verifying…' : 'Verify OTP' }}
+        </button>
+      </form>
+    }
+
+    @if (otpVerified && !registered) {
       <p class="form-message" role="status">
-        Your details are ready to be connected to the registration service.
+        Mobile number verified. You can now create your account.
       </p>
+      <button
+        class="primary-button"
+        type="button"
+        [disabled]="!canRegisterCustomer"
+        (click)="registerCustomer()"
+      >
+        {{ isRegistering ? 'Creating account…' : 'Create account' }}
+      </button>
+    }
+
+    @if (errorMessage) {
+      <p class="field-error form-error" role="alert">{{ errorMessage }}</p>
+    }
+    @if (registered) {
+      <p class="form-message" role="status">Your account has been registered successfully.</p>
     }
 
     <p class="auth-footer">

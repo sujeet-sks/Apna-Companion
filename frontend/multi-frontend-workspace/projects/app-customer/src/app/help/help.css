@@ -1,0 +1,70 @@
+:host {
+  display: block;
+  color: #183329;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.page-shell {
+  width: min(820px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: clamp(40px, 7vw, 72px) 0;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #19764e;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+}
+
+h1 {
+  margin: 0;
+  color: #193b2d;
+  font-size: clamp(32px, 5vw, 44px);
+  letter-spacing: -1px;
+}
+
+.intro {
+  margin: 12px 0 24px;
+  color: #68796f;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.faq-list {
+  display: grid;
+  gap: 10px;
+}
+
+details {
+  padding: 17px 19px;
+  border: 1px solid #e2ebe3;
+  border-radius: 10px;
+  background: #f6f9f6;
+}
+
+summary {
+  color: #244534;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+details p {
+  margin: 12px 0 0;
+  color: #68796f;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+summary:focus-visible {
+  outline: 3px solid #8ebfa0;
+  outline-offset: 4px;
+}
+
+@media (max-width: 600px) {
+  .page-shell {
+    width: calc(100% - 36px);
+  }
+}

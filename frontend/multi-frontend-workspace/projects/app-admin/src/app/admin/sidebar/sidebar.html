@@ -1,0 +1,14 @@
+<aside class="sidebar">
+  <a class="brand" routerLink="/admin/dashboard" aria-label="Bharat Companion dashboard">
+    <img src="/assets/bharat-companion-logo.svg" alt="Bharat Companion" />
+  </a>
+
+  <nav class="sidebar-nav" aria-label="Admin navigation">
+    <a routerLink="/admin/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+      Dashboard
+    </a>
+    <a routerLink="/admin/pending-requests" routerLinkActive="active">Pending Requests</a>
+    <a routerLink="/admin/clients" routerLinkActive="active">Clients</a>
+    <a routerLink="/admin/settings" routerLinkActive="active">Settings</a>
+  </nav>
+</aside>
