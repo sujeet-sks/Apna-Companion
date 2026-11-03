@@ -1,0 +1,57 @@
+<div class="landing-page">
+  <header class="dashboard-header">
+    <div class="header-top">
+      <a routerLink="/home" aria-label="Apna Companion home">
+          <img class="brand-mark" src="/assets/bharat-companion-logo.svg" alt="">
+      </a>
+
+      <nav class="main-nav" aria-label="Main navigation">
+        <a
+          class="nav-link"
+          routerLink="/home"
+          routerLinkActive="active"
+          ariaCurrentWhenActive="page"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >Home</a>
+        <a
+          class="nav-link"
+          routerLink="/bookings"
+          routerLinkActive="active"
+          ariaCurrentWhenActive="page"
+        >Bookings</a>
+        <a
+          class="nav-link"
+          routerLink="/manage-address"
+          routerLinkActive="active"
+          ariaCurrentWhenActive="page"
+        >Manage Address</a>
+        <a
+          class="nav-link"
+          routerLink="/help"
+          routerLinkActive="active"
+          ariaCurrentWhenActive="page"
+        >Help</a>
+      </nav>
+
+      <div class="account-actions">
+        <a
+          class="avatar"
+          routerLink="/profile"
+          routerLinkActive="active"
+          aria-label="Open Rahul's profile"
+        >RK</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-content">
+    <router-outlet />
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-main">
+      <a class="footer-brand" routerLink="/home">Bharat Companion</a>
+      <span>&copy; 2026 Bharat Companion</span>
+    </div>
+  </footer>
+</div>
