@@ -1,0 +1,60 @@
+<div class="auth-page login-page">
+  <section class="auth-card" aria-labelledby="login-title">
+    <div class="brand-mark" aria-label="Bharat Companion">BC</div>
+
+    <div class="auth-heading">
+      <p class="eyebrow">ADMIN PORTAL</p>
+      <h1 id="login-title">Log in to your account</h1>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
+      <label for="login-username">Email or mobile number</label>
+      <input
+        id="login-username"
+        formControlName="username"
+        type="text"
+        inputmode="email"
+        autocomplete="username"
+        placeholder="admin@example.com"
+        aria-describedby="username-error"
+      />
+      @if (loginForm.controls.username.touched && loginForm.controls.username.invalid) {
+        <p id="username-error" class="field-error" role="alert">
+          @if (loginForm.controls.username.hasError('required')) {
+            Enter your email address or mobile number.
+          } @else {
+            Enter a valid email address or mobile number.
+          }
+        </p>
+      }
+
+      <div class="label-row">
+        <label for="login-password">Password</label>
+        <a routerLink="/forgot-password">Forgot password?</a>
+      </div>
+      <input
+        id="login-password"
+        formControlName="password"
+        type="password"
+        autocomplete="current-password"
+        placeholder="Enter your password"
+        aria-describedby="password-error"
+      />
+      @if (loginForm.controls.password.touched && loginForm.controls.password.invalid) {
+        <p id="password-error" class="field-error" role="alert">
+          Enter your password.
+        </p>
+      }
+
+      <button class="primary-button" type="submit" [disabled]="loginForm.invalid">
+        Log in
+      </button>
+    </form>
+
+    @if (submitted) {
+      <p class="form-message" role="status">
+        Login submitted. Connect this form to the admin authentication service.
+      </p>
+    }
+  </section>
+</div>

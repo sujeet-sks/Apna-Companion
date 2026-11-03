@@ -1,0 +1,38 @@
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.label-row label {
+  margin-right: 12px;
+}
+
+.label-row a {
+  margin-top: 7px;
+  font-size: 12px;
+}
+
+.field-error {
+  margin: -4px 0 2px;
+  color: #b42318;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.primary-button:disabled {
+  transform: none;
+  background: #9bb6a6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 360px) {
+  .label-row {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .label-row a {
+    text-align: right;
+  }
+}
