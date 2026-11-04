@@ -1,0 +1,68 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  padding: 32px;
+  box-sizing: border-box;
+  background: #12343d;
+  color: #eef4f5;
+}
+
+.settings-card {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+h1 {
+  margin-bottom: 24px;
+}
+
+form {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 24px;
+  padding: 24px;
+  border-radius: 10px;
+  background: rgba(16, 54, 65, 0.72);
+}
+
+h2 {
+  margin: 0 0 8px;
+}
+
+label {
+  margin-top: 4px;
+}
+
+input {
+  height: 44px;
+  border: 1px solid rgba(153, 188, 194, 0.28);
+  border-radius: 7px;
+  padding: 0 12px;
+  color: #eef4f5;
+  background: #102f39;
+}
+
+button {
+  height: 46px;
+  border: 0;
+  border-radius: 7px;
+  margin-top: 8px;
+  color: #10283b;
+  background: #ee9e2d;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+small,
+p {
+  margin: 4px 0 0;
+}
+
+small {
+  color: #ffb4a9;
+}
