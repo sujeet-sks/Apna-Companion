@@ -12,7 +12,7 @@ from django.utils import timezone
 from rest_framework.decorators import api_view
 
 from .customer_auth import hash_password, normalize_email, normalize_mobile, validate_new_password
-from .models import Companion, CompanionService, Organization, Service
+from .models import Booking, Companion, CompanionService, Organization, Service
 from .role_auth import (
     change_password, consume_email_code, error, from_bearer,
     login_account, ok, organization_for_resubmission, reset_complete,
@@ -181,18 +181,50 @@ def org_resubmit(request):
     })
 
 
-@api_view(["POST"])
+@api_view(["GET", "POST"])
 def org_services(request):
-    # A small service-create endpoint: create IDs for companion.service_ids
     org, failed = _org(request, approved=True)
     if failed is not None:
         return failed
+
+    if request.method == "GET":
+        try:
+            page = int(request.query_params.get("page", 1))
+            page_size = int(request.query_params.get("page_size", 10))
+        except (TypeError, ValueError):
+            return error("page and page_size must be whole numbers.")
+        if page < 1 or not 1 <= page_size <= 50:
+            return error("page must be positive; page_size must be between 1 and 50.")
+
+        services = Service.objects.filter(organization=org).order_by("id")
+        start = (page - 1) * page_size
+        items = [
+            {
+                "id": service.id,
+                "name": service.name,
+                "price_inr": str(service.price_inr),
+                "is_active": service.is_active,
+            }
+            for service in services[start:start + page_size]
+        ]
+        return ok({
+            "items": items,
+            "total": services.count(),
+            "page": page,
+            "page_size": page_size,
+        })
+
     name = str(request.data.get("name") or "").strip()
     if not 1 <= len(name) <= 120:
         return error("Enter a service name of at most 120 characters.")
     try:
         price = Decimal(str(request.data.get("price_inr")))
-        if not price.is_finite() or price < 0 or price > Decimal("99999999.99") or price.as_tuple().exponent < -2:
+        if (
+            not price.is_finite()
+            or price < 0
+            or price > Decimal("99999999.99")
+            or price.as_tuple().exponent < -2
+        ):
             raise ValueError
     except (InvalidOperation, TypeError, ValueError):
         return error("Enter a nonnegative price with at most two decimal places.")
@@ -202,6 +234,97 @@ def org_services(request):
         price_inr=price,
     )
     return ok({"id": service.id, "is_active": True}, 201)
+
+
+@api_view(["GET", "PATCH"])
+def org_service_detail(request, service_id):
+    org, failed = _org(request, approved=True)
+    if failed is not None:
+        return failed
+    service = Service.objects.filter(id=service_id, organization=org).first()
+    if service is None:
+        return error("Service not found.", 404)
+
+    if request.method == "GET":
+        return ok({
+            "id": service.id,
+            "organization_id": service.organization_id,
+            "name": service.name,
+            "description": service.description,
+            "price_inr": str(service.price_inr),
+            "is_active": service.is_active,
+        })
+
+    allowed = {"name", "description", "price_inr"}
+    if (
+        not isinstance(request.data, dict)
+        or not request.data
+        or not set(request.data).issubset(allowed)
+    ):
+        return error("Send at least one of: name, description, price_inr.")
+
+    changed = []
+    if "name" in request.data:
+        name = request.data["name"]
+        if not isinstance(name, str) or not 1 <= len(name.strip()) <= 120:
+            return error("Enter a service name of at most 120 characters.")
+        service.name = name.strip()
+        changed.append("name")
+
+    if "description" in request.data:
+        description = request.data["description"]
+        if description is not None and not isinstance(description, str):
+            return error("description must be text or null.")
+        service.description = (description or "").strip() or None
+        changed.append("description")
+
+    if "price_inr" in request.data:
+        try:
+            price = Decimal(str(request.data["price_inr"]))
+            if (
+                not price.is_finite()
+                or price < 0
+                or price > Decimal("99999999.99")
+                or price.as_tuple().exponent < -2
+            ):
+                raise ValueError
+        except (InvalidOperation, TypeError, ValueError):
+            return error("Enter a nonnegative price with at most two decimal places.")
+        service.price_inr = price
+        changed.append("price_inr")
+
+    service.save(update_fields=[*changed, "updated_at"])
+    return ok({"message": "Service updated"})
+
+
+@api_view(["PATCH"])
+def org_service_status(request, service_id):
+    org, failed = _org(request, approved=True)
+    if failed is not None:
+        return failed
+    service = Service.objects.filter(id=service_id, organization=org).first()
+    if service is None:
+        return error("Service not found.", 404)
+    if (
+        not isinstance(request.data, dict)
+        or set(request.data) != {"is_active"}
+        or type(request.data["is_active"]) is not bool
+    ):
+        return error("Send is_active as true or false.")
+
+    active = request.data["is_active"]
+    if service.is_active and not active:
+        open_statuses = [
+            "pending", "accepted", "assigned",
+            "on_the_way", "arrived", "in_progress",
+        ]
+        if Booking.objects.filter(service=service, status__in=open_statuses).exists():
+            return error("Finish or cancel open bookings before deactivating this service.", 409)
+
+    if service.is_active != active:
+        service.is_active = active
+        service.save(update_fields=["is_active", "updated_at"])
+    return ok({"message": "Service status updated"})
 
 
 def _companion_input(data):

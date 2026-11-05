@@ -15,6 +15,8 @@ urlpatterns = [
     path("org/change-password/", o.org_change_password),
     path("org/logout/", o.org_logout),
     path("org/services/", o.org_services),
+    path("org/services/<int:service_id>/", o.org_service_detail),
+    path("org/services/<int:service_id>/status/", o.org_service_status),
     path("org/companions/", o.org_companions),
 
     path("companion/login/", c.companion_login),
