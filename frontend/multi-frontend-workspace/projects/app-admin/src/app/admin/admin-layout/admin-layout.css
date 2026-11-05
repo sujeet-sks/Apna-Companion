@@ -1,0 +1,21 @@
+:host {
+  display: block;
+}
+
+.admin-layout {
+  display: grid;
+  min-height: 100dvh;
+  grid-template-columns: 220px minmax(0, 1fr);
+  background: #f7f8f6;
+}
+
+.admin-content {
+  min-width: 0;
+  background: #f7f8f6;
+}
+
+@media (max-width: 760px) {
+  .admin-layout {
+    display: block;
+  }
+}
