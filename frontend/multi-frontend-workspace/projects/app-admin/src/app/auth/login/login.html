@@ -1,0 +1,69 @@
+<main class="login-page">
+  <section class="login-card" aria-label="Admin login">
+    <aside class="brand-panel">
+      <img
+        class="company-logo"
+        src="/assets/bharat-companion-logo.svg"
+        alt="Bharat Companion"
+      />
+
+      <div class="brand-content">
+        <svg class="shield-icon" viewBox="0 0 160 180" aria-hidden="true">
+          <path
+            class="shield-outline"
+            d="M80 9 145 35v43c0 43-25 73-65 93C40 151 15 121 15 78V35L80 9Z"
+          />
+          <circle class="shield-line" cx="80" cy="68" r="24" />
+          <path class="shield-line" d="M45 125c5-29 18-43 35-43s30 14 35 43" />
+        </svg>
+        <h2>Secure Administration</h2>
+      </div>
+    </aside>
+
+    <div class="form-panel">
+      <div class="admin-badge">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 20a8 8 0 0 1 16 0" />
+        </svg>
+        <span>ADMIN PORTAL</span>
+      </div>
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
+        <h1>Sign in</h1>
+
+        <div class="field-group">
+          <label for="login-username">Email</label>
+          <input
+            id="login-username"
+            formControlName="username"
+            type="text"
+            autocomplete="username"
+            placeholder="admin@example.com"
+          />
+        </div>
+
+        <div class="field-group password-group">
+          <div class="label-row">
+            <label for="login-password">Password</label>
+            <a routerLink="/forgot-password">Forgot password?</a>
+          </div>
+          <div class="password-input">
+            <input
+              id="login-password"
+              formControlName="password"
+              [type]="showPassword ? 'text' : 'password'"
+              autocomplete="current-password"
+              placeholder="Enter your password"
+            />
+            <button type="button" (click)="togglePassword()">
+              {{ showPassword ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+        </div>
+
+        <button class="submit-button" type="submit">Sign in to dashboard</button>
+      </form>
+    </div>
+  </section>
+</main>
