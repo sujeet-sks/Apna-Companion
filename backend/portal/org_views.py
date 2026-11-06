@@ -367,11 +367,62 @@ def _companion_input(data):
     }
 
 
-@api_view(["POST"])
+@api_view(["GET", "POST"])
 def org_companions(request):
     org, failed = _org(request, approved=True)
     if failed is not None:
         return failed
+
+    if request.method == "GET":
+        try:
+            page = int(request.query_params.get("page", 1))
+            page_size = int(request.query_params.get("page_size", 10))
+        except (TypeError, ValueError):
+            return error("page and page_size must be whole numbers.")
+        if page < 1 or not 1 <= page_size <= 50:
+            return error("page must be positive; page_size must be between 1 and 50.")
+
+        companions = Companion.objects.filter(organization=org).order_by(
+            "name", "companion_id"
+        )
+        service_id = request.query_params.get("service_id")
+        if service_id is not None:
+            try:
+                service_id = int(service_id)
+            except (TypeError, ValueError):
+                return error("service_id must be a positive number.")
+            if service_id < 1:
+                return error("service_id must be a positive number.")
+            mapped_ids = CompanionService.objects.filter(
+                service_id=service_id, service__organization=org
+            ).values("companion_id")
+            companions = companions.filter(companion_id__in=mapped_ids)
+
+        availability = request.query_params.get("availability_status")
+        if availability is not None:
+            if availability not in {"available", "unavailable", "busy"}:
+                return error("Invalid availability_status filter.")
+            companions = companions.filter(availability_status=availability)
+
+        active = request.query_params.get("is_active")
+        if active is not None:
+            if active not in {"true", "false"}:
+                return error("is_active must be true or false.")
+            companions = companions.filter(is_active=active == "true")
+
+        total = companions.count()
+        start = (page - 1) * page_size
+        items = [
+            {
+                "companion_id": companion.companion_id,
+                "name": companion.name,
+                "is_active": companion.is_active,
+                "availability_status": companion.availability_status,
+            }
+            for companion in companions[start:start + page_size]
+        ]
+        return ok({"items": items, "total": total, "page": page, "page_size": page_size})
+
     try:
         values = _companion_input(request.data)
     except (ValueError, TypeError) as exc:
@@ -413,3 +464,89 @@ def org_companions(request):
         "availability_status": companion.availability_status,
         "message": "Companion created; temporary password emailed",
     }, 201)
+
+
+@api_view(["GET"])
+def org_companion_detail(request, companion_id):
+    org, failed = _org(request, approved=True)
+    if failed is not None:
+        return failed
+    companion = Companion.objects.filter(
+        companion_id=companion_id, organization=org
+    ).first()
+    if companion is None:
+        return error("Companion not found.", 404)
+
+    service_ids = list(
+        CompanionService.objects.filter(companion=companion)
+        .order_by("service_id").values_list("service_id", flat=True)
+    )
+    return ok({
+        "companion_id": companion.companion_id,
+        "name": companion.name,
+        "email": companion.email,
+        "mobile": companion.mobile,
+        "organization_id": companion.organization_id,
+        "languages_known": companion.languages_known,
+        "speciality": companion.speciality,
+        "experience_years": (
+            float(companion.experience_years)
+            if companion.experience_years is not None else None
+        ),
+        "is_active": companion.is_active,
+        "availability_status": companion.availability_status,
+        "service_ids": service_ids,
+    })
+
+
+@api_view(["PUT"])
+def org_companion_services(request, companion_id):
+    org, failed = _org(request, approved=True)
+    if failed is not None:
+        return failed
+    if not isinstance(request.data, dict) or set(request.data) != {"service_ids"}:
+        return error("Send service_ids as a list.")
+    service_ids = request.data["service_ids"]
+    if (
+        not isinstance(service_ids, list)
+        or any(type(sid) is not int or sid < 1 for sid in service_ids)
+        or len(service_ids) != len(set(service_ids))
+    ):
+        return error("service_ids must be distinct positive numbers.")
+
+    with transaction.atomic():
+        companion = Companion.objects.select_for_update().filter(
+            companion_id=companion_id, organization=org
+        ).first()
+        if companion is None:
+            return error("Companion not found.", 404)
+        if (
+            Service.objects.filter(organization=org, id__in=service_ids).count()
+            != len(service_ids)
+        ):
+            return error("Every service ID must belong to this organization.")
+
+        old_ids = set(
+            CompanionService.objects.filter(companion=companion)
+            .values_list("service_id", flat=True)
+        )
+        new_ids = set(service_ids)
+        removed = old_ids - new_ids
+        added = new_ids - old_ids
+        if removed:
+            open_statuses = ["assigned", "on_the_way", "arrived", "in_progress"]
+            if Booking.objects.filter(
+                companion=companion, service_id__in=removed, status__in=open_statuses
+            ).exists():
+                return error("Finish or cancel assigned bookings before removing their service.", 409)
+            CompanionService.objects.filter(
+                companion=companion, service_id__in=removed
+            ).delete()
+        if added:
+            CompanionService.objects.bulk_create([
+                CompanionService(companion=companion, service_id=sid)
+                for sid in sorted(added)
+            ])
+        if removed or added:
+            companion.save(update_fields=["updated_at"])
+    return ok({"companion_id": companion.companion_id, "service_ids": service_ids})
