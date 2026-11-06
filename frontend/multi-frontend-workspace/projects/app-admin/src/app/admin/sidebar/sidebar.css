@@ -53,6 +53,42 @@
   color: #fff;
 }
 
+.logout-button {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  border: 0;
+  border-top: 1px solid rgb(255 255 255 / 7%);
+  padding: 12px 20px;
+  color: #d9e9ed;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.logout-button:hover {
+  background: #215e4c;
+  color: #fff;
+}
+
+.logout-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.logout-button svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 @media (max-width: 760px) {
   :host {
     min-width: 0;
