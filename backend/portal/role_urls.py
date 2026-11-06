@@ -18,6 +18,8 @@ urlpatterns = [
     path("org/services/<int:service_id>/", o.org_service_detail),
     path("org/services/<int:service_id>/status/", o.org_service_status),
     path("org/companions/", o.org_companions),
+    path("org/companions/<str:companion_id>/", o.org_companion_detail),
+    path("org/companions/<str:companion_id>/services/", o.org_companion_services),
 
     path("companion/login/", c.companion_login),
     path("companion/forgot-password/request/", c.companion_forgot_request),
