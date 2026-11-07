@@ -466,7 +466,7 @@ def org_companions(request):
     }, 201)
 
 
-@api_view(["GET"])
+@api_view(["GET", "PATCH"])
 def org_companion_detail(request, companion_id):
     org, failed = _org(request, approved=True)
     if failed is not None:
@@ -476,6 +476,35 @@ def org_companion_detail(request, companion_id):
     ).first()
     if companion is None:
         return error("Companion not found.", 404)
+
+    if request.method == "PATCH":
+        editable_fields = {
+            "name", "mobile", "experience_years", "dob", "gender", "address",
+            "identity_proof_url", "photo_url", "speciality", "languages_known",
+        }
+        if (
+            not isinstance(request.data, dict)
+            or not request.data
+            or not set(request.data).issubset(editable_fields)
+        ):
+            return error("Send at least one editable companion profile field.")
+
+        profile = {field: getattr(companion, field) for field in editable_fields}
+        profile.update({"email": companion.email, "service_ids": []})
+        profile.update(request.data)
+        try:
+            values = _companion_input(profile)
+        except (ValueError, TypeError) as exc:
+            return error(str(exc))
+
+        changed = []
+        for field in request.data:
+            if getattr(companion, field) != values[field]:
+                setattr(companion, field, values[field])
+                changed.append(field)
+        if changed:
+            companion.save(update_fields=changed + ["updated_at"])
+        return ok({"message": "Companion updated"})
 
     service_ids = list(
         CompanionService.objects.filter(companion=companion)
@@ -497,6 +526,59 @@ def org_companion_detail(request, companion_id):
         "availability_status": companion.availability_status,
         "service_ids": service_ids,
     })
+
+
+@api_view(["PATCH"])
+def org_companion_status(request, companion_id):
+    org, failed = _org(request, approved=True)
+    if failed is not None:
+        return failed
+    allowed = {"is_active", "availability_status"}
+    if (
+        not isinstance(request.data, dict)
+        or not request.data
+        or not set(request.data).issubset(allowed)
+    ):
+        return error("Send is_active and/or availability_status.")
+    if "is_active" in request.data and type(request.data["is_active"]) is not bool:
+        return error("is_active must be true or false.")
+    if "availability_status" in request.data:
+        choice = request.data["availability_status"]
+        if not isinstance(choice, str) or choice not in {"available", "unavailable"}:
+            return error("Choose available or unavailable; busy is set by the backend.")
+
+    with transaction.atomic():
+        companion = Companion.objects.select_for_update().filter(
+            companion_id=companion_id, organization=org
+        ).first()
+        if companion is None:
+            return error("Companion not found.", 404)
+
+        active = request.data.get("is_active", companion.is_active)
+        availability = request.data.get(
+            "availability_status", companion.availability_status
+        )
+        if not active:
+            if availability == "available" and "availability_status" in request.data:
+                return error("An inactive companion cannot be available.")
+            availability = "unavailable"
+
+        changed = []
+        if companion.is_active != active:
+            changed.append("is_active")
+        if companion.availability_status != availability:
+            changed.append("availability_status")
+        if changed and Booking.objects.filter(
+            companion=companion,
+            status__in=["assigned", "on_the_way", "arrived", "in_progress"],
+        ).exists():
+            return error("Finish or cancel assigned bookings before changing companion status.", 409)
+
+        if changed:
+            companion.is_active = active
+            companion.availability_status = availability
+            companion.save(update_fields=changed + ["updated_at"])
+    return ok({"message": "Companion status updated"})
 
 
 @api_view(["PUT"])
