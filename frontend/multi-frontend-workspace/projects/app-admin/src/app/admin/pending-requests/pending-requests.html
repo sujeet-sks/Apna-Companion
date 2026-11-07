@@ -1,0 +1,43 @@
+<main class="pending-requests-page">
+  <h1>Pending request</h1>
+
+  <section class="requests-card" aria-label="Pending client requests">
+    <div class="table-scroll">
+      <table class="requests-table">
+        <thead>
+          <tr>
+            <th scope="col">Client</th>
+            <th scope="col">Type</th>
+            <th scope="col">City</th>
+            <th scope="col">Submitted</th>
+            <th scope="col">Documents</th>
+            <th scope="col">Status</th>
+            <th scope="col"><span class="visually-hidden">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (request of pendingRequests; track request.id) {
+            <tr>
+              <th scope="row">{{ request.client }}</th>
+              <td>{{ request.type }}</td>
+              <td>{{ request.city }}</td>
+              <td>{{ request.submitted }}</td>
+              <td>{{ request.documentsVerified }} of {{ request.documentsTotal }} verified</td>
+              <td>
+                <span
+                  class="status-badge"
+                  [class.status-badge--duplicate]="request.status === 'Possible duplicate'"
+                >
+                  {{ request.status }}
+                </span>
+              </td>
+              <td>
+                <a class="review-button" [routerLink]="[request.id]">Review</a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>

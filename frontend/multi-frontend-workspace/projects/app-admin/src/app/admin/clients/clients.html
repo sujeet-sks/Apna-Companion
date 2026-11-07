@@ -1,0 +1,38 @@
+<main class="clients-page">
+  <h1>Approved clients</h1>
+
+  @if (clients.length === 0) {
+    <section class="clients-card empty-state">
+      <p>No approved clients found.</p>
+    </section>
+  } @else {
+    <section class="clients-card" aria-label="Approved clients">
+      <div class="table-scroll">
+        <table class="clients-table">
+          <thead>
+            <tr>
+              @for (column of columns; track column) {
+                <th scope="col">{{ column }}</th>
+              }
+              <th scope="col"><span class="visually-hidden">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (client of clients; track getClientId(client)) {
+              <tr>
+                @for (column of columns; track column) {
+                  <td>{{ formatClientValue(client[column]) }}</td>
+                }
+                <td>
+                  <a class="details-button" [routerLink]="[getClientId(client)]">
+                    View details
+                  </a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+</main>

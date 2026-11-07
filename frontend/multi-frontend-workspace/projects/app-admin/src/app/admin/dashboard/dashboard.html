@@ -1,0 +1,113 @@
+<section class="dashboard" aria-labelledby="dashboard-title">
+  <header class="dashboard-header">
+    <div class="dashboard-heading">
+      <h1 id="dashboard-title">{{ dashboardData.title }}</h1>
+    </div>
+
+    <div class="dashboard-filters" aria-label="Dashboard filters">
+      <div class="period-filters" role="group" aria-label="Select period">
+        @for (period of dashboardData.periods; track period) {
+          <button
+            class="filter-button"
+            [class.is-active]="selectedPeriod === period"
+            [attr.aria-pressed]="selectedPeriod === period"
+            type="button"
+            (click)="selectedPeriod = period"
+          >
+            {{ period }}
+          </button>
+        }
+      </div>
+
+      <label class="city-filter">
+        <span class="visually-hidden">Filter by city</span>
+        <select
+          [value]="selectedCity"
+          aria-label="Filter by city"
+          (change)="onCityChange($event)"
+        >
+          @for (city of dashboardData.cities; track city) {
+            <option [value]="city">{{ city }}</option>
+          }
+        </select>
+      </label>
+    </div>
+  </header>
+
+  <div class="metrics-grid">
+    @for (metric of dashboardData.metrics; track metric.label) {
+      <article class="metric-card" [class.metric-card--wide]="metric.wide">
+        <h2>{{ metric.label }}</h2>
+        <p class="metric-value">{{ metric.value }}</p>
+      </article>
+    }
+  </div>
+
+  <div class="dashboard-details">
+    <section class="detail-panel clients-panel" aria-labelledby="top-clients-title">
+      <header class="panel-header">
+        <h2 id="top-clients-title">Top clients</h2>
+        <div class="client-sort" role="group" aria-label="Sort top clients">
+          @for (sortOption of dashboardData.clientSortOptions; track sortOption) {
+            <button
+              class="filter-button"
+              [class.is-active]="selectedClientSort === sortOption"
+              [attr.aria-pressed]="selectedClientSort === sortOption"
+              type="button"
+              (click)="selectedClientSort = sortOption"
+            >
+              {{ sortOption }}
+            </button>
+          }
+        </div>
+      </header>
+
+      <div class="table-scroll">
+        <table class="clients-table">
+          <thead>
+            <tr>
+              <th scope="col">Client</th>
+              <th scope="col">Bookings</th>
+              <th scope="col">Revenue</th>
+              <th scope="col">Rating</th>
+              <th scope="col">Cancel rate</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (client of sortedTopClients; track client.name) {
+              <tr>
+                <th scope="row">{{ client.name }}</th>
+                <td>{{ client.bookings }}</td>
+                <td>{{ client.revenue }}</td>
+                <td>{{ client.rating }}</td>
+                <td>{{ client.cancellationRate }}%</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="detail-panel services-panel" aria-labelledby="services-title">
+      <h2 id="services-title">{{ dashboardData.bookingsByServiceTitle }}</h2>
+      <div class="service-list">
+        @for (service of dashboardData.bookingsByService; track service.name) {
+          <div class="service-row">
+            <span class="service-name">{{ service.name }}</span>
+            <div
+              class="service-track"
+              role="progressbar"
+              [attr.aria-label]="service.name + ' bookings'"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              [attr.aria-valuenow]="service.percentage"
+            >
+              <span class="service-bar" [style.width.%]="service.percentage"></span>
+            </div>
+          </div>
+        }
+      </div>
+      <p class="service-note">{{ dashboardData.bookingsByServiceNote }}</p>
+    </section>
+  </div>
+</section>
