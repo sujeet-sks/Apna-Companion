@@ -6,15 +6,20 @@
 
 .landing-page {
   display: flex;
-  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
   flex-direction: column;
 }
 
 .page-content {
-  flex: 1 0 auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .dashboard-header {
+  position: relative;
+  z-index: 20;
   flex: 0 0 auto;
   background: #1e7b51;
   color: #fff;
@@ -159,8 +164,8 @@
 }
 
 .site-footer {
-
-
+  position: relative;
+  z-index: 20;
   flex: 0 0 auto;
   margin-top: auto;
   border-top: 1px solid #dce9df;

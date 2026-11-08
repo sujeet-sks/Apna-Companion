@@ -1,9 +1,176 @@
 <main class="address-page">
-  <p class="eyebrow">YOUR ACCOUNT</p>
-  <h1>Manage Address</h1>
-  <section class="empty-state" aria-labelledby="address-empty-title">
-    <span class="address-icon" aria-hidden="true">⌖</span>
-    <h2 id="address-empty-title">Your saved addresses will appear here</h2>
-    <p>Addresses you add for your companionship visits will be available here.</p>
+  <button class="add-address" type="button" (click)="openAddForm()">
+    <span class="add-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 5v14M5 12h14" />
+      </svg>
+    </span>
+    <span class="add-copy">
+      <strong>Add a new address</strong>
+      <small>Home, parents' place, office...</small>
+    </span>
+  </button>
+
+  @if (formOpen) {
+    <section class="address-form" aria-label="Address details">
+      <div class="form-heading">
+        <h2>{{ editingId === null ? 'Add a new address' : 'Edit address' }}</h2>
+        <button class="close-button" type="button" aria-label="Close form" (click)="closeForm()">×</button>
+      </div>
+
+      @if (editingId === null) {
+        <div class="location-options" aria-label="Location options">
+          <button class="location-option" type="button" (click)="useCurrentLocation()">
+            <span class="location-option-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="3" />
+                <circle cx="12" cy="12" r="7" />
+                <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+              </svg>
+            </span>
+            <span class="location-option-copy">
+              <strong>Use my current location</strong>
+              <small>Uses your phone's GPS</small>
+            </span>
+          </button>
+
+          <button class="location-option" type="button" disabled>
+            <span class="location-option-icon map-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="m3 6 5-3 8 3 5-3v15l-5 3-8-3-5 3V6Z" />
+                <path d="M8 3v15M16 6v15" />
+              </svg>
+            </span>
+            <span class="location-option-copy">
+              <strong>Pick on map</strong>
+              <small>Drag the pin to the exact spot</small>
+            </span>
+            <span class="disabled-arrow" aria-hidden="true">›</span>
+          </button>
+
+          @if (locationStatus) {
+            <p class="location-status" role="status">{{ locationStatus }}</p>
+          }
+        </div>
+      }
+
+      <label>
+        Address label
+        <select [(ngModel)]="label">
+          <option value="HOME">Home</option>
+          <option value="PARENTS">Parents</option>
+          <option value="WORK">Office</option>
+        </select>
+      </label>
+
+      <div class="address-form-grid">
+        <label>
+          House / flat no.
+          <input [(ngModel)]="houseNo" required />
+        </label>
+
+        <label>
+          Building / street
+          <input [(ngModel)]="buildingStreet" required />
+        </label>
+
+        <label>
+          Area / locality
+          <input [(ngModel)]="areaLocality" required />
+        </label>
+
+        <label>
+          Landmark
+          <input [(ngModel)]="landmark" />
+        </label>
+
+        <label>
+          City
+          <input [(ngModel)]="city" required />
+        </label>
+
+        <label>
+          State
+          <input [(ngModel)]="state" required />
+        </label>
+
+        <label>
+          Pincode
+          <input [(ngModel)]="pincode" inputmode="numeric" maxlength="6" required />
+        </label>
+
+        <label>
+          Country
+          <input [(ngModel)]="country" required />
+        </label>
+
+        <label>
+          Contact name
+          <input [(ngModel)]="contactName" required />
+        </label>
+
+        <label>
+          Contact phone
+          <input [(ngModel)]="contactPhone" inputmode="tel" maxlength="10" required />
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <button class="cancel-button" type="button" (click)="closeForm()">Cancel</button>
+        <button class="save-button" type="button" (click)="saveAddress()" [disabled]="!canSaveAddress()">
+          {{ editingId === null ? 'Save address' : 'Edit address' }}
+        </button>
+      </div>
+    </section>
+  }
+
+  <h2 class="saved-heading">SAVED ({{ addresses.length }})</h2>
+
+  <section class="address-list" aria-label="Saved addresses">
+    @for (item of addresses; track item.addressId) {
+      <article class="address-card">
+        <div class="address-details">
+          <span class="address-icon" [class.parents]="item.label === 'PARENTS'" [class.office]="item.label === 'WORK'" aria-hidden="true">
+            @if (item.label === 'HOME') {
+              <svg viewBox="0 0 24 24">
+                <path d="m3 11 9-7 9 7M5.5 10v9h13v-9M9.5 19v-6h5v6" />
+              </svg>
+            } @else if (item.label === 'PARENTS') {
+              <svg viewBox="0 0 24 24">
+                <circle cx="9" cy="8" r="3" />
+                <circle cx="17" cy="10" r="2" />
+                <path d="M3.5 19c.5-4 2.3-6 5.5-6s5 2 5.5 6M14.5 19c.2-2.4 1.1-4 2.5-4 1.8 0 3 1.6 3.5 4" />
+              </svg>
+            } @else {
+              <svg viewBox="0 0 24 24">
+                <rect x="3" y="7" width="18" height="12" rx="1" />
+                <path d="M9 7V4h6v3M3 12h18M10 12v2h4v-2" />
+              </svg>
+            }
+          </span>
+
+          <div class="address-copy">
+            <div class="title-row">
+              <h3>{{ getLabelTitle(item.label) }}</h3>
+              @if (item.isDefault) {
+                <span class="default-badge">DEFAULT</span>
+              }
+            </div>
+            <p>{{ getFullAddress(item) }}</p>
+            @if (item.contactName || item.contactPhone) {
+              <p class="meet-at">Meet: <strong>{{ item.contactName }}{{ item.contactName && item.contactPhone ? ' · ' : '' }}{{ item.contactPhone }}</strong></p>
+            }
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <button class="edit-button" type="button" (click)="openEditForm(item)">Edit</button>
+          <button class="delete-button" type="button" (click)="deleteAddress(item.addressId)">Delete</button>
+          @if (!item.isDefault) {
+            <button class="default-button" type="button" (click)="setDefault(item.addressId)">Set as default</button>
+          }
+        </div>
+      </article>
+    }
   </section>
 </main>
