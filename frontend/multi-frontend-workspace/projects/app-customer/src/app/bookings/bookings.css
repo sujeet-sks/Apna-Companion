@@ -5,82 +5,210 @@
 }
 
 .page-shell {
-  width: min(920px, calc(100% - 48px));
+  width: calc(100% - 48px);
   margin: 0 auto;
   padding: clamp(40px, 7vw, 72px) 0;
 }
 
-.eyebrow {
-  margin: 0 0 8px;
+.bookings-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.booking-section h1 {
+  margin: 0 0 16px;
+  color: #193b2d;
+  font-size: 24px;
+}
+
+.booking-list {
+  display: grid;
+  gap: 12px;
+  max-height: 520px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.booking-card {
+  padding: 16px;
+  border: 1px solid #e2ebe3;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgb(24 51 41 / 5%);
+}
+
+.booking-card-heading,
+.companion-details,
+.otp-details {
+  display: flex;
+  align-items: center;
+}
+
+.booking-card-heading {
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.booking-card h2 {
+  margin: 0 0 4px;
+  color: #244534;
+  font-size: 16px;
+}
+
+.booking-card-heading p,
+.booking-details p,
+.otp-details p,
+.booking-comments {
+  margin: 4px 0 0;
+  color: #68796f;
+  font-size: 12px;
+}
+
+.status-badge {
+  border-radius: 999px;
+  background: #fff3d6;
+  color: #946000;
+  padding: 5px 9px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.status-badge.completed {
+  background: #e5f2e9;
   color: #19764e;
+}
+
+.status-badge.rejected {
+  background: #fae6e6;
+  color: #b83a3a;
+}
+
+.booking-details {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #edf1ed;
+}
+
+.companion-details {
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  color: #52665a;
+  font-size: 12px;
+}
+
+.otp-details {
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.review-section {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 9px;
+  background: #f4f7f4;
+}
+
+.review-section h3 {
+  margin: 0;
+  color: #244534;
+  font-size: 14px;
+}
+
+.review-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #52665a;
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 1.2px;
 }
 
-h1 {
-  margin: 0;
-  color: #193b2d;
-  font-size: clamp(32px, 5vw, 44px);
-  letter-spacing: -1px;
+.star-rating {
+  display: flex;
+  gap: 2px;
 }
 
-.empty-state {
+.star-rating button {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #b7c0ba;
+  font-size: 21px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.star-rating button.selected {
+  color: #e2a83b;
+}
+
+.review-comment {
   display: grid;
-  justify-items: center;
-  margin-top: 28px;
-  padding: 42px 24px;
-  border: 1px solid #e2ebe3;
-  border-radius: 14px;
-  background: #f6f9f6;
+  gap: 5px;
+  color: #52665a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.review-comment textarea {
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px solid #dfe6e1;
+  border-radius: 7px;
+  background: #fff;
+  color: #183329;
+  font: inherit;
+  font-size: 12px;
+  resize: vertical;
+  padding: 9px;
+}
+
+.submit-review-button {
+  min-height: 38px;
+  border: 0;
+  border-radius: 7px;
+  background: #19764e;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.submit-review-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.review-status {
+  margin: 0;
+  color: #19764e;
+  font-size: 12px;
   text-align: center;
 }
 
-.empty-icon {
-  display: grid;
-  width: 48px;
-  height: 48px;
-  place-items: center;
-  border-radius: 50%;
-  background: #e7f1e9;
-  color: #19764e;
-  font-size: 27px;
-}
-
-h2 {
-  margin: 18px 0 8px;
-  color: #244534;
-  font-size: 20px;
-}
-
-.empty-state p {
-  max-width: 470px;
-  margin: 0;
+.empty-message {
+  padding: 24px;
+  border: 1px solid #e2ebe3;
+  border-radius: 12px;
   color: #68796f;
-  font-size: 14px;
-  line-height: 1.7;
-}
-
-.empty-state a {
-  margin-top: 20px;
-  color: #19764e;
-  font-size: 14px;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.empty-state a:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-a:focus-visible {
-  outline: 3px solid #8ebfa0;
-  outline-offset: 3px;
+  text-align: center;
 }
 
 @media (max-width: 600px) {
   .page-shell {
     width: calc(100% - 36px);
+  }
+
+  .bookings-layout {
+    grid-template-columns: 1fr;
   }
 }
