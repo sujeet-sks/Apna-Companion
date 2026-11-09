@@ -25,6 +25,10 @@ urlpatterns = [
     path("org/bookings/<int:booking_id>/", b.org_booking_detail),
     path("org/bookings/<int:booking_id>/accept/", b.org_booking_accept),
     path("org/bookings/<int:booking_id>/reject/", b.org_booking_reject),
+    path("org/bookings/<int:booking_id>/eligible-companions/", b.org_booking_eligible_companions),
+    path("org/bookings/<int:booking_id>/assign/", b.org_booking_assign),
+    path("org/bookings/<int:booking_id>/tracking/", b.org_booking_tracking),
+    path("org/bookings/<int:booking_id>/cancel/", b.org_booking_cancel),
 
     path("companion/login/", c.companion_login),
     path("companion/forgot-password/request/", c.companion_forgot_request),
