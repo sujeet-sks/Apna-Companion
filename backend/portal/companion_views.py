@@ -54,3 +54,25 @@ def companion_logout(request):
     if failed is not None:
         return failed
     return ok({"message": "Logged out"})
+
+
+@api_view(["GET"])
+def companion_profile(request):
+    companion, failed = _companion(request)
+    if failed is not None:
+        return failed
+
+    organization = companion.organization
+    return ok({
+        "companion_id": companion.companion_id,
+        "name": companion.name,
+        "email": companion.email,
+        "is_active": companion.is_active,
+        "availability_status": companion.availability_status,
+        "organization": {
+            "organization_id": organization.organization_id,
+            "organization_name": organization.organization_name,
+            "email": organization.email,
+            "address": organization.address,
+        },
+    })

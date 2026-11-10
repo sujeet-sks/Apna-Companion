@@ -1,7 +1,6 @@
 from django.urls import path
 
-from . import companion_views as c, org_booking_views as b, org_views as o
-
+from . import companion_booking_views as cb, companion_views as c, org_booking_views as b, org_views as o
 
 urlpatterns = [
     path("org/register/start/", o.org_register_start),
@@ -36,4 +35,10 @@ urlpatterns = [
     path("companion/me/", c.companion_me),
     path("companion/change-password/", c.companion_change_password),
     path("companion/logout/", c.companion_logout),
+    path("companion/dashboard/", cb.companion_dashboard),
+    path("companion/bookings/active/", cb.companion_active_bookings),
+    path("companion/bookings/history/", cb.companion_booking_history),
+    path("companion/bookings/<int:booking_id>/", cb.companion_booking_detail),
+    path("companion/bookings/<int:booking_id>/status/", cb.companion_booking_status),
+    path("companion/profile/", c.companion_profile),
 ]
