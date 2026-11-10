@@ -7,7 +7,6 @@
     />
 
     <div class="auth-heading">
-      <p class="eyebrow">WELCOME BACK</p>
       <h1 id="login-title">Log in to your account</h1>
     </div>
 
@@ -49,8 +48,12 @@
         </p>
       }
 
-      <button class="primary-button" type="submit" [disabled]="loginForm.invalid">
-        Log in
+      @if (errorMessage()) {
+        <p class="field-error" role="alert">{{ errorMessage() }}</p>
+      }
+
+      <button class="primary-button" type="submit" [disabled]="loginForm.invalid || isSubmitting()">
+        {{ isSubmitting() ? 'Logging in...' : 'Log in' }}
       </button>
     </form>
 

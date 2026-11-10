@@ -242,7 +242,7 @@ export class Bookings implements OnInit {
   }
 
   ngOnInit(): void {
-    // this.loadCurrentBookings();
+    this.loadCurrentBookings();
     // this.loadPastBookings();
   }
 
@@ -257,6 +257,7 @@ export class Bookings implements OnInit {
   }
 
   private loadCurrentBookings(): void {
+
     this.http
       .post<BookingListResponse<CurrentBookingRecord> | CurrentBookingRecord[]>(
         this.currentBookingsApiUrl,
@@ -264,6 +265,7 @@ export class Bookings implements OnInit {
       )
       .subscribe({
         next: (response) => {
+
           const records = Array.isArray(response)
             ? response
             : response.data;

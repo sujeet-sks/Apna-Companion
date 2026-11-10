@@ -1,3 +1,10 @@
 <div class="app-shell">
   <router-outlet />
+  <app-toast />
+  @if (isLoading$ | async) {
+    <div class="global-spinner" role="status" aria-label="Loading">
+      <span class="spinner" aria-hidden="true"></span>
+      <span>Loading...</span>
+    </div>
+  }
 </div>

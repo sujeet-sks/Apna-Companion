@@ -7,9 +7,11 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
       : sessionStorage.getItem('access_token');
 
   const isPublicAuthRequest =
-    request.url.includes('/generateOTP') ||
-    request.url.includes('/submitOTP') ||
-    request.url.includes('/registerCustomer');
+    request.url.includes('/api/customer/register/start/') ||
+    request.url.includes('/api/customer/register/complete/') ||
+    request.url.includes('/api/customer/login/') ||
+    request.url.includes('/api/customer/forgot-password/request/') ||
+    request.url.includes('/api/customer/forgot-password/confirm/');
 
   if (!accessToken || isPublicAuthRequest) {
     return next(request);

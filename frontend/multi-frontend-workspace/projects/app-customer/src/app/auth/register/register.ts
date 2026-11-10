@@ -1,13 +1,46 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
+  AbstractControl,
   NonNullableFormBuilder,
   ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
   Validators,
 } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
+import { ToastService } from '../../shared/toast.service';
+
+interface RegistrationStartResponse {
+  verification_id: string;
+  expires_in: number;
+}
+
+interface RegistrationCompleteResponse {
+  message: string;
+  customer: {
+    customer_id: number;
+    full_name: string;
+    email_id: string;
+    mobile_number: string;
+    dob: string;
+    gender: string;
+    account_status: string;
+    created_at: string;
+    updated_at: string;
+  };
+}
+
+const matchingPasswordsValidator: ValidatorFn = (
+  control: AbstractControl,
+): ValidationErrors | null => {
+  const password = control.get('password')?.value;
+  const confirmPassword = control.get('confirm_password')?.value;
+  return password && confirmPassword && password !== confirmPassword
+    ? { passwordMismatch: true }
+    : null;
+};
 
 @Component({
   imports: [ReactiveFormsModule, RouterLink],
@@ -18,154 +51,152 @@ import { finalize } from 'rxjs';
 export class Register {
   private readonly http = inject(HttpClient);
   private readonly fb = inject(NonNullableFormBuilder);
+  private readonly router = inject(Router);
+  private readonly toast = inject(ToastService);
+  private readonly registrationStartUrl = '/api/customer/register/start/';
+  private readonly registrationCompleteUrl = '/api/customer/register/complete/';
   protected readonly latestDateOfBirth = new Date(
     Date.now() - new Date().getTimezoneOffset() * 60_000,
   ).toISOString().slice(0, 10);
 
-  readonly registrationForm = this.fb.group({
-    fullName: ['', [Validators.required, Validators.pattern(/\S/)]],
-    dob: ['', Validators.required],
-    gender: ['', Validators.required],
-    email: ['', [Validators.required, Validators.email]],
-    mobile: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
-  });
+  readonly registrationForm = this.fb.group(
+    {
+      fullName: ['', [Validators.required, Validators.pattern(/\S/)]],
+      dob: ['', Validators.required],
+      gender: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      mobile: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
+      password: ['', Validators.required],
+      confirm_password: ['', Validators.required],
+    },
+    { validators: matchingPasswordsValidator },
+  );
 
   protected readonly otpForm = this.fb.group({
-    otp: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
+    email_code: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
+    mobile_code: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
   });
 
   protected otpSent = false;
-  protected otpVerified = false;
-  protected otpMobile = '';
+  private verificationId = '';
+  protected showPassword = false;
+  protected showConfirmPassword = false;
   protected isSendingOtp = false;
-  protected isVerifyingOtp = false;
-  protected isRegistering = false;
-  protected registered = false;
+  protected isCompletingRegistration = false;
   protected errorMessage = '';
 
-  protected get canVerifyOtp(): boolean {
+  protected get canCompleteRegistration(): boolean {
     return (
       this.otpSent &&
       this.otpForm.valid &&
       !this.isSendingOtp &&
-      !this.isVerifyingOtp
+      !this.isCompletingRegistration
     );
   }
 
-  protected get canRegisterCustomer(): boolean {
-    return (
-      this.otpVerified &&
-      this.registrationForm.valid &&
-      !this.isRegistering &&
-      !this.registered
-    );
-  }
-
-  constructor() {
-    this.registrationForm.controls.mobile.valueChanges
-      .pipe(takeUntilDestroyed())
-      .subscribe((mobile) => {
-        if (mobile.trim() !== this.otpMobile) {
-          this.otpSent = false;
-          this.otpVerified = false;
-          this.otpMobile = '';
-          this.otpForm.reset();
-        }
-      });
-  }
-
-  sendOtp(): void {
+  protected sendOtp(): void {
     if (
       this.registrationForm.invalid ||
       this.isSendingOtp ||
-      this.isVerifyingOtp ||
-      this.isRegistering ||
-      this.registered
+      this.isCompletingRegistration ||
+      this.otpSent
     ) {
       this.registrationForm.markAllAsTouched();
-      setTimeout(() => {
-        this.otpSent = true;
-      }, 2000);
       return;
     }
 
-    const localMobile = this.registrationForm.controls.mobile.value.trim();
-    const mobile = `+91${localMobile}`;
+    const {
+      fullName,
+      dob,
+      gender,
+      email,
+      mobile,
+      password,
+      confirm_password,
+    } = this.registrationForm.getRawValue();
     this.errorMessage = '';
-    this.otpSent = false;
-    this.otpVerified = false;
-    this.otpForm.reset();
     this.isSendingOtp = true;
+    this.registrationForm.disable({ emitEvent: false });
+    this.otpForm.reset();
     this.http
-      .post('/generateOTP', { mobile })
-      .pipe(finalize(() => (this.isSendingOtp = false)))
+      .post<RegistrationStartResponse>(this.registrationStartUrl, {
+        full_name: fullName.trim(),
+        email_id: email.trim(),
+        mobile_number: mobile.trim(),
+        dob,
+        gender,
+        password,
+        confirm_password,
+      })
+      .pipe(
+        finalize(() => {
+          this.isSendingOtp = false;
+          if (!this.otpSent) {
+            this.registrationForm.enable({ emitEvent: false });
+          }
+        }),
+      )
       .subscribe({
-        next: () => {
-          if (this.registrationForm.controls.mobile.value.trim() !== localMobile) {
-            this.errorMessage = 'The mobile number changed. Send a new OTP to continue.';
+        next: (response) => {
+          if (!response.verification_id) {
+            this.errorMessage =
+              'The registration response was incomplete. Please try again.';
             return;
           }
 
-          this.otpMobile = localMobile;
+          this.verificationId = response.verification_id;
           this.otpSent = true;
+          this.toast.show('otp has been send to mobile and email');
         },
-        error: () => (this.errorMessage = 'Unable to send an OTP. Please try again.'),
+        error: (error: HttpErrorResponse) => {
+          this.errorMessage =
+            error.error?.message ??
+            'Unable to start registration. Please check your details and try again.';
+        },
       });
   }
 
-  protected verifyOtp(): void {
-    if (!this.canVerifyOtp) {
+  protected completeRegistration(): void {
+    if (!this.canCompleteRegistration || !this.verificationId) {
       this.otpForm.markAllAsTouched();
       return;
     }
 
-    const localMobile = this.otpMobile;
-    const mobile = `+91${localMobile}`;
     this.errorMessage = '';
-    this.isVerifyingOtp = true;
+    this.isCompletingRegistration = true;
     this.http
-      .post('/submitOTP', {
-        mobile,
-        otp: this.otpForm.controls.otp.value,
+      .post<RegistrationCompleteResponse>(this.registrationCompleteUrl, {
+        verification_id: this.verificationId,
+        ...this.otpForm.getRawValue(),
       })
-      .pipe(finalize(() => (this.isVerifyingOtp = false)))
+      .pipe(finalize(() => (this.isCompletingRegistration = false)))
       .subscribe({
-        next: () => {
-          if (
-            this.registrationForm.controls.mobile.value.trim() !== localMobile ||
-            this.otpMobile !== localMobile
-          ) {
-            this.errorMessage = 'The mobile number changed. Send a new OTP to continue.';
+        next: (response) => {
+          if (!response.customer?.customer_id) {
+            this.errorMessage = 'The registration response was incomplete. Please try again.';
+            this.toast.show(this.errorMessage, 'error');
             return;
           }
-          this.otpVerified = true;
+          this.toast.show(
+            response.message || 'Customer registered successfully.',
+            'success',
+          );
+          void this.router.navigate(['/login']);
         },
-        error: () =>
-          (this.errorMessage = 'The OTP could not be verified. Check the code and try again.'),
+        error: (error: HttpErrorResponse) => {
+          this.errorMessage =
+            error.error?.message ??
+            'Unable to verify the codes and complete registration. Please try again.';
+          this.toast.show(this.errorMessage, 'error');
+        },
       });
   }
 
-  protected registerCustomer(): void {
-    if (!this.canRegisterCustomer) {
-      this.registrationForm.markAllAsTouched();
-      return;
-    }
-
-    const { fullName, dob, gender, email, mobile } = this.registrationForm.getRawValue();
+  protected editRegistrationDetails(): void {
+    this.verificationId = '';
+    this.otpSent = false;
+    this.otpForm.reset();
+    this.registrationForm.enable({ emitEvent: false });
     this.errorMessage = '';
-    this.isRegistering = true;
-    this.http
-      .post('/registerCustomer', {
-        fullName: fullName.trim(),
-        dob,
-        gender,
-        email: email.trim(),
-        mobile: `+91${mobile.trim()}`,
-      })
-      .pipe(finalize(() => (this.isRegistering = false)))
-      .subscribe({
-        next: () => (this.registered = true),
-        error: () => (this.errorMessage = 'Unable to create your account. Please try again.'),
-      });
   }
 }

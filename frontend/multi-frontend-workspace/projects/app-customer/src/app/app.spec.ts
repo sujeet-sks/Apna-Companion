@@ -22,5 +22,6 @@ describe('App', () => {
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('router-outlet')).toBeTruthy();
+    expect(compiled.querySelector('app-toast')).toBeTruthy();
   });
 });

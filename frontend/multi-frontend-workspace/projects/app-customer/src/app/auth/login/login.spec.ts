@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Login } from './login';
@@ -6,7 +8,7 @@ describe('Login', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Login],
-      providers: [provideRouter([])],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     }).compileComponents();
   });
 
@@ -56,5 +58,95 @@ describe('Login', () => {
     fixture.detectChanges();
 
     expect(element.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled).toBe(true);
+  });
+
+  it('submits the identifier and password and stores the returned session', () => {
+    const fixture = TestBed.createComponent(Login);
+    const httpTesting = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    const usernameInput = element.querySelector<HTMLInputElement>('#login-username')!;
+    const passwordInput = element.querySelector<HTMLInputElement>('#login-password')!;
+    usernameInput.value = 'person@example.com';
+    usernameInput.dispatchEvent(new Event('input'));
+    passwordInput.value = 'secret';
+    passwordInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    element.querySelector<HTMLFormElement>('form')!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+
+    const request = httpTesting.expectOne('/api/customer/login/');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({
+      identifier: 'person@example.com',
+      password: 'secret',
+    });
+    request.flush({
+      access_token: 'test-token',
+      token_type: 'Bearer',
+      expires_in: 3600,
+      customer: {
+        customer_id: 42,
+        full_name: 'Test Customer',
+        email_id: 'person@example.com',
+        mobile_number: '9876543210',
+        dob: '',
+        gender: '',
+        account_status: 'active',
+        created_at: '',
+        updated_at: '',
+      },
+    });
+
+    expect(sessionStorage.getItem('access_token')).toBe('test-token');
+    expect(sessionStorage.getItem('customer_id')).toBe('42');
+    expect(sessionStorage.getItem('full_name')).toBe('Test Customer');
+    expect(sessionStorage.getItem('email_id')).toBe('person@example.com');
+    expect(sessionStorage.getItem('mobile_number')).toBe('9876543210');
+    expect(localStorage.getItem('userID')).toBe('42');
+    httpTesting.verify();
+    sessionStorage.removeItem('access_token');
+    sessionStorage.removeItem('customer_id');
+    sessionStorage.removeItem('full_name');
+    sessionStorage.removeItem('email_id');
+    sessionStorage.removeItem('mobile_number');
+    localStorage.removeItem('userID');
+  });
+
+  it('resets the login button after a failed login request', () => {
+    const fixture = TestBed.createComponent(Login);
+    const httpTesting = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    const usernameInput = element.querySelector<HTMLInputElement>('#login-username')!;
+    const passwordInput = element.querySelector<HTMLInputElement>('#login-password')!;
+    usernameInput.value = 'person@example.com';
+    usernameInput.dispatchEvent(new Event('input'));
+    passwordInput.value = 'incorrect';
+    passwordInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    element.querySelector<HTMLFormElement>('form')!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+
+    const request = httpTesting.expectOne('/api/customer/login/');
+    expect(element.querySelector('button[type="submit"]')?.textContent).toContain(
+      'Logging in...',
+    );
+    request.flush(
+      { message: 'Invalid credentials.' },
+      { status: 401, statusText: 'Unauthorized' },
+    );
+    fixture.detectChanges();
+
+    const submitButton =
+      element.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    expect(submitButton.disabled).toBe(false);
+    expect(submitButton.textContent).toContain('Log in');
+    expect(element.textContent).toContain('Invalid credentials.');
+    httpTesting.verify();
   });
 });
