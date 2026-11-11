@@ -10,6 +10,7 @@ urlpatterns = [
     path("org/forgot-password/request/", o.org_forgot_request),
     path("org/forgot-password/complete/", o.org_forgot_complete),
     path("org/me/", o.org_me),
+    path("org/dashboard/", b.org_dashboard),
     path("org/profile/", o.org_profile),
     path("org/change-password/", o.org_change_password),
     path("org/logout/", o.org_logout),
@@ -40,5 +41,7 @@ urlpatterns = [
     path("companion/bookings/history/", cb.companion_booking_history),
     path("companion/bookings/<int:booking_id>/", cb.companion_booking_detail),
     path("companion/bookings/<int:booking_id>/status/", cb.companion_booking_status),
+    path("companion/bookings/<int:booking_id>/start/", cb.companion_booking_start),
+    path("companion/bookings/<int:booking_id>/complete/", cb.companion_booking_complete),
     path("companion/profile/", c.companion_profile),
 ]
