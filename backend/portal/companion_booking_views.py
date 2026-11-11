@@ -1,8 +1,13 @@
+import re
+
 from django.db import transaction
+from django.utils import timezone
 from rest_framework.decorators import api_view
 
 from .companion_views import _companion
+from .customer_auth import verify_password
 from .models import Booking, Companion
+from .org_booking_views import _currently_busy
 from .role_auth import error, ok
 
 
@@ -168,3 +173,90 @@ def companion_booking_status(request, booking_id):
         booking.save(update_fields=["status", "updated_at"])
 
     return ok({"id": booking.id, "status": booking.status})
+
+
+def _six_digit_code(data, field):
+    if not isinstance(data, dict) or set(data) != {field}:
+        return None, error(f"Send {field}.")
+    code = data[field]
+    if not isinstance(code, str) or re.fullmatch(r"[0-9]{6}", code) is None:
+        return None, error(f"{field} must be a six-digit string.")
+    return code, None
+
+
+@api_view(["POST"])
+def companion_booking_start(request, booking_id):
+    companion, failed = _companion(request)
+    if failed is not None:
+        return failed
+    code, failed = _six_digit_code(request.data, "start_code")
+    if failed is not None:
+        return failed
+
+    with transaction.atomic():
+        booking = Booking.objects.select_for_update().filter(
+            id=booking_id, companion=companion
+        ).first()
+        if booking is None:
+            return error("Booking not found.", 404)
+        if booking.status != "arrived":
+            return error("Only an arrived booking can be started.", 422)
+        if not booking.start_code_hash:
+            return error("Start code is not available for this booking.", 422)
+        if not verify_password(code, booking.start_code_hash):
+            return error("Incorrect start code.")
+
+        booking.status = "in_progress"
+        booking.started_at = timezone.now()
+        booking.start_code_hash = None
+        booking.save(update_fields=[
+            "status", "started_at", "start_code_hash", "updated_at",
+        ])
+
+    return ok({
+        "id": booking.id,
+        "status": booking.status,
+        "started_at": booking.started_at,
+    })
+
+
+@api_view(["POST"])
+def companion_booking_complete(request, booking_id):
+    companion, failed = _companion(request)
+    if failed is not None:
+        return failed
+    code, failed = _six_digit_code(request.data, "end_code")
+    if failed is not None:
+        return failed
+
+    with transaction.atomic():
+        booking = Booking.objects.select_for_update().filter(
+            id=booking_id, companion=companion
+        ).first()
+        if booking is None:
+            return error("Booking not found.", 404)
+        if booking.status != "in_progress":
+            return error("Only an in-progress booking can be completed.", 422)
+        if not booking.end_code_hash:
+            return error("End code is not available for this booking.", 422)
+        if not verify_password(code, booking.end_code_hash):
+            return error("Incorrect end code.")
+
+        locked_companion = Companion.objects.select_for_update().get(pk=companion.pk)
+        booking.status = "completed"
+        booking.completed_at = timezone.now()
+        booking.end_code_hash = None
+        booking.save(update_fields=[
+            "status", "completed_at", "end_code_hash", "updated_at",
+        ])
+
+        if locked_companion.availability_status == "busy":
+            if not _currently_busy(locked_companion):
+                locked_companion.availability_status = "available"
+                locked_companion.save(update_fields=["availability_status", "updated_at"])
+
+    return ok({
+        "id": booking.id,
+        "status": booking.status,
+        "completed_at": booking.completed_at,
+    })

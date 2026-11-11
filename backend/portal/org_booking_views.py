@@ -312,3 +312,20 @@ def org_booking_cancel(request, booking_id):
         "cancelled_by": booking.cancelled_by,
         "cancelled_at": booking.cancelled_at,
     })
+
+
+
+@api_view(["GET"])
+def org_dashboard(request):
+    org, failed = _org(request, approved=True)
+    if failed is not None:
+        return failed
+
+    own_bookings = Booking.objects.filter(organization=org)
+    return ok({
+        "companions_total": Companion.objects.filter(organization=org).count(),
+        "pending_bookings": own_bookings.filter(status="pending").count(),
+        "active_bookings": own_bookings.filter(status__in=[
+            "assigned", "on_the_way", "arrived", "in_progress",
+        ]).count(),
+    })
