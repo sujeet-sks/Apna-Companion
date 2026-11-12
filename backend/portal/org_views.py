@@ -122,20 +122,73 @@ def org_me(request):
     })
 
 
-@api_view(["GET"])
+@api_view(["GET", "PATCH"])
 def org_profile(request):
-    org, failed = _org(request)
+    org, failed = _org(request, approved=request.method == "PATCH")
     if failed is not None:
         return failed
-    return ok({
-        "organization_id": org.organization_id, "organization_name": org.organization_name,
-        "organization_type": org.organization_type, "email": org.email,
-        "address": org.address, "logo_url": org.logo_url,
-        "latitude": float(org.latitude) if org.latitude is not None else None,
-        "longitude": float(org.longitude) if org.longitude is not None else None,
-        "document_type": org.document_type, "approval_status": org.approval_status,
-        "approval_remarks": org.approval_remarks, "is_active": org.is_active,
-    })
+
+    if request.method == "GET":
+        return ok({
+            "organization_id": org.organization_id,
+            "organization_name": org.organization_name,
+            "organization_type": org.organization_type,
+            "email": org.email,
+            "address": org.address,
+            "logo_url": org.logo_url,
+            "latitude": float(org.latitude) if org.latitude is not None else None,
+            "longitude": float(org.longitude) if org.longitude is not None else None,
+            "document_type": org.document_type,
+            "approval_status": org.approval_status,
+            "approval_remarks": org.approval_remarks,
+            "is_active": org.is_active,
+        })
+
+    data = request.data
+    allowed = {"address", "logo_url", "latitude", "longitude"}
+    if not isinstance(data, dict) or not data or not set(data).issubset(allowed):
+        return error("Send at least one editable profile field.")
+
+    changes = {}
+    if "address" in data:
+        address = data["address"]
+        if not isinstance(address, str) or not address.strip():
+            return error("Enter an address.")
+        changes["address"] = address.strip()
+
+    if "logo_url" in data:
+        logo_url = data["logo_url"]
+        if logo_url is not None and not isinstance(logo_url, str):
+            return error("logo_url must be text or null.")
+        changes["logo_url"] = (logo_url or "").strip() or None
+
+    for field, limit in (("latitude", 90), ("longitude", 180)):
+        if field not in data:
+            continue
+        raw = data[field]
+        if raw is None:
+            changes[field] = None
+            continue
+        try:
+            value = Decimal(str(raw))
+            if (not value.is_finite() or value < -limit or value > limit
+                    or value.as_tuple().exponent < -6):
+                raise ValueError
+        except (InvalidOperation, TypeError, ValueError):
+            return error(f"{field} must be within range with up to six decimal places.")
+        changes[field] = value
+
+    with transaction.atomic():
+        current = Organization.objects.select_for_update().filter(pk=org.pk).first()
+        if current is None or not current.is_active:
+            return error("Organization account is inactive.", 401)
+        if current.approval_status != "approved":
+            return error("Organization approval is required.", 403)
+        for field, value in changes.items():
+            setattr(current, field, value)
+        current.save(update_fields=[*changes, "updated_at"])
+
+    return ok({"message": "Profile updated"})
 
 
 @api_view(["PATCH"])
