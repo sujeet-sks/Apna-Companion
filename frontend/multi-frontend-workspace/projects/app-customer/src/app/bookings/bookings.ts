@@ -1,7 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 
 interface BookingCompanion {
   name: string;
@@ -41,7 +40,7 @@ interface BookingListResponse<T> {
 }
 
 @Component({
-  imports: [RouterLink, FormsModule],
+  imports: [FormsModule],
   selector: 'app-bookings',
   styleUrl: './bookings.css',
   templateUrl: './bookings.html',

@@ -1,5 +1,5 @@
-import { HttpClient } from '@angular/common/http';
-import { Component, inject, OnInit } from '@angular/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 interface Address {
@@ -13,8 +13,6 @@ interface Address {
   state: string;
   pincode: string;
   country: string;
-  contactName: string;
-  contactPhone: string;
   latitude?: number | null;
   longitude?: number | null;
   isDefault: boolean;
@@ -24,6 +22,14 @@ interface AddressApiResponse {
   success: number;
   message: string;
   data: Address[];
+}
+
+interface AddressActionResponse {
+  success: number;
+  message?: string;
+  data?: {
+    message?: string;
+  };
 }
 
 interface ReverseGeocodeResponse {
@@ -51,48 +57,14 @@ interface ReverseGeocodeResponse {
 })
 export class ManageAddress implements OnInit {
   private readonly http = inject(HttpClient);
-  private readonly addressesApiUrl = '/addresses';
+  private readonly addressesApiUrl = '/api/v1/customer/getAllSavedAddress/';
+  private readonly deleteAddressApiUrl = '/api/v1/customer/deleteAddress/';
+  private readonly editAddressApiUrl = '/api/v1/customer/editExistingAddress/';
+  private readonly saveAddressApiUrl = '/api/v1/customer/saveNewAddress/';
   private readonly reverseGeocodeUrl = '/addresses/reverse-geocode';
   readonly userId: number | null = this.getStoredUserId();
-
-  readonly staticAddressResponse: AddressApiResponse = {
-    success: 200,
-    message: 'Addresses fetched successfully',
-    data: [
-      {
-        addressId: 101,
-        label: 'HOME',
-        houseNo: 'B-205',
-        buildingStreet: 'Shanti Apartments, MG Road',
-        areaLocality: 'Indiranagar',
-        landmark: 'Opposite Metro Station',
-        city: 'Bengaluru',
-        state: 'Karnataka',
-        pincode: '560038',
-        country: 'India',
-        contactName: 'Ramesh Kumar',
-        contactPhone: '9876543210',
-        isDefault: true,
-      },
-      {
-        addressId: 102,
-        label: 'WORK',
-        houseNo: '4th Floor',
-        buildingStreet: 'Tech Park, Outer Ring Road',
-        areaLocality: 'Marathahalli',
-        landmark: 'Near Flyover',
-        city: 'Bengaluru',
-        state: 'Karnataka',
-        pincode: '560037',
-        country: 'India',
-        contactName: 'Ramesh Kumar',
-        contactPhone: '9876543210',
-        isDefault: false,
-      },
-    ],
-  };
-
-  addresses: Address[] = this.staticAddressResponse.data;
+  readonly addresses = signal<Address[]>([]);
+  readonly addressStatus = signal('');
 
   formOpen = false;
   editingId: number | null = null;
@@ -105,8 +77,6 @@ export class ManageAddress implements OnInit {
   state = '';
   pincode = '';
   country = 'India';
-  contactName = '';
-  contactPhone = '';
   locationStatus = '';
   latitude: number | null = null;
   longitude: number | null = null;
@@ -114,11 +84,14 @@ export class ManageAddress implements OnInit {
   private getStoredUserId(): number | null {
     if (typeof window === 'undefined') return null;
 
-    const storedUserId = window.localStorage.getItem('userId');
+    const storedUserId =
+      window.sessionStorage.getItem('userID') ??
+      window.sessionStorage.getItem('userId') ??
+      window.sessionStorage.getItem('customer_id');
     if (!storedUserId) return null;
 
     const userId = Number(storedUserId);
-    return Number.isFinite(userId) ? userId : null;
+    return Number.isFinite(userId) ? userId : 1234;
   }
 
   ngOnInit(): void {
@@ -126,14 +99,28 @@ export class ManageAddress implements OnInit {
   }
 
   loadAddresses(): void {
-    this.http.get<AddressApiResponse>(this.addressesApiUrl).subscribe({
+    if (this.userId === null) {
+      this.addresses.set([]);
+      this.addressStatus.set('Please log in to view your saved addresses.');
+      return;
+    }
+
+    this.http.post<AddressApiResponse>(this.addressesApiUrl, {
+      userId: this.userId,
+    }).subscribe({
       next: (response) => {
         if (response.success === 200 && Array.isArray(response.data)) {
-          this.addresses = response.data;
+          this.addresses.set(response.data);
+          return;
         }
+        this.addresses.set([]);
+        this.addressStatus.set(response.message || 'Unable to load saved addresses.');
       },
-      error: () => {
-        this.addresses = this.staticAddressResponse.data;
+      error: (error: HttpErrorResponse) => {
+        this.addresses.set([]);
+        this.addressStatus.set(
+          error.error?.message ?? 'Unable to load saved addresses. Please try again.',
+        );
       },
     });
   }
@@ -171,8 +158,8 @@ export class ManageAddress implements OnInit {
   openEditForm(address: Address): void {
     this.editingId = address.addressId;
     this.locationStatus = '';
-    this.latitude = address.latitude ?? null;
-    this.longitude = address.longitude ?? null;
+    this.latitude = address.latitude ?? 19.1326204;
+    this.longitude = address.longitude ?? 72.9109825;
     this.label = address.label;
     this.houseNo = address.houseNo;
     this.buildingStreet = address.buildingStreet;
@@ -182,8 +169,6 @@ export class ManageAddress implements OnInit {
     this.state = address.state;
     this.pincode = address.pincode;
     this.country = address.country;
-    this.contactName = address.contactName;
-    this.contactPhone = address.contactPhone;
     this.formOpen = true;
   }
 
@@ -196,8 +181,6 @@ export class ManageAddress implements OnInit {
     this.state = '';
     this.pincode = '';
     this.country = 'India';
-    this.contactName = '';
-    this.contactPhone = '';
   }
 
   useCurrentLocation(): void {
@@ -276,13 +259,10 @@ export class ManageAddress implements OnInit {
       this.state,
       this.pincode,
       this.country,
-      this.contactName,
-      this.contactPhone,
     ].every((value) => value.trim().length > 0);
 
     return requiredFieldsPresent
-      && /^\d{6}$/.test(this.pincode.trim())
-      && /^\d{10}$/.test(this.contactPhone.trim());
+      && /^\d{6}$/.test(this.pincode.trim());
   }
 
   closeForm(): void {
@@ -291,13 +271,18 @@ export class ManageAddress implements OnInit {
 
   saveAddress(): void {
     if (!this.canSaveAddress()) return;
+    if (this.userId === null) {
+      this.addressStatus.set('Please log in to save an address.');
+      return;
+    }
 
     const existingAddress =
       this.editingId !== null
-        ? this.addresses.find((item) => item.addressId === this.editingId)
+        ? this.addresses().find((item) => item.addressId === this.editingId)
         : undefined;
-    const isDefault = existingAddress?.isDefault ?? this.addresses.length === 0;
+    const isDefault = existingAddress?.isDefault ?? this.addresses().length === 0;
 
+    this.addressStatus.set('');
     const addressPayload = {
       userId: this.userId,
       ...(this.editingId !== null ? { addressId: this.editingId } : {}),
@@ -310,8 +295,6 @@ export class ManageAddress implements OnInit {
       state: this.state.trim(),
       pincode: this.pincode.trim(),
       country: this.country.trim(),
-      contactName: this.contactName.trim(),
-      contactPhone: this.contactPhone.trim(),
       latitude: this.latitude,
       longitude: this.longitude,
       isDefault,
@@ -319,51 +302,103 @@ export class ManageAddress implements OnInit {
 
     if (this.editingId !== null) {
       this.http
-        .put<Address>(this.addressesApiUrl, addressPayload)
+        .post<AddressActionResponse>(this.editAddressApiUrl, addressPayload)
         .subscribe({
-          next: () => {
-            this.loadAddresses();
+          next: (response) => {
+            if (response.success !== 200) {
+              this.addressStatus.set(
+                response.data?.message ??
+                  response.message ??
+                  'Unable to update the address. Please try again.',
+              );
+              return;
+            }
+
+            this.addressStatus.set(
+              response.data?.message ?? response.message ?? 'Address updated successfully.',
+            );
             this.closeForm();
+            this.loadAddresses();
           },
-          error: () => {
-            this.locationStatus = 'Unable to update the address. Please try again.';
+          error: (error: HttpErrorResponse) => {
+            this.addressStatus.set(
+              error.error?.message ??
+                'Unable to update the address. Please try again.',
+            );
           },
         });
     } else {
       this.http
-        .post<Address>(this.addressesApiUrl, addressPayload)
+        .post<AddressActionResponse>(this.saveAddressApiUrl, addressPayload)
         .subscribe({
-          next: () => {
-            this.loadAddresses();
+          next: (response) => {
+            if (response.success !== 200) {
+              this.addressStatus.set(
+                response.data?.message ??
+                  response.message ??
+                  'Unable to save the address. Please try again.',
+              );
+              return;
+            }
+
+            this.addressStatus.set(
+              response.data?.message ?? response.message ?? 'Address added successfully.',
+            );
             this.closeForm();
+            this.loadAddresses();
           },
-          error: () => {
-            this.locationStatus = 'Unable to save the address. Please try again.';
+          error: (error: HttpErrorResponse) => {
+            this.addressStatus.set(
+              error.error?.message ?? 'Unable to save the address. Please try again.',
+            );
           },
         });
     }
   }
 
   deleteAddress(id: number): void {
+    if (this.userId === null) {
+      this.addressStatus.set('Please log in to delete an address.');
+      return;
+    }
+
     const deletePayload = {
       userId: this.userId,
       addressId: id,
     };
 
+    this.addressStatus.set('');
     this.http
-      .delete(this.addressesApiUrl, { body: deletePayload })
+      .post<AddressActionResponse>(this.deleteAddressApiUrl, deletePayload)
       .subscribe({
-        next: () => {
+        next: (response) => {
+          if (response.success !== 200) {
+            this.addressStatus.set(
+              response.message ?? 'Unable to delete the address. Please try again.',
+            );
+            return;
+          }
+
+          this.addressStatus.set(
+            response.message ?? 'Address deleted successfully.',
+          );
           this.loadAddresses();
         },
-        error: () => {
-          this.locationStatus = 'Unable to delete the address. Please try again.';
+        error: (error: HttpErrorResponse) => {
+          this.addressStatus.set(
+            error.error?.message ?? 'Unable to delete the address. Please try again.',
+          );
         },
       });
   }
 
   setDefault(id: number): void {
-    const address = this.addresses.find((item) => item.addressId === id);
+    if (this.userId === null) {
+      this.addressStatus.set('Please log in to update an address.');
+      return;
+    }
+
+    const address = this.addresses().find((item) => item.addressId === id);
     if (!address) return;
 
     const addressPayload = {
@@ -378,21 +413,35 @@ export class ManageAddress implements OnInit {
       state: address.state,
       pincode: address.pincode,
       country: address.country,
-      contactName: address.contactName,
-      contactPhone: address.contactPhone,
-      latitude: address.latitude ?? null,
-      longitude: address.longitude ?? null,
+      latitude: address.latitude ?? 19.1326204,
+      longitude: address.longitude ?? 72.9109825,
       isDefault: true,
     };
 
+    this.addressStatus.set('');
     this.http
-      .put<Address>(this.addressesApiUrl, addressPayload)
+      .post<AddressActionResponse>(this.editAddressApiUrl, addressPayload)
       .subscribe({
-        next: () => {
+        next: (response) => {
+          if (response.success !== 200) {
+            this.addressStatus.set(
+              response.data?.message ??
+                response.message ??
+                'Unable to set this address as default. Please try again.',
+            );
+            return;
+          }
+
+          this.addressStatus.set(
+            response.data?.message ?? response.message ?? 'Default address updated.',
+          );
           this.loadAddresses();
         },
-        error: () => {
-          this.locationStatus = 'Unable to set this address as default. Please try again.';
+        error: (error: HttpErrorResponse) => {
+          this.addressStatus.set(
+            error.error?.message ??
+              'Unable to set this address as default. Please try again.',
+          );
         },
       });
   }

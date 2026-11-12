@@ -11,6 +11,10 @@
     </span>
   </button>
 
+  @if (addressStatus()) {
+    <p class="address-status" role="status">{{ addressStatus() }}</p>
+  }
+
   @if (formOpen) {
     <section class="address-form" aria-label="Address details">
       <div class="form-heading">
@@ -103,16 +107,6 @@
           Country
           <input [(ngModel)]="country" required />
         </label>
-
-        <label>
-          Contact name
-          <input [(ngModel)]="contactName" required />
-        </label>
-
-        <label>
-          Contact phone
-          <input [(ngModel)]="contactPhone" inputmode="tel" maxlength="10" required />
-        </label>
       </div>
 
       <div class="form-actions">
@@ -124,10 +118,10 @@
     </section>
   }
 
-  <h2 class="saved-heading">SAVED ({{ addresses.length }})</h2>
+  <h2 class="saved-heading">SAVED ({{ addresses().length }})</h2>
 
   <section class="address-list" aria-label="Saved addresses">
-    @for (item of addresses; track item.addressId) {
+    @for (item of addresses(); track item.addressId) {
       <article class="address-card">
         <div class="address-details">
           <span class="address-icon" [class.parents]="item.label === 'PARENTS'" [class.office]="item.label === 'WORK'" aria-hidden="true">
@@ -157,9 +151,6 @@
               }
             </div>
             <p>{{ getFullAddress(item) }}</p>
-            @if (item.contactName || item.contactPhone) {
-              <p class="meet-at">Meet: <strong>{{ item.contactName }}{{ item.contactName && item.contactPhone ? ' · ' : '' }}{{ item.contactPhone }}</strong></p>
-            }
           </div>
         </div>
 

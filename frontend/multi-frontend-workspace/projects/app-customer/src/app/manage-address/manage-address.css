@@ -29,6 +29,12 @@
   background: #fbfdfb;
 }
 
+.address-status {
+  margin: 12px 0;
+  color: #355b46;
+  font-size: 14px;
+}
+
 .add-icon,
 .address-icon {
   display: grid;
@@ -314,16 +320,6 @@
   color: #62746a;
   font-size: 13px;
   line-height: 1.45;
-}
-
-.address-copy .meet-at {
-  margin-top: 7px;
-  color: #36483f;
-  font-size: 12px;
-}
-
-.meet-at strong {
-  color: #244735;
 }
 
 .default-badge {

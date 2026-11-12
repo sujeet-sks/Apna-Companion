@@ -1,7 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 
 type BookingMode = 'formal' | 'everyday';
 
@@ -54,7 +53,7 @@ interface CustomerAddressesResponse {
 }
 
 @Component({
-  imports: [RouterLink, FormsModule],
+  imports: [FormsModule],
   selector: 'app-home',
   styleUrl: './home.css',
   templateUrl: './home.html',
