@@ -59,6 +59,7 @@ export class Login {
   private readonly loginApiUrl = '/api/customer/login/';
 
   protected submitted = false;
+  protected showPassword = false;
   protected readonly isSubmitting = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly loginForm = new FormGroup({
@@ -99,7 +100,6 @@ export class Login {
           sessionStorage.setItem('full_name', response.customer.full_name ?? '');
           sessionStorage.setItem('email_id', response.customer.email_id ?? '');
           sessionStorage.setItem('mobile_number', response.customer.mobile_number ?? '');
-          localStorage.setItem('userID', String(response.customer.customer_id));
           this.submitted = true;
           void this.router.navigate(['/home']);
         },

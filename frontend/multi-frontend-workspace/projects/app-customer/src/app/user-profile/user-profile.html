@@ -1,13 +1,13 @@
 <main class="profile-page">
   <p class="eyebrow">YOUR ACCOUNT</p>
   <h1>Your profile</h1>
-  <p class="intro">Your personal details and location for Bharat Companion.</p>
+  <p class="intro">Your account details for Bharat Companion.</p>
 
   <section class="profile-card" aria-labelledby="profile-name">
     <div class="profile-summary">
-      <div class="profile-avatar" aria-hidden="true">RK</div>
+      <div class="profile-avatar" aria-hidden="true">{{ initials }}</div>
       <div>
-        <h2 id="profile-name">Rahul</h2>
+        <h2 id="profile-name">{{ fullName }}</h2>
         <p>Customer</p>
       </div>
     </div>
@@ -15,19 +15,19 @@
     <dl class="profile-details">
       <div>
         <dt>Name</dt>
-        <dd>Rahul</dd>
+        <dd>{{ fullName }}</dd>
       </div>
       <div>
-        <dt>Location</dt>
-        <dd>Andheri West, Mumbai</dd>
+        <dt>Customer ID</dt>
+        <dd>{{ customerId }}</dd>
       </div>
       <div>
         <dt>Email address</dt>
-        <dd class="not-provided">Not provided</dd>
+        <dd>{{ email }}</dd>
       </div>
       <div>
         <dt>Phone number</dt>
-        <dd class="not-provided">Not provided</dd>
+        <dd>{{ mobileNumber }}</dd>
       </div>
     </dl>
   </section>

@@ -85,13 +85,13 @@ export class ManageAddress implements OnInit {
     if (typeof window === 'undefined') return null;
 
     const storedUserId =
+      window.sessionStorage.getItem('customer_id') ??
       window.sessionStorage.getItem('userID') ??
-      window.sessionStorage.getItem('userId') ??
-      window.sessionStorage.getItem('customer_id');
+      window.sessionStorage.getItem('userId');
     if (!storedUserId) return null;
 
     const userId = Number(storedUserId);
-    return Number.isFinite(userId) ? userId : 1234;
+    return Number.isSafeInteger(userId) && userId > 0 ? userId : null;
   }
 
   ngOnInit(): void {
@@ -295,8 +295,8 @@ export class ManageAddress implements OnInit {
       state: this.state.trim(),
       pincode: this.pincode.trim(),
       country: this.country.trim(),
-      latitude: this.latitude,
-      longitude: this.longitude,
+      latitude: this.latitude ?? 19.1326204,
+      longitude: this.longitude ?? 72.9109825,
       isDefault,
     };
 

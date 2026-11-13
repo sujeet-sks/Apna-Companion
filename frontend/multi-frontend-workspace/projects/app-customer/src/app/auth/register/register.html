@@ -11,7 +11,7 @@
       <p>Enter your details and verify your email and mobile number to register.</p>
     </div>
 
-    @if (!otpSent) {
+    @if (!otpSent()) {
       <form [formGroup]="registrationForm" (ngSubmit)="sendOtp()" novalidate>
       <label for="register-name">Full name</label>
       <input
@@ -190,16 +190,16 @@
           type="submit"
           [disabled]="
             registrationForm.invalid ||
-            isSendingOtp ||
-            isCompletingRegistration
+            isSendingOtp() ||
+            isCompletingRegistration()
           "
         >
-          {{ isSendingOtp ? 'Sending OTP…' : otpSent ? 'Resend OTP' : 'Send OTP' }}
+          {{ isSendingOtp() ? 'Sending OTP…' : otpSent() ? 'Resend OTP' : 'Send OTP' }}
         </button>
       </form>
     }
 
-    @if (otpSent) {
+    @if (otpSent()) {
       <p class="form-message" role="status">
         Verification codes were sent to your email address and mobile number.
       </p>
@@ -255,22 +255,13 @@
           type="submit"
           [disabled]="!canCompleteRegistration"
         >
-          {{ isCompletingRegistration ? 'Registering…' : 'Verify and register' }}
+          {{ isCompletingRegistration() ? 'Registering…' : 'Verify and register' }}
         </button>
       </form>
-      <button
-        id="edit-registration"
-        class="secondary-button"
-        type="button"
-        [disabled]="isCompletingRegistration"
-        (click)="editRegistrationDetails()"
-      >
-        Edit registration details
-      </button>
     }
 
-    @if (errorMessage) {
-      <p class="field-error form-error" role="alert">{{ errorMessage }}</p>
+    @if (errorMessage()) {
+      <p class="field-error form-error" role="alert">{{ errorMessage() }}</p>
     }
 
     <p class="auth-footer">

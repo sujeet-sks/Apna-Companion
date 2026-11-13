@@ -29,13 +29,11 @@ describe('ManageAddress', () => {
       providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
     httpTesting = TestBed.inject(HttpTestingController);
-    localStorage.setItem('userID', '42');
+    sessionStorage.setItem('customer_id', '42');
   });
 
   afterEach(() => {
     httpTesting.verify();
-    localStorage.removeItem('userID');
-    localStorage.removeItem('userId');
     sessionStorage.removeItem('customer_id');
   });
 
@@ -65,6 +63,15 @@ describe('ManageAddress', () => {
 
     expect(element.textContent).toContain('SAVED (1)');
     expect(element.textContent).toContain('Shanti Apartments');
+  });
+
+  it('does not request addresses with an invalid session customer ID', () => {
+    sessionStorage.setItem('customer_id', 'not-a-number');
+    const fixture = TestBed.createComponent(ManageAddress);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.userId).toBeNull();
+    expect(fixture.componentInstance.addressStatus()).toContain('Please log in');
   });
 
   it('saves a new address using the save API', () => {

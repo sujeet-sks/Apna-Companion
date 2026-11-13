@@ -11,6 +11,11 @@ describe('Home', () => {
     }).compileComponents();
   });
 
+  afterEach(() => {
+    sessionStorage.removeItem('full_name');
+    sessionStorage.removeItem('mobile_number');
+  });
+
   it('should show booking modes and quick links', () => {
     const fixture = TestBed.createComponent(Home);
     fixture.detectChanges();
@@ -22,5 +27,14 @@ describe('Home', () => {
     expect(element.textContent).toContain('Hospitals');
     expect(element.querySelector('a[routerLink="/bookings"]')).toBeTruthy();
     expect(element.querySelector('a[routerLink="/help"]')).toBeTruthy();
+  });
+
+  it('prefills booking contact details from session storage', () => {
+    sessionStorage.setItem('full_name', 'Test Customer');
+    sessionStorage.setItem('mobile_number', '9876543210');
+
+    const fixture = TestBed.createComponent(Home);
+    expect(fixture.componentInstance.customerName).toBe('Test Customer');
+    expect(fixture.componentInstance.customerMobile).toBe('9876543210');
   });
 });

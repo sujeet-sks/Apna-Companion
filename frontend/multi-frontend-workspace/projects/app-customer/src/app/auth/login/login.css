@@ -12,6 +12,35 @@
   font-size: 12px;
 }
 
+.password-input {
+  position: relative;
+}
+
+.auth-card .password-input input {
+  padding-right: 72px;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  padding: 4px;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: #19724d;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.password-toggle:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid #398b63;
+  outline-offset: 2px;
+}
+
 .field-error {
   margin: -4px 0 2px;
   color: #b42318;

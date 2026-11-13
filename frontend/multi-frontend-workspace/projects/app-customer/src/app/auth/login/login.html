@@ -35,13 +35,24 @@
         <label for="login-password">Password</label>
         <a routerLink="/forgot-password">Forgot password?</a>
       </div>
-      <input
-        id="login-password"
-        formControlName="password"
-        type="password"
-        placeholder="Enter your password"
-        aria-describedby="password-error"
-      />
+      <div class="password-input">
+        <input
+          id="login-password"
+          formControlName="password"
+          [type]="showPassword ? 'text' : 'password'"
+          placeholder="Enter your password"
+          aria-describedby="password-error"
+        />
+        <button
+          class="password-toggle"
+          type="button"
+          [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+          [attr.aria-pressed]="showPassword"
+          (click)="showPassword = !showPassword"
+        >
+          {{ showPassword ? 'Hide' : 'Show' }}
+        </button>
+      </div>
       @if (loginForm.controls.password.touched && loginForm.controls.password.hasError('required')) {
         <p id="password-error" class="field-error" role="alert">
           Enter your password.

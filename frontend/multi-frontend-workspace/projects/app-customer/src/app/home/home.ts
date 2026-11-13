@@ -72,8 +72,8 @@ export class Home implements OnInit {
   longitude: number | null = null;
   address = '';
   selectedServiceId: number | null = null;
-  customerName = '';
-  customerMobile = '';
+  customerName = this.getStoredCustomerDetail('full_name');
+  customerMobile = this.getStoredCustomerDetail('mobile_number');
   bookingDate = '';
   bookingTime = '';
   bookingDuration = '';
@@ -222,8 +222,6 @@ export class Home implements OnInit {
 
   selectService(service: CompanionService): void {
     this.selectedServiceId = service.serviceId;
-    this.customerName = '';
-    this.customerMobile = '';
     this.bookingDate = '';
     this.bookingTime = '';
     this.bookingDuration = '';
@@ -316,10 +314,16 @@ export class Home implements OnInit {
     if (typeof window === 'undefined') return '';
 
     return (
-      window.localStorage.getItem('userID') ??
-      window.localStorage.getItem('userId') ??
+      window.sessionStorage.getItem('customer_id') ??
+      window.sessionStorage.getItem('userID') ??
+      window.sessionStorage.getItem('userId') ??
       ''
     );
+  }
+
+  private getStoredCustomerDetail(key: 'full_name' | 'mobile_number'): string {
+    if (typeof window === 'undefined') return '';
+    return window.sessionStorage.getItem(key) ?? '';
   }
 
   private getStoredAddress(): string {

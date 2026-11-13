@@ -147,6 +147,9 @@ describe('Register', () => {
     const mobileCodeInput = element.querySelector<HTMLInputElement>('#register-mobile-code');
     const completeButton =
       element.querySelector<HTMLButtonElement>('form button[type="submit"]');
+    expect(element.querySelector('#register-name')).toBeNull();
+    expect(element.textContent).not.toContain('Sending OTP');
+    expect(element.querySelector('#edit-registration')).toBeNull();
     expect(emailCodeInput).not.toBeNull();
     expect(mobileCodeInput).not.toBeNull();
     expect(completeButton?.disabled).toBe(true);
@@ -230,7 +233,7 @@ describe('Register', () => {
     toastService.dismiss(toastService.toasts()[0]!.id);
   });
 
-  it('allows editing registration details after starting registration', () => {
+  it('does not show an edit button during OTP verification', () => {
     const fixture = TestBed.createComponent(Register);
     fixture.detectChanges();
     const element = fixture.nativeElement as HTMLElement;
@@ -252,15 +255,7 @@ describe('Register', () => {
     fixture.detectChanges();
 
     expect(element.querySelector('#register-email-code')).not.toBeNull();
-    element.querySelector<HTMLButtonElement>('#edit-registration')!.click();
-    fixture.detectChanges();
-    expect(element.querySelector('#register-email-code')).toBeNull();
-    setInput(element, '#register-mobile', '9123456789');
-    fixture.detectChanges();
-
-    expect(element.querySelector<HTMLButtonElement>('button[type="submit"]')?.textContent).toContain(
-      'Send OTP',
-    );
+    expect(element.querySelector('#edit-registration')).toBeNull();
   });
 });
 

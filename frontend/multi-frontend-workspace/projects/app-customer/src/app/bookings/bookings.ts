@@ -249,8 +249,9 @@ export class Bookings implements OnInit {
     if (typeof window === 'undefined') return '';
 
     return (
-      window.localStorage.getItem('userID') ??
-      window.localStorage.getItem('userId') ??
+      window.sessionStorage.getItem('customer_id') ??
+      window.sessionStorage.getItem('userID') ??
+      window.sessionStorage.getItem('userId') ??
       ''
     );
   }

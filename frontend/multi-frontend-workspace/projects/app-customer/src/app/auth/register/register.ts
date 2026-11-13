@@ -1,5 +1,5 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import {
   AbstractControl,
   NonNullableFormBuilder,
@@ -77,29 +77,29 @@ export class Register {
     mobile_code: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
   });
 
-  protected otpSent = false;
+  protected readonly otpSent = signal(false);
   private verificationId = '';
   protected showPassword = false;
   protected showConfirmPassword = false;
-  protected isSendingOtp = false;
-  protected isCompletingRegistration = false;
-  protected errorMessage = '';
+  protected readonly isSendingOtp = signal(false);
+  protected readonly isCompletingRegistration = signal(false);
+  protected readonly errorMessage = signal('');
 
   protected get canCompleteRegistration(): boolean {
     return (
-      this.otpSent &&
+      this.otpSent() &&
       this.otpForm.valid &&
-      !this.isSendingOtp &&
-      !this.isCompletingRegistration
+      !this.isSendingOtp() &&
+      !this.isCompletingRegistration()
     );
   }
 
   protected sendOtp(): void {
     if (
       this.registrationForm.invalid ||
-      this.isSendingOtp ||
-      this.isCompletingRegistration ||
-      this.otpSent
+      this.isSendingOtp() ||
+      this.isCompletingRegistration() ||
+      this.otpSent()
     ) {
       this.registrationForm.markAllAsTouched();
       return;
@@ -114,8 +114,8 @@ export class Register {
       password,
       confirm_password,
     } = this.registrationForm.getRawValue();
-    this.errorMessage = '';
-    this.isSendingOtp = true;
+    this.errorMessage.set('');
+    this.isSendingOtp.set(true);
     this.registrationForm.disable({ emitEvent: false });
     this.otpForm.reset();
     this.http
@@ -130,8 +130,8 @@ export class Register {
       })
       .pipe(
         finalize(() => {
-          this.isSendingOtp = false;
-          if (!this.otpSent) {
+          this.isSendingOtp.set(false);
+          if (!this.otpSent()) {
             this.registrationForm.enable({ emitEvent: false });
           }
         }),
@@ -139,19 +139,21 @@ export class Register {
       .subscribe({
         next: (response) => {
           if (!response.verification_id) {
-            this.errorMessage =
-              'The registration response was incomplete. Please try again.';
+            this.errorMessage.set(
+              'The registration response was incomplete. Please try again.',
+            );
             return;
           }
 
           this.verificationId = response.verification_id;
-          this.otpSent = true;
+          this.otpSent.set(true);
           this.toast.show('otp has been send to mobile and email');
         },
         error: (error: HttpErrorResponse) => {
-          this.errorMessage =
+          this.errorMessage.set(
             error.error?.message ??
-            'Unable to start registration. Please check your details and try again.';
+              'Unable to start registration. Please check your details and try again.',
+          );
         },
       });
   }
@@ -162,19 +164,20 @@ export class Register {
       return;
     }
 
-    this.errorMessage = '';
-    this.isCompletingRegistration = true;
+    this.errorMessage.set('');
+    this.isCompletingRegistration.set(true);
     this.http
       .post<RegistrationCompleteResponse>(this.registrationCompleteUrl, {
         verification_id: this.verificationId,
         ...this.otpForm.getRawValue(),
       })
-      .pipe(finalize(() => (this.isCompletingRegistration = false)))
+      .pipe(finalize(() => this.isCompletingRegistration.set(false)))
       .subscribe({
         next: (response) => {
           if (!response.customer?.customer_id) {
-            this.errorMessage = 'The registration response was incomplete. Please try again.';
-            this.toast.show(this.errorMessage, 'error');
+            const message = 'The registration response was incomplete. Please try again.';
+            this.errorMessage.set(message);
+            this.toast.show(message, 'error');
             return;
           }
           this.toast.show(
@@ -184,19 +187,13 @@ export class Register {
           void this.router.navigate(['/login']);
         },
         error: (error: HttpErrorResponse) => {
-          this.errorMessage =
+          const message =
             error.error?.message ??
             'Unable to verify the codes and complete registration. Please try again.';
-          this.toast.show(this.errorMessage, 'error');
+          this.errorMessage.set(message);
+          this.toast.show(message, 'error');
         },
       });
   }
 
-  protected editRegistrationDetails(): void {
-    this.verificationId = '';
-    this.otpSent = false;
-    this.otpForm.reset();
-    this.registrationForm.enable({ emitEvent: false });
-    this.errorMessage = '';
-  }
 }

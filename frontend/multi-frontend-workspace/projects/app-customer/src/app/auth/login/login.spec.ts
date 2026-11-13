@@ -6,6 +6,7 @@ import { Login } from './login';
 
 describe('Login', () => {
   beforeEach(async () => {
+    localStorage.removeItem('userID');
     await TestBed.configureTestingModule({
       imports: [Login],
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
@@ -60,6 +61,26 @@ describe('Login', () => {
     expect(element.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled).toBe(true);
   });
 
+  it('toggles password visibility', () => {
+    const fixture = TestBed.createComponent(Login);
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    const passwordInput = element.querySelector<HTMLInputElement>('#login-password')!;
+    const toggleButton = element.querySelector<HTMLButtonElement>('.password-toggle')!;
+
+    expect(passwordInput.type).toBe('password');
+    expect(toggleButton.getAttribute('aria-label')).toBe('Show password');
+    toggleButton.click();
+    fixture.detectChanges();
+
+    expect(passwordInput.type).toBe('text');
+    expect(toggleButton.getAttribute('aria-label')).toBe('Hide password');
+    toggleButton.click();
+    fixture.detectChanges();
+    expect(passwordInput.type).toBe('password');
+  });
+
   it('submits the identifier and password and stores the returned session', () => {
     const fixture = TestBed.createComponent(Login);
     const httpTesting = TestBed.inject(HttpTestingController);
@@ -105,14 +126,13 @@ describe('Login', () => {
     expect(sessionStorage.getItem('full_name')).toBe('Test Customer');
     expect(sessionStorage.getItem('email_id')).toBe('person@example.com');
     expect(sessionStorage.getItem('mobile_number')).toBe('9876543210');
-    expect(localStorage.getItem('userID')).toBe('42');
+    expect(localStorage.getItem('userID')).toBeNull();
     httpTesting.verify();
     sessionStorage.removeItem('access_token');
     sessionStorage.removeItem('customer_id');
     sessionStorage.removeItem('full_name');
     sessionStorage.removeItem('email_id');
     sessionStorage.removeItem('mobile_number');
-    localStorage.removeItem('userID');
   });
 
   it('resets the login button after a failed login request', () => {
