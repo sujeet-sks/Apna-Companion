@@ -58,8 +58,25 @@ describe('Organization authentication', () => {
       address: 'Example address',
       document_type: 'registration_certificate',
       document_url: 'https://example.com/document.pdf',
+      latitude: 37.77493,
+      longitude: -122.419416,
     });
-    http.expectOne('http://localhost:8000/api/v1/org/register/start/').flush({
+    const registrationRequest = http.expectOne(
+      'http://localhost:8000/api/v1/org/register/start/',
+    );
+    expect(registrationRequest.request.body).toEqual({
+      organization_name: 'Example',
+      organization_type: 'ngo',
+      email: 'org@example.com',
+      password: 'password123',
+      confirm_password: 'password123',
+      address: 'Example address',
+      document_type: 'registration_certificate',
+      document_url: 'https://example.com/document.pdf',
+      latitude: 37.77493,
+      longitude: -122.419416,
+    });
+    registrationRequest.flush({
       status_code: 200,
       data: { verification_id: 'verification-id' },
     });

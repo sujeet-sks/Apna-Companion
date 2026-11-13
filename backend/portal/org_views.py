@@ -21,7 +21,91 @@ from .role_auth import (
 
 
 logger = logging.getLogger(__name__)
-ORG_TYPES = {"bank", "hospital", "ngo", "rto", "others"}
+ORG_DOCUMENT_TYPES = {
+    "bank": {
+        "RBI Banking Licence",
+        "Branch Authorization Letter",
+        "Certificate of Incorporation",
+    },
+    "hospital": {
+        "Hospital Registration Certificate",
+        "Clinical Establishment Registration Certificate",
+        "Hospital Operating Licence",
+    },
+    "rto": {
+        "Government Department Authorization Letter",
+        "Official Office Establishment Order",
+    },
+    "ngo": {
+        "NGO Registration Certificate",
+        "Trust Deed",
+        "Society Registration Certificate",
+        "Section 8 Incorporation Certificate",
+    },
+    "municipal_corporation": {
+        "Municipal Authority Authorization Letter",
+        "Official Establishment Order",
+    },
+    "district_collector_office": {
+        "District Administration Authorization Letter",
+        "Government Office Order",
+    },
+    "pension_office": {
+        "Pension Department Authorization Letter",
+        "Official Establishment Order",
+    },
+    "passport_seva_kendra": {
+        "Passport Office Authorization Letter",
+        "Government Establishment Order",
+    },
+    "aadhaar_seva_kendra": {
+        "UIDAI Authorization Letter",
+        "Aadhaar Enrolment Agency Authorization Certificate",
+    },
+    "post_office": {
+        "Department of Posts Authorization Letter",
+        "Official Establishment Order",
+    },
+    "electricity_board_office": {
+        "Electricity Distribution Licence",
+        "Utility Authorization Letter",
+        "Government Establishment Order",
+    },
+    "water_supply_office": {
+        "Water Supply Department Authorization Letter",
+        "Government Establishment Order",
+    },
+    "gas_distribution_office": {
+        "Authorized Gas Distributorship Certificate",
+        "Oil/Gas Company Authorization Letter",
+    },
+    "school": {
+        "School Recognition Certificate",
+        "School Registration Certificate",
+        "Affiliation Certificate",
+    },
+    "college_university": {
+        "University Establishment Act/Notification",
+        "University Affiliation Letter",
+        "Institution Recognition Certificate",
+    },
+    "police_station": {
+        "Police Department Authorization Letter",
+        "Official Establishment Order",
+    },
+    "court_legal_aid_centre": {
+        "Legal Services Authority Authorization Letter",
+        "Government Establishment Notification",
+        "Official Court Administration Authorization",
+    },
+    "others": {
+        "Relevant Government Registration Certificate",
+        "Certificate of Incorporation",
+        "Department Authorization Letter",
+        "Applicable Operating Licence",
+    },
+}
+ORG_TYPES = set(ORG_DOCUMENT_TYPES)
 
 
 def _org(request, approved=False):
@@ -33,6 +117,29 @@ def _org(request, approved=False):
     return org, None
 
 
+def _organization_coordinates(data):
+    latitude = data.get("latitude")
+    longitude = data.get("longitude")
+    if latitude in (None, "") and longitude in (None, ""):
+        raise ValueError("Current location is required.")
+    if latitude in (None, "") or longitude in (None, ""):
+        raise ValueError("Provide both latitude and longitude.")
+
+    try:
+        latitude = Decimal(str(latitude)).quantize(Decimal("0.000001"))
+        longitude = Decimal(str(longitude)).quantize(Decimal("0.000001"))
+    except (InvalidOperation, TypeError, ValueError):
+        raise ValueError("Latitude and longitude must be valid coordinates.")
+    if (
+        not latitude.is_finite()
+        or not longitude.is_finite()
+        or not Decimal("-90") <= latitude <= Decimal("90")
+        or not Decimal("-180") <= longitude <= Decimal("180")
+    ):
+        raise ValueError("Latitude must be between -90 and 90 and longitude between -180 and 180.")
+    return latitude, longitude
+
+
 @api_view(["POST"])
 def org_register_start(request):
     try:
@@ -42,10 +149,13 @@ def org_register_start(request):
         address = str(request.data.get("address") or "").strip()
         document_type = str(request.data.get("document_type") or "").strip()
         document_url = str(request.data.get("document_url") or "").strip()
+        latitude, longitude = _organization_coordinates(request.data)
         validate_new_password(request.data.get("password"), request.data.get("confirm_password"))
         if not 1 <= len(name) <= 150 or org_type not in ORG_TYPES:
             raise ValueError("Enter an organization name and valid organization type.")
-        if not address or not document_type or not document_url:
+        if document_type not in ORG_DOCUMENT_TYPES[org_type]:
+            raise ValueError("Choose a valid document type for this organization.")
+        if not address or not document_url:
             raise ValueError("Address, document type and document URL are required.")
     except ValueError as exc:
         return error(str(exc))
@@ -58,6 +168,7 @@ def org_register_start(request):
             "organization_name": name, "organization_type": org_type,
             "address": address, "document_type": document_type,
             "document_url": document_url,
+            "latitude": latitude, "longitude": longitude,
             "password_hash": hash_password(request.data["password"]),
         },
         "organization registration",
@@ -83,6 +194,7 @@ def org_register_complete(request):
                 organization_type=state["organization_type"],
                 email=state["email"], address=state["address"],
                 document_type=state["document_type"], document_url=state["document_url"],
+                latitude=state["latitude"], longitude=state["longitude"],
                 password_hash=state["password_hash"],
                 approval_status="pending", is_active=True,
             )
@@ -122,18 +234,54 @@ def org_me(request):
     })
 
 
-@api_view(["GET"])
+@api_view(["GET", "PATCH"])
 def org_profile(request):
-    org, failed = _org(request)
+    org, failed = _org(request, approved=request.method == "PATCH")
     if failed is not None:
         return failed
+    if request.method == "PATCH":
+        editable_fields = {"address", "logo_url", "latitude", "longitude"}
+        if (
+            not isinstance(request.data, dict)
+            or not request.data
+            or not set(request.data).issubset(editable_fields)
+        ):
+            return error("Send one or more editable profile fields.")
+
+        updates = {}
+        if "address" in request.data:
+            address = request.data["address"]
+            if not isinstance(address, str) or not address.strip():
+                return error("Address cannot be empty.")
+            updates["address"] = address.strip()
+
+        if "logo_url" in request.data:
+            logo_url = request.data["logo_url"]
+            if logo_url is not None and not isinstance(logo_url, str):
+                return error("Logo URL must be a string or null.")
+            updates["logo_url"] = logo_url.strip() if isinstance(logo_url, str) else None
+
+        if "latitude" in request.data or "longitude" in request.data:
+            try:
+                latitude, longitude = _organization_coordinates(request.data)
+            except (ValueError, TypeError) as exc:
+                return error(str(exc))
+            updates["latitude"] = latitude
+            updates["longitude"] = longitude
+
+        for field, value in updates.items():
+            setattr(org, field, value)
+        org.save(update_fields=[*updates, "updated_at"])
+        return ok({"message": "Profile updated"})
+
     return ok({
         "organization_id": org.organization_id, "organization_name": org.organization_name,
         "organization_type": org.organization_type, "email": org.email,
         "address": org.address, "logo_url": org.logo_url,
         "latitude": float(org.latitude) if org.latitude is not None else None,
         "longitude": float(org.longitude) if org.longitude is not None else None,
-        "document_type": org.document_type, "approval_status": org.approval_status,
+        "document_type": org.document_type,
+        "approval_status": org.approval_status,
         "approval_remarks": org.approval_remarks, "is_active": org.is_active,
     })
 
@@ -163,7 +311,9 @@ def org_resubmit(request):
     address = str(request.data.get("address") or "").strip()
     document_type = str(request.data.get("document_type") or "").strip()
     document_url = str(request.data.get("document_url") or "").strip()
-    if not address or not document_type or not document_url:
+    if document_type not in ORG_DOCUMENT_TYPES.get(org.organization_type, set()):
+        return error("Choose a valid document type for this organization.")
+    if not address or not document_url:
         return error("Address, document type and document URL are required.")
     with transaction.atomic():
         updated = Organization.objects.filter(

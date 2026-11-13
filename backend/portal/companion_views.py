@@ -67,6 +67,17 @@ def companion_profile(request):
         "companion_id": companion.companion_id,
         "name": companion.name,
         "email": companion.email,
+        "mobile": companion.mobile,
+        "dob": companion.dob,
+        "gender": companion.gender,
+        "address": companion.address,
+        "photo_url": companion.photo_url,
+        "speciality": companion.speciality,
+        "experience_years": (
+            float(companion.experience_years)
+            if companion.experience_years is not None else None
+        ),
+        "languages_known": companion.languages_known,
         "is_active": companion.is_active,
         "availability_status": companion.availability_status,
         "organization": {
@@ -74,5 +85,6 @@ def companion_profile(request):
             "organization_name": organization.organization_name,
             "email": organization.email,
             "address": organization.address,
+            "logo_url": organization.logo_url,
         },
     })

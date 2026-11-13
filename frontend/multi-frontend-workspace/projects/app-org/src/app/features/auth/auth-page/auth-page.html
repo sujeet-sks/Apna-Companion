@@ -50,9 +50,11 @@
               <input name="name" [(ngModel)]="name" required maxlength="150" placeholder="e.g. Sunrise Hospital" />
             </label>
             <label>Organization type
-              <select name="type" [(ngModel)]="type" required>
-                <option value="bank">Bank</option><option value="hospital">Hospital</option>
-                <option value="ngo">NGO</option><option value="rto">RTO</option><option value="others">Others</option>
+              <select name="type" [(ngModel)]="type" (ngModelChange)="onOrganizationTypeChange($event)" required>
+                <option value="" disabled>Select organization type</option>
+                @for (organizationType of organizationTypes; track organizationType.value) {
+                  <option [value]="organizationType.value">{{ organizationType.label }}</option>
+                }
               </select>
             </label>
           }
@@ -80,13 +82,41 @@
             <label>Address
               <textarea name="address" [(ngModel)]="address" required placeholder="Street, city and location"></textarea>
             </label>
-            <label>Document type
-              <input name="documentType" [(ngModel)]="documentType" required />
-            </label>
+            @if (page === 'register') {
+              <label>Required document
+                <select name="documentType" [(ngModel)]="documentType" required [disabled]="!documentTypes.length">
+                  <option value="" disabled>Select a required document</option>
+                  @for (document of documentTypes; track document) {
+                    <option [value]="document">{{ document }}</option>
+                  }
+                </select>
+              </label>
+            } @else {
+              <label>Required document
+                <input name="documentType" [(ngModel)]="documentType" required />
+              </label>
+            }
             <label>Verification document URL
-              <input type="url" name="documentUrl" [(ngModel)]="documentUrl" required placeholder="https://..." />
+              <input type="url" name="documentUrl" [(ngModel)]="documentUrl" required placeholder="Paste your Google Drive share link" />
             </label>
-            <p class="hint">The API accepts a document URL; upload the document to your storage provider first.</p>
+            <p class="hint">Upload the document to Google Drive, set General access to “Anyone with the link” (Viewer), then paste the share link here.</p>
+            @if (page === 'register') {
+              <div class="location-field">
+                <label>Current location</label>
+                <button class="secondary location-button" type="button" (click)="fetchCurrentLocation()" [disabled]="locating">
+                  @if (locating) {
+                    Getting location…
+                  } @else if (latitude !== null && longitude !== null) {
+                    Latitude {{ latitude }} · Longitude {{ longitude }} · Refresh
+                  } @else {
+                    Use my current location
+                  }
+                </button>
+                @if (locationMessage) {
+                  <p class="field-error" role="alert">{{ locationMessage }}</p>
+                }
+              </div>
+            }
           }
 
           @if (page === 'verify' || page === 'reset') {

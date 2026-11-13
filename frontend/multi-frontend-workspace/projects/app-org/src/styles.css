@@ -7,3 +7,38 @@
   font-weight: 400;
   line-height: 1.5;
 }
+
+.location-field {
+  display: grid;
+  gap: 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.location-field .hint {
+  margin: 7px 0 0;
+}
+
+.location-button {
+  width: 100%;
+  margin: 2px 0 0;
+  padding: 13px;
+  border: 1px solid #d9e0d9;
+  border-radius: 7px;
+  background: #fcfdfb;
+  color: #293f34;
+  text-align: left;
+  font: inherit;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.location-button:focus-visible {
+  outline: 2px solid #8caa97;
+  outline-offset: 2px;
+}
+
+.location-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}

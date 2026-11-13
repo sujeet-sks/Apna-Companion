@@ -75,7 +75,7 @@ export class AuthPage {
       switch (this.page) {
         case 'login':
           await this.auth.login(this.email, this.password);
-          await this.router.navigateByUrl('/account');
+          await this.router.navigateByUrl('/dashboard');
           break;
         case 'forgot':
           await this.auth.beginReset(this.email);

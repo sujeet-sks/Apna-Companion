@@ -4,7 +4,13 @@ CREATE TABLE organizations (
     organization_id VARCHAR(36) PRIMARY KEY,
     organization_name VARCHAR(150) NOT NULL,
     organization_type VARCHAR(50) NOT NULL
-        CHECK (organization_type IN ('bank', 'hospital', 'ngo', 'rto', 'others')),
+        CHECK (organization_type IN (
+            'bank', 'hospital', 'rto', 'ngo', 'municipal_corporation',
+            'district_collector_office', 'pension_office', 'passport_seva_kendra',
+            'aadhaar_seva_kendra', 'post_office', 'electricity_board_office',
+            'water_supply_office', 'gas_distribution_office', 'school',
+            'college_university', 'police_station', 'court_legal_aid_centre', 'others'
+        )),
     email VARCHAR(255) NOT NULL,
     address TEXT NOT NULL,
     approval_status VARCHAR(20) NOT NULL DEFAULT 'pending'

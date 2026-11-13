@@ -39,7 +39,9 @@ def org_bookings(request):
     if status is not None and status not in BOOKING_STATUSES:
         return error("Invalid booking status filter.")
 
-    bookings = Booking.objects.filter(organization=org).order_by("-created_at", "-id")
+    bookings = Booking.objects.filter(organization=org).select_related(
+        "customer", "service", "companion"
+    ).order_by("-created_at", "-id")
     if status is not None:
         bookings = bookings.filter(status=status)
     total = bookings.count()
@@ -48,8 +50,17 @@ def org_bookings(request):
         {
             "id": booking.id,
             "service_id": booking.service_id,
+            "service_name": booking.service.name,
+            "customer_name": booking.customer.full_name,
             "status": booking.status,
             "scheduled_at": booking.scheduled_at,
+            "duration": booking.duration,
+            "price_inr": str(booking.price_inr),
+            "pickup_address": booking.pickup_address,
+            "latitude": float(booking.latitude) if booking.latitude is not None else None,
+            "longitude": float(booking.longitude) if booking.longitude is not None else None,
+            "companion_id": booking.companion_id,
+            "companion_name": booking.companion.name if booking.companion else None,
         }
         for booking in bookings[start:start + page_size]
     ]
@@ -61,7 +72,9 @@ def org_booking_detail(request, booking_id):
     org, failed = _org(request, approved=True)
     if failed is not None:
         return failed
-    booking = _owned_booking(org, booking_id)
+    booking = Booking.objects.filter(
+        id=booking_id, organization=org
+    ).select_related("customer", "service", "companion").first()
     if booking is None:
         return error("Booking not found.", 404)
 
@@ -69,8 +82,11 @@ def org_booking_detail(request, booking_id):
         "id": booking.id,
         "organization_id": booking.organization_id,
         "customer_id": booking.customer_id,
+        "customer_name": booking.customer.full_name,
         "service_id": booking.service_id,
+        "service_name": booking.service.name,
         "companion_id": booking.companion_id,
+        "companion_name": booking.companion.name if booking.companion else None,
         "status": booking.status,
         "scheduled_at": booking.scheduled_at,
         "duration": booking.duration,

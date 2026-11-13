@@ -51,14 +51,22 @@ def companion_active_bookings(request):
 
     bookings = Booking.objects.filter(
         companion=companion, status__in=ACTIVE_STATUSES
-    ).select_related("service").order_by("scheduled_at", "id")
+    ).select_related("service", "customer", "organization").order_by("scheduled_at", "id")
     start = (page - 1) * page_size
     items = [
         {
             "id": booking.id,
             "service_name": booking.service.name,
+            "customer_name": booking.customer.full_name,
+            "organization_name": booking.organization.organization_name,
             "status": booking.status,
             "scheduled_at": booking.scheduled_at,
+            "duration": booking.duration,
+            "price_inr": str(booking.price_inr),
+            "service_notes": booking.service_notes,
+            "pickup_address": booking.pickup_address,
+            "latitude": float(booking.latitude) if booking.latitude is not None else None,
+            "longitude": float(booking.longitude) if booking.longitude is not None else None,
         }
         for booking in bookings[start:start + page_size]
     ]

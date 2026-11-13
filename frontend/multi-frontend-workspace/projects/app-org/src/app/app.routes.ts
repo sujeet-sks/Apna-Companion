@@ -1,7 +1,13 @@
 import { Routes } from '@angular/router';
 import { AuthPage } from './features/auth/auth-page/auth-page';
-import { authGuard } from './core/guards/auth.guard';
+import { OrganizationDashboard } from './features/organization/dashboard/dashboard';
+import { OrganizationProfile } from './features/organization/profile/profile';
+import { approvedOrganizationGuard, authGuard } from './core/guards/auth.guard';
 export const routes:Routes=[
+{path:'dashboard', component:OrganizationDashboard, canActivate:[approvedOrganizationGuard]},
+{path:'dashboard-preview', component:OrganizationDashboard, data:{preview:true}},
+{path:'profile', component:OrganizationProfile, canActivate:[approvedOrganizationGuard]},
+{path:'profile-preview', component:OrganizationProfile, data:{preview:true}},
 {path:'login', component:AuthPage, data:{page:'login'}},
 {path:'forgot-password', component:AuthPage, data:{page:'forgot'}},
 {path:'reset-password', component:AuthPage, data:{page:'reset'}},

@@ -84,6 +84,8 @@ export class AuthService {
     address: string;
     document_type: string;
     document_url: string;
+    latitude: number;
+    longitude: number;
   }): Promise<void> {
     const result = await this.call(
       this.http.post<ApiEnvelope<RequestResponse>>(

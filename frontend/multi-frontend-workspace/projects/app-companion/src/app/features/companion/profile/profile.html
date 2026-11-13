@@ -1,1 +1,43 @@
-<h1>Companion Profile</h1>
+<main class="profile-page">
+  <header class="topbar">
+    <a class="brand" [routerLink]="isPreview ? '/dashboard-preview' : '/dashboard'">Apna Companion</a>
+    <a class="back-link" [routerLink]="isPreview ? '/dashboard-preview' : '/dashboard'">Back to dashboard</a>
+  </header>
+  <section class="content">
+    <p class="eyebrow">COMPANION PORTAL</p>
+    <h1>My profile</h1>
+    @if (isPreview) {
+      <p class="subheading">Sample profile · not connected to the backend.</p>
+    } @else {
+      <p class="subheading">Your contact details and organization information.</p>
+    }
+    @if (loading) {
+      <p class="notice">Loading profile…</p>
+    } @else if (error) {
+      <div class="notice error" role="alert">{{ error }} <button type="button" (click)="load()">Try again</button></div>
+    } @else if (profile) {
+      <section class="profile-card">
+        <div class="title-row">
+          <div>
+            <h2>{{ profile.name }}</h2>
+            <p>{{ profile.speciality || 'Companion' }}</p>
+          </div>
+          <span class="status" [attr.data-status]="profile.availability_status">{{ profile.availability_status }}</span>
+        </div>
+        <dl>
+          <div><dt>Email</dt><dd>{{ profile.email }}</dd></div>
+          <div><dt>Mobile</dt><dd>{{ profile.mobile }}</dd></div>
+          <div><dt>Date of birth</dt><dd>{{ profile.dob || 'Not provided' }}</dd></div>
+          <div><dt>Gender</dt><dd>{{ profile.gender || 'Not provided' }}</dd></div>
+          <div><dt>Address</dt><dd>{{ profile.address || 'Not provided' }}</dd></div>
+          <div><dt>Experience</dt><dd>{{ profile.experience_years ?? 'Not provided' }} @if (profile.experience_years !== null) { years }</dd></div>
+          <div><dt>Languages</dt><dd>{{ profile.languages_known.length ? profile.languages_known.join(', ') : 'Not provided' }}</dd></div>
+          <div><dt>Organization</dt><dd>{{ profile.organization.organization_name }}</dd></div>
+          <div><dt>Organization address</dt><dd>{{ profile.organization.address }}</dd></div>
+          <div><dt>Organization contact</dt><dd><a [href]="'mailto:' + profile.organization.email">{{ profile.organization.email }}</a></dd></div>
+        </dl>
+        <p class="read-only">Profile details are currently view-only. Contact your organization to update them.</p>
+      </section>
+    }
+  </section>
+</main>

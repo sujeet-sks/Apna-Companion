@@ -1,1 +1,136 @@
-<h1>Organization Dashboard</h1>
+<main class="dashboard">
+  <header class="topbar">
+    <a class="brand" routerLink="/dashboard"><span class="mark">a<span>c</span></span> apna companion</a>
+    <div class="top-actions">
+      @if (isPreview) {
+        <a routerLink="/profile-preview">Organization profile</a>
+        <span class="preview-label">Preview mode</span>
+      } @else {
+        <a routerLink="/profile">Organization profile</a>
+        <a routerLink="/change-password">Change password</a>
+        <button type="button" class="quiet-button" (click)="logout()">Sign out</button>
+      }
+    </div>
+  </header>
+
+  <section class="content">
+    <div class="heading-row">
+      <div>
+        <p class="eyebrow">ORGANIZATION PORTAL</p>
+        <h1>{{ profile?.organization_name || 'Your dashboard' }}</h1>
+        <p class="subheading">
+          @if (isPreview) {
+            Sample dashboard data · not connected to the backend.
+          } @else {
+            A quick overview of your companions and bookings.
+          }
+        </p>
+      </div>
+      <button type="button" class="refresh-button" (click)="refresh()" [disabled]="loading">
+        {{ loading ? 'Refreshing…' : 'Refresh' }}
+      </button>
+    </div>
+
+    @if (error) {
+      <div class="alert error" role="alert">
+        <span>{{ error }}</span>
+        <button type="button" class="retry-button" (click)="refresh()">Try again</button>
+      </div>
+    }
+    @if (actionError) {
+      <div class="alert error" role="alert">{{ actionError }}</div>
+    }
+
+    <div class="stats">
+      <article class="stat-card">
+        <span class="stat-icon">♙</span>
+        <p>Companions</p>
+        <strong>{{ loading ? '—' : summary?.companions_total }}</strong>
+      </article>
+      <article class="stat-card">
+        <span class="stat-icon">◷</span>
+        <p>Pending bookings</p>
+        <strong>{{ loading ? '—' : summary?.pending_bookings }}</strong>
+      </article>
+      <article class="stat-card">
+        <span class="stat-icon">↗</span>
+        <p>Active bookings</p>
+        <strong>{{ loading ? '—' : summary?.active_bookings }}</strong>
+      </article>
+    </div>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">LATEST ACTIVITY</p>
+          <h2>Bookings to review and assign</h2>
+        </div>
+        <span class="count">{{ bookings.length }} shown</span>
+      </div>
+
+      @if (loading && !bookings.length) {
+        <p class="empty">Loading your bookings…</p>
+      } @else if (!loading && !bookings.length) {
+        <div class="empty-state">
+          <span class="empty-icon">◷</span>
+          <h3>No bookings yet</h3>
+          <p>New customer bookings will appear here.</p>
+        </div>
+      } @else {
+        <div class="booking-list">
+          @for (booking of bookings; track booking.id) {
+            <article class="booking-row">
+              <div class="booking-mark">#{{ booking.id }}</div>
+              <div class="booking-info">
+                <strong>{{ booking.service_name }} · {{ booking.customer_name }}</strong>
+                <span>{{ booking.scheduled_at | date: 'medium' }} · {{ booking.duration }} min · ₹{{ booking.price_inr }}</span>
+                <span>{{ booking.pickup_address || 'No pickup address provided' }}</span>
+                @if (booking.latitude !== null && booking.longitude !== null) {
+                  <a
+                    class="map-link"
+                    [href]="'https://www.google.com/maps?q=' + booking.latitude + ',' + booking.longitude"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >View location</a>
+                }
+                @if (booking.companion_name) {
+                  <span class="assigned-companion">Assigned to {{ booking.companion_name }}</span>
+                }
+              </div>
+              <span class="status" [attr.data-status]="booking.status">{{ booking.status.replace('_', ' ') }}</span>
+              <div class="booking-actions">
+                @if (booking.status === 'pending') {
+                  <button type="button" class="action-button" [disabled]="busyBookingId === booking.id" (click)="acceptBooking(booking)">
+                    {{ busyBookingId === booking.id ? 'Working…' : 'Accept' }}
+                  </button>
+                } @else if (booking.status === 'accepted' && !booking.companion_id) {
+                  @if (eligibleByBooking[booking.id]; as eligible) {
+                    @if (eligible.length) {
+                      <select [attr.aria-label]="'Choose companion for booking ' + booking.id" (change)="onCompanionSelected(booking.id, $event)">
+                        <option value="">Choose companion</option>
+                        @for (candidate of eligible; track candidate.companion_id) {
+                          <option [value]="candidate.companion_id">{{ candidate.name }}</option>
+                        }
+                      </select>
+                      <button type="button" class="action-button" [disabled]="busyBookingId === booking.id" (click)="assignBooking(booking)">Assign</button>
+                    } @else {
+                      <span class="no-companions">No eligible companions</span>
+                    }
+                  } @else {
+                    <button type="button" class="action-button secondary" [disabled]="busyBookingId === booking.id" (click)="loadEligibleCompanions(booking)">
+                      {{ busyBookingId === booking.id ? 'Loading…' : 'Find companion' }}
+                    </button>
+                  }
+                }
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+
+    @if (profile) {
+      <p class="org-meta">{{ profile.organization_type.replace('_', ' ') }} · {{ profile.email }}</p>
+    }
+  </section>
+</main>
