@@ -2,13 +2,14 @@ import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CompanionProfile as CompanionProfileData, CompanionService } from '../../../core/services/companion.service';
+import { Sidebar } from '../../../shared/components/sidebar/sidebar';
 
 @Component({
   selector: 'app-companion-profile',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, Sidebar],
   templateUrl: './profile.html',
-  styleUrl: './profile.css',
+  styleUrls: ['./profile.css', '../../../shared/companion-page-layout.css'],
 })
 export class CompanionProfile implements OnInit {
   private readonly companions = inject(CompanionService);

@@ -1,1 +1,34 @@
-<ng-content />
+<aside class="sidebar">
+  <a class="brand" [routerLink]="dashboardPath">
+    <span class="mark">a<span>c</span></span>
+    <span>apna companion</span>
+  </a>
+
+  <p class="nav-caption">ORGANIZATION</p>
+  <nav aria-label="Organization navigation">
+    <a [routerLink]="dashboardPath" [class.active]="active === 'dashboard'">
+      <span class="nav-icon">⌂</span> Dashboard
+    </a>
+    <a [routerLink]="dashboardPath" fragment="bookings" [class.active]="active === 'bookings'">
+      <span class="nav-icon">◷</span> Bookings
+    </a>
+    <a [routerLink]="companionsPath" [class.active]="active === 'companions'">
+      <span class="nav-icon">♙</span> Companions
+    </a>
+    <a [routerLink]="servicesPath" [class.active]="active === 'services'">
+      <span class="nav-icon">▤</span> Services
+    </a>
+    <a [routerLink]="profilePath" [class.active]="active === 'profile'">
+      <span class="nav-icon">♙</span> Organization profile
+    </a>
+    @if (!preview) {
+      <a routerLink="/change-password">
+        <span class="nav-icon">⌑</span> Change password
+      </a>
+    }
+  </nav>
+
+  @if (preview) {
+    <div class="preview-note">Preview mode · sample data</div>
+  }
+</aside>

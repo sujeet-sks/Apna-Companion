@@ -1,1 +1,82 @@
-<h1>Organization Services</h1>
+<app-sidebar [preview]="isPreview" active="services" />
+<main class="services-page">
+  <header class="topbar">
+    <span class="organization-label">ORGANIZATION PORTAL</span>
+    @if (isPreview) {
+      <span class="preview-label">Preview mode</span>
+    }
+  </header>
+
+  <section class="content">
+    <div class="heading-row">
+      <div>
+        <p class="eyebrow">YOUR OFFERINGS</p>
+        <h1>Services</h1>
+        <p class="subheading">Manage the services customers can book from your organization.</p>
+      </div>
+    </div>
+
+    @if (error) {
+      <div class="notice error" role="alert">{{ error }}</div>
+    }
+    @if (feedback) {
+      <div class="notice success" role="status">{{ feedback }}</div>
+    }
+
+    <section class="service-directory">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">YOUR SERVICES</p>
+          <h2>Service catalog</h2>
+        </div>
+        <span>{{ services.length }} shown</span>
+      </div>
+      @if (loading) {
+        <p class="empty-state">Loading services…</p>
+      } @else if (!services.length) {
+        <p class="empty-state">No services yet. Add your first service below.</p>
+      } @else {
+        <div class="service-list">
+          @for (service of services; track service.id) {
+            <article class="service-row">
+              <span class="service-icon" aria-hidden="true">▤</span>
+              <div class="service-info">
+                <h3>{{ service.name }}</h3>
+                <p>₹{{ service.price_inr }} per hour</p>
+              </div>
+              <span class="status" [class.inactive]="!service.is_active">
+                {{ service.is_active ? 'Active' : 'Inactive' }}
+              </span>
+              <button
+                type="button"
+                class="status-button"
+                [disabled]="busyServiceId === service.id"
+                (click)="toggleService(service)"
+              >
+                {{ busyServiceId === service.id ? 'Updating…' : service.is_active ? 'Deactivate' : 'Activate' }}
+              </button>
+            </article>
+          }
+        </div>
+      }
+    </section>
+
+    <form class="add-service" (ngSubmit)="addService()">
+      <div>
+        <p class="eyebrow">NEW OFFERING</p>
+        <h2>Add service</h2>
+      </div>
+      <label>
+        <span>Service name</span>
+        <input name="name" [(ngModel)]="newService.name" maxlength="120" placeholder="e.g. Hospital visit">
+      </label>
+      <label>
+        <span>Price per hour (₹)</span>
+        <input name="price" type="number" min="0" max="99999999.99" step="0.01" [(ngModel)]="newService.priceInr">
+      </label>
+      <button class="primary-button" type="submit" [disabled]="creating || !newService.name.trim() || !newService.priceInr">
+        {{ creating ? 'Adding…' : 'Add service' }}
+      </button>
+    </form>
+  </section>
+</main>

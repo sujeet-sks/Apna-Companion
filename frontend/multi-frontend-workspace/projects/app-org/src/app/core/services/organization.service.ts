@@ -44,6 +44,47 @@ export interface EligibleCompanion {
   name: string;
 }
 
+export interface OrganizationCompanion {
+  companion_id: string;
+  name: string;
+  is_active: boolean;
+  availability_status: 'available' | 'unavailable' | 'busy';
+}
+
+export interface OrganizationCompanionPage {
+  items: OrganizationCompanion[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface OrganizationServiceOption {
+  id: number;
+  name: string;
+  price_inr: string;
+  is_active: boolean;
+}
+
+export interface CreateOrganizationServiceInput {
+  name: string;
+  price_inr: string;
+}
+
+export interface CreateCompanionInput {
+  name: string;
+  email: string;
+  mobile: string;
+  service_ids: number[];
+  languages_known: string[];
+  dob?: string;
+  gender?: string;
+  address?: string;
+  identity_proof_url?: string;
+  photo_url?: string;
+  speciality?: string;
+  experience_years?: number;
+}
+
 interface ApiResponse<T> {
   data: T;
 }
@@ -93,6 +134,49 @@ export class OrganizationService {
     return this.post(`${API_BASE_URL}/org/bookings/${bookingId}/assign/`, {
       companion_id: companionId,
     });
+  }
+
+  async services(): Promise<OrganizationServiceOption[]> {
+    const response = await this.get<{ items: OrganizationServiceOption[] }>(
+      `${API_BASE_URL}/org/services/?page=1&page_size=50`,
+    );
+    return response.items;
+  }
+
+  createService(input: CreateOrganizationServiceInput): Promise<{
+    id: number;
+    is_active: boolean;
+  }> {
+    return this.post(`${API_BASE_URL}/org/services/`, input);
+  }
+
+  updateServiceStatus(serviceId: number, isActive: boolean): Promise<{ message: string }> {
+    return this.patch(`${API_BASE_URL}/org/services/${serviceId}/status/`, {
+      is_active: isActive,
+    });
+  }
+
+  companions(input: {
+    page: number;
+    pageSize: number;
+    search?: string;
+    availability?: string;
+  }): Promise<OrganizationCompanionPage> {
+    const params = new URLSearchParams({
+      page: String(input.page),
+      page_size: String(input.pageSize),
+    });
+    if (input.search) params.set('search', input.search);
+    if (input.availability) params.set('availability_status', input.availability);
+    return this.get(`${API_BASE_URL}/org/companions/?${params.toString()}`);
+  }
+
+  createCompanion(input: CreateCompanionInput): Promise<{
+    companion_id: string;
+    email: string;
+    message: string;
+  }> {
+    return this.post(`${API_BASE_URL}/org/companions/`, input);
   }
 
   private async post<T>(url: string, body: object | null = null): Promise<T> {

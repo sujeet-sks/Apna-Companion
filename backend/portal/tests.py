@@ -6,8 +6,81 @@ from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase
 from django.test import RequestFactory
+from django.db.models import Q
 
-from .org_views import _organization_coordinates, org_profile, org_register_complete
+from .org_views import (
+    _companion_input,
+    _organization_coordinates,
+    org_companions,
+    org_profile,
+    org_register_complete,
+)
+
+
+class CompanionInputTests(SimpleTestCase):
+    def test_accepts_the_three_supported_gender_values(self):
+        for gender in ("Male", "Female", "Prefer not to say"):
+            with self.subTest(gender=gender):
+                result = _companion_input({
+                    "name": "Companion",
+                    "email": "companion@example.com",
+                    "mobile": "9876543210",
+                    "service_ids": [1],
+                    "gender": gender,
+                })
+                self.assertEqual(result["gender"], gender)
+
+    def test_rejects_gender_values_outside_the_supported_options(self):
+        with self.assertRaisesMessage(
+            ValueError, "Gender must be Male, Female, or Prefer not to say."
+        ):
+            _companion_input({
+                "name": "Companion",
+                "email": "companion@example.com",
+                "mobile": "9876543210",
+                "service_ids": [1],
+                "gender": "Other",
+            })
+
+    def test_gender_remains_optional(self):
+        result = _companion_input({
+            "name": "Companion",
+            "email": "companion@example.com",
+            "mobile": "9876543210",
+            "service_ids": [1],
+        })
+        self.assertIsNone(result["gender"])
+
+
+class OrganizationCompanionDirectoryTests(SimpleTestCase):
+    @patch("portal.org_views._org")
+    @patch("portal.org_views.Companion.objects.filter")
+    def test_search_matches_companion_name_or_id(self, companion_filter, get_org):
+        organization = SimpleNamespace(organization_id="org-1")
+        companion = SimpleNamespace(
+            companion_id="comp-123",
+            name="Priya Sharma",
+            is_active=True,
+            availability_status="available",
+        )
+        queryset = MagicMock()
+        queryset.order_by.return_value = queryset
+        queryset.filter.return_value = queryset
+        queryset.count.return_value = 1
+        queryset.__getitem__.return_value = [companion]
+        companion_filter.return_value = queryset
+        get_org.return_value = (organization, None)
+
+        request = RequestFactory().get(
+            "/api/v1/org/companions/?search=Priya&page=1&page_size=10"
+        )
+        response = org_companions(request)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["data"]["items"][0]["companion_id"], "comp-123")
+        queryset.filter.assert_called_once_with(
+            Q(name__icontains="Priya") | Q(companion_id__icontains="Priya")
+        )
 
 
 class OrganizationCoordinatesTests(SimpleTestCase):

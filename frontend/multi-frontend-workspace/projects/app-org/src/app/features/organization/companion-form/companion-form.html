@@ -1,1 +1,149 @@
-<h1>Organization Companion Form</h1>
+<app-sidebar [preview]="isPreview" active="companions" />
+<main class="companion-page">
+  <header class="topbar">
+    <nav>
+      <a class="back-link" [routerLink]="isPreview ? '/dashboard-preview' : '/dashboard'">Back to dashboard</a>
+    </nav>
+  </header>
+
+  <section class="content">
+    <p class="eyebrow">ORGANIZATION PORTAL</p>
+    <h1>Add a companion</h1>
+    <p class="subheading">
+      Add a team member and select the services they can provide.
+      A temporary password will be sent to their email.
+      @if (isPreview) { This preview does not save or send email. }
+    </p>
+
+    @if (error) {
+      <div class="notice error" role="alert">{{ error }}</div>
+    }
+    @if (success) {
+      <div class="notice success" role="status">
+        {{ success }}
+        @if (createdCompanionId && !isPreview) {
+          <span> Companion ID: {{ createdCompanionId }}</span>
+        }
+      </div>
+    }
+
+    @if (loading) {
+      <p class="notice">Loading services…</p>
+    } @else {
+      <form class="form-card" (ngSubmit)="submit()">
+        <div class="field-grid">
+          <label>
+            <span>Full name</span>
+            <input name="name" [(ngModel)]="form.name" maxlength="100" required autocomplete="name">
+          </label>
+          <label>
+            <span>Email address</span>
+            <input name="email" type="email" [(ngModel)]="form.email" maxlength="254" required autocomplete="email">
+          </label>
+          <label>
+            <span>Mobile number</span>
+            <input name="mobile" type="tel" [(ngModel)]="form.mobile" maxlength="16" required placeholder="9876543210">
+          </label>
+          <label>
+            <span>Date of birth</span>
+            <input name="dob" type="date" [(ngModel)]="form.dob">
+          </label>
+          <label>
+            <span>Gender</span>
+            <select name="gender" [(ngModel)]="form.gender">
+              <option value="">Select gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Prefer not to say">Prefer not to say</option>
+            </select>
+          </label>
+          <label>
+            <span>Speciality</span>
+            <input name="speciality" [(ngModel)]="form.speciality" maxlength="100">
+          </label>
+          <label>
+            <span>Experience (years)</span>
+            <input name="experienceYears" type="number" min="0" max="999.9" step="0.1" [(ngModel)]="form.experienceYears">
+          </label>
+          <label>
+            <span>Address</span>
+            <input name="address" [(ngModel)]="form.address">
+          </label>
+          <label>
+            <span>Languages</span>
+            <input name="languages" [(ngModel)]="languageInput" placeholder="Hindi, English">
+          </label>
+          <label>
+            <span>Identity document URL</span>
+            <input name="identityProofUrl" type="url" [(ngModel)]="form.identityProofUrl" placeholder="Share a secure document link">
+          </label>
+          <label>
+            <span>Photo URL</span>
+            <input name="photoUrl" type="url" [(ngModel)]="form.photoUrl">
+          </label>
+        </div>
+
+        <fieldset class="services">
+          <legend>Services this companion can provide</legend>
+          @if (!services.length) {
+            <p class="notice">No active services yet. Add one below for this companion.</p>
+          } @else {
+            <div class="service-list">
+              @for (service of services; track service.id) {
+                <label class="service-option">
+                  <input
+                    type="checkbox"
+                    [checked]="form.serviceIds.includes(service.id)"
+                    (change)="toggleService(service.id, $event)"
+                  >
+                  <span>{{ service.name }} · ₹{{ service.price_inr }}</span>
+                </label>
+              }
+            </div>
+          }
+          <section class="add-service" aria-labelledby="add-service-heading">
+            <h2 id="add-service-heading">Add a service</h2>
+            <div class="add-service-fields">
+              <label>
+                <span>Service name</span>
+                <input
+                  name="newServiceName"
+                  [(ngModel)]="newService.name"
+                  maxlength="120"
+                  placeholder="e.g. Hospital visit"
+                >
+              </label>
+              <label>
+                <span>Price per hour (₹)</span>
+                <input
+                  name="newServicePrice"
+                  type="number"
+                  min="0"
+                  max="99999999.99"
+                  step="0.01"
+                  [(ngModel)]="newService.priceInr"
+                  placeholder="e.g. 450"
+                >
+              </label>
+              <button
+                class="add-service-button"
+                type="button"
+                (click)="addService()"
+                [disabled]="creatingService || !newService.name.trim() || newService.priceInr === '' || newService.priceInr === null"
+              >
+                {{ creatingService ? 'Adding…' : 'Add service' }}
+              </button>
+            </div>
+            @if (serviceFeedback) {
+              <p class="service-feedback" role="status">{{ serviceFeedback }}</p>
+            }
+          </section>
+        </fieldset>
+
+        <button class="submit-button" type="submit" [disabled]="submitting || creatingService || !form.serviceIds.length">
+          {{ submitting ? 'Creating…' : 'Create companion' }}
+        </button>
+      </form>
+    }
+  </section>
+</main>

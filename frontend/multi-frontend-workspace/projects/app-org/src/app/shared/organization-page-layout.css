@@ -1,0 +1,11 @@
+.profile-page,
+.companion-page {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  :host {
+    display: block;
+  }
+}

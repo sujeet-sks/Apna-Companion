@@ -8,6 +8,7 @@ import uuid
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 from django.utils import timezone
 from rest_framework.decorators import api_view
 
@@ -492,8 +493,10 @@ def _companion_input(data):
         raise ValueError("Date of birth cannot be in the future.")
     gender = str(data.get("gender") or "").strip() or None
     speciality = str(data.get("speciality") or "").strip() or None
-    if (gender and len(gender) > 20) or (speciality and len(speciality) > 100):
-        raise ValueError("Gender or speciality is too long.")
+    if gender and gender not in {"Male", "Female", "Prefer not to say"}:
+        raise ValueError("Gender must be Male, Female, or Prefer not to say.")
+    if speciality and len(speciality) > 100:
+        raise ValueError("Speciality is too long.")
     languages = data.get("languages_known", [])
     if not isinstance(languages, list) or any(not isinstance(v, str) for v in languages):
         raise ValueError("languages_known must be a list of strings.")
@@ -535,6 +538,11 @@ def org_companions(request):
         companions = Companion.objects.filter(organization=org).order_by(
             "name", "companion_id"
         )
+        search = request.query_params.get("search", "").strip()
+        if search:
+            companions = companions.filter(
+                Q(name__icontains=search) | Q(companion_id__icontains=search)
+            )
         service_id = request.query_params.get("service_id")
         if service_id is not None:
             try:
@@ -639,7 +647,12 @@ def org_companion_detail(request, companion_id):
         ):
             return error("Send at least one editable companion profile field.")
 
-        profile = {field: getattr(companion, field) for field in editable_fields}
+        profile = {
+            field: getattr(companion, field)
+            for field in editable_fields - {"gender"}
+        }
+        if "gender" in request.data:
+            profile["gender"] = companion.gender
         profile.update({"email": companion.email, "service_ids": []})
         profile.update(request.data)
         try:

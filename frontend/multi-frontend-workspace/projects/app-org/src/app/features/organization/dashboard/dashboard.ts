@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   OrganizationBooking,
@@ -10,19 +10,28 @@ import {
   OrganizationService,
 } from '../../../core/services/organization.service';
 import { AuthService } from '../../../core/services/auth.service';
+import {
+  OrganizationNavigationItem,
+  Sidebar,
+} from '../../../shared/components/sidebar/sidebar';
 
 @Component({
   selector: 'app-organization-dashboard',
   standalone: true,
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, Sidebar],
   templateUrl: './dashboard.html',
-  styleUrls: ['./dashboard.css', './dashboard-actions.css'],
+  styleUrls: [
+    './dashboard.css',
+    './dashboard-actions.css',
+    '../../../shared/organization-page-layout.css',
+  ],
 })
 export class OrganizationDashboard implements OnInit {
   private readonly organizations = inject(OrganizationService);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   isPreview = this.route.snapshot.data['preview'] === true;
+  activeNavigation: OrganizationNavigationItem = 'dashboard';
   readonly auth = inject(AuthService);
 
   profile: OrganizationProfile | null = null;
@@ -39,6 +48,9 @@ export class OrganizationDashboard implements OnInit {
     this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((data) => {
       this.isPreview = data['preview'] === true;
       void this.refresh();
+    });
+    this.route.fragment.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((fragment) => {
+      this.activeNavigation = fragment === 'bookings' ? 'bookings' : 'dashboard';
     });
   }
 

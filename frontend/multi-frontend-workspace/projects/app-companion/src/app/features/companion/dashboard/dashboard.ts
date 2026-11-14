@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   CompanionBooking,
@@ -8,19 +8,28 @@ import {
   CompanionService,
 } from '../../../core/services/companion.service';
 import { AuthService } from '../../../core/services/auth.service';
+import {
+  CompanionNavigationItem,
+  Sidebar,
+} from '../../../shared/components/sidebar/sidebar';
 
 @Component({
   selector: 'app-companion-dashboard',
   standalone: true,
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, Sidebar],
   templateUrl: './dashboard.html',
-  styleUrls: ['./dashboard.css', './dashboard-actions.css'],
+  styleUrls: [
+    './dashboard.css',
+    './dashboard-actions.css',
+    '../../../shared/companion-page-layout.css',
+  ],
 })
 export class CompanionDashboard implements OnInit {
   private readonly companions = inject(CompanionService);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   isPreview = this.route.snapshot.data['preview'] === true;
+  activeNavigation: CompanionNavigationItem = 'dashboard';
   readonly auth = inject(AuthService);
 
   summary: CompanionDashboardSummary | null = null;
@@ -32,6 +41,9 @@ export class CompanionDashboard implements OnInit {
     this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((data) => {
       this.isPreview = data['preview'] === true;
       void this.refresh();
+    });
+    this.route.fragment.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((fragment) => {
+      this.activeNavigation = fragment === 'journeys' ? 'journeys' : 'dashboard';
     });
   }
 

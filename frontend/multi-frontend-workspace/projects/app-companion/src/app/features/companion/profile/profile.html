@@ -1,7 +1,9 @@
+<app-sidebar [preview]="isPreview" active="profile" />
 <main class="profile-page">
   <header class="topbar">
-    <a class="brand" [routerLink]="isPreview ? '/dashboard-preview' : '/dashboard'">Apna Companion</a>
-    <a class="back-link" [routerLink]="isPreview ? '/dashboard-preview' : '/dashboard'">Back to dashboard</a>
+    <nav class="profile-actions" aria-label="Profile actions">
+      <a class="back-link" [routerLink]="isPreview ? '/dashboard-preview' : '/dashboard'">Back to dashboard</a>
+    </nav>
   </header>
   <section class="content">
     <p class="eyebrow">COMPANION PORTAL</p>

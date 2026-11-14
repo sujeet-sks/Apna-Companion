@@ -1,13 +1,10 @@
+<app-sidebar [preview]="isPreview" [active]="activeNavigation" />
 <main class="dashboard">
   <header class="topbar">
-    <a class="brand" routerLink="/dashboard"><span class="mark">a<span>c</span></span> apna companion</a>
     <div class="top-actions">
       @if (isPreview) {
-        <a routerLink="/profile-preview">My profile</a>
         <span class="preview-label">Preview mode</span>
       } @else {
-        <a routerLink="/profile">My profile</a>
-        <a routerLink="/change-password">Change password</a>
         <button type="button" class="quiet-button" (click)="logout()">Sign out</button>
       }
     </div>
@@ -51,7 +48,7 @@
       </article>
     </div>
 
-    <section class="panel">
+    <section class="panel" id="journeys">
       <div class="panel-heading">
         <div>
           <p class="eyebrow">YOUR SCHEDULE</p>

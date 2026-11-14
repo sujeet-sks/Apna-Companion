@@ -3,13 +3,14 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { OrganizationProfile as OrganizationProfileData, OrganizationService } from '../../../core/services/organization.service';
+import { Sidebar } from '../../../shared/components/sidebar/sidebar';
 
 @Component({
   selector: 'app-organization-profile',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, Sidebar],
   templateUrl: './profile.html',
-  styleUrl: './profile.css',
+  styleUrls: ['./profile.css', '../../../shared/organization-page-layout.css'],
 })
 export class OrganizationProfile implements OnInit {
   private readonly organizations = inject(OrganizationService);
