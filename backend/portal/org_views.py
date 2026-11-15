@@ -8,6 +8,7 @@ import uuid
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 from django.utils import timezone
 from rest_framework.decorators import api_view
 
@@ -47,6 +48,23 @@ def org_register_start(request):
             raise ValueError("Enter an organization name and valid organization type.")
         if not address or not document_type or not document_url:
             raise ValueError("Address, document type and document URL are required.")
+        coordinates = {}
+        for field, limit in (("latitude", 90), ("longitude", 180)):
+            raw = request.data.get(field)
+            if raw is None:
+                raise ValueError(f"{field} is required.")
+            try:
+                value = Decimal(str(raw))
+                if (
+                    not value.is_finite() or value < -limit or value > limit
+                    or value.as_tuple().exponent < -6
+                ):
+                    raise ValueError
+            except (InvalidOperation, TypeError, ValueError):
+                raise ValueError(
+                    f"{field} must be within range with up to six decimal places."
+                ) from None
+            coordinates[field] = value
     except ValueError as exc:
         return error(str(exc))
     if Organization.objects.filter(email__iexact=email).exists():
@@ -59,6 +77,7 @@ def org_register_start(request):
             "address": address, "document_type": document_type,
             "document_url": document_url,
             "password_hash": hash_password(request.data["password"]),
+            **coordinates,
         },
         "organization registration",
     )
@@ -84,6 +103,7 @@ def org_register_complete(request):
                 email=state["email"], address=state["address"],
                 document_type=state["document_type"], document_url=state["document_url"],
                 password_hash=state["password_hash"],
+                latitude=state["latitude"], longitude=state["longitude"],
                 approval_status="pending", is_active=True,
             )
     except IntegrityError:
@@ -380,7 +400,7 @@ def org_service_status(request, service_id):
     return ok({"message": "Service status updated"})
 
 
-def _companion_input(data):
+def _companion_input(data, *, validate_gender=True):
     name = str(data.get("name") or "").strip()
     email = normalize_email(data.get("email"))
     mobile = normalize_mobile(data.get("mobile"))
@@ -393,10 +413,12 @@ def _companion_input(data):
     dob = date.fromisoformat(str(raw_dob)) if raw_dob else None
     if dob and dob > date.today():
         raise ValueError("Date of birth cannot be in the future.")
-    gender = str(data.get("gender") or "").strip() or None
+    gender = str(data.get("gender") or "").strip().lower() or None
     speciality = str(data.get("speciality") or "").strip() or None
-    if (gender and len(gender) > 20) or (speciality and len(speciality) > 100):
-        raise ValueError("Gender or speciality is too long.")
+    if validate_gender and gender not in {None, "male", "female", "prefer not to say"}:
+        raise ValueError("Choose Male, Female, or Prefer not to say for gender.")
+    if speciality and len(speciality) > 100:
+        raise ValueError("Speciality is too long.")
     languages = data.get("languages_known", [])
     if not isinstance(languages, list) or any(not isinstance(v, str) for v in languages):
         raise ValueError("languages_known must be a list of strings.")
@@ -438,6 +460,11 @@ def org_companions(request):
         companions = Companion.objects.filter(organization=org).order_by(
             "name", "companion_id"
         )
+        search = str(request.query_params.get("search") or "").strip()
+        if search:
+            companions = companions.filter(
+                Q(name__icontains=search) | Q(companion_id__icontains=search)
+            )
         service_id = request.query_params.get("service_id")
         if service_id is not None:
             try:
@@ -546,7 +573,7 @@ def org_companion_detail(request, companion_id):
         profile.update({"email": companion.email, "service_ids": []})
         profile.update(request.data)
         try:
-            values = _companion_input(profile)
+            values = _companion_input(profile, validate_gender="gender" in request.data)
         except (ValueError, TypeError) as exc:
             return error(str(exc))
 
