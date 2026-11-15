@@ -19,7 +19,7 @@
 .booking-section h1 {
   margin: 0 0 16px;
   color: #193b2d;
-  font-size: 24px;
+  font-size: 28px;
 }
 
 .booking-list {
@@ -31,7 +31,7 @@
 }
 
 .booking-card {
-  padding: 16px;
+  padding: 20px;
   border: 1px solid #e2ebe3;
   border-radius: 12px;
   background: #fff;
@@ -40,6 +40,7 @@
 
 .booking-card-heading,
 .companion-details,
+.booking-contact-details,
 .otp-details {
   display: flex;
   align-items: center;
@@ -53,7 +54,7 @@
 .booking-card h2 {
   margin: 0 0 4px;
   color: #244534;
-  font-size: 16px;
+  font-size: 20px;
 }
 
 .booking-card-heading p,
@@ -62,17 +63,45 @@
 .booking-comments {
   margin: 4px 0 0;
   color: #68796f;
-  font-size: 12px;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 .status-badge {
   border-radius: 999px;
-  background: #fff3d6;
-  color: #946000;
-  padding: 5px 9px;
-  font-size: 10px;
+  padding: 6px 11px;
+  font-size: 13px;
   font-weight: 800;
-  text-transform: capitalize;
+}
+
+.status-badge.pending {
+  background: #fff3d6;
+  color: #805500;
+}
+
+.status-badge.accepted {
+  background: #e4f0ff;
+  color: #245c99;
+}
+
+.status-badge.assigned {
+  background: #eee8ff;
+  color: #5e3b99;
+}
+
+.status-badge.on-the-way {
+  background: #dff4f5;
+  color: #12666d;
+}
+
+.status-badge.arrived {
+  background: #e1f3eb;
+  color: #246746;
+}
+
+.status-badge.in-progress {
+  background: #ffeadb;
+  color: #93470d;
 }
 
 .status-badge.completed {
@@ -91,12 +120,14 @@
   border-top: 1px solid #edf1ed;
 }
 
-.companion-details {
+.companion-details,
+.booking-contact-details {
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 10px;
   color: #52665a;
-  font-size: 12px;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 .otp-details {
@@ -117,7 +148,7 @@
 .review-section h3 {
   margin: 0;
   color: #244534;
-  font-size: 14px;
+  font-size: 18px;
 }
 
 .review-row {
@@ -126,7 +157,7 @@
   justify-content: space-between;
   gap: 12px;
   color: #52665a;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
 }
 
@@ -155,7 +186,7 @@
   display: grid;
   gap: 5px;
   color: #52665a;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
 }
 
@@ -167,18 +198,18 @@
   background: #fff;
   color: #183329;
   font: inherit;
-  font-size: 12px;
+  font-size: 15px;
   resize: vertical;
-  padding: 9px;
+  padding: 11px;
 }
 
 .submit-review-button {
-  min-height: 38px;
+  min-height: 44px;
   border: 0;
   border-radius: 7px;
   background: #19764e;
   color: #fff;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -191,7 +222,7 @@
 .review-status {
   margin: 0;
   color: #19764e;
-  font-size: 12px;
+  font-size: 14px;
   text-align: center;
 }
 
@@ -201,6 +232,34 @@
   border-radius: 12px;
   color: #68796f;
   text-align: center;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.data-loading {
+  display: flex;
+  min-height: 160px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #19764e;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.data-loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 4px solid #dce9df;
+  border-top-color: #19764e;
+  border-radius: 50%;
+  animation: data-loading-rotation 800ms linear infinite;
+}
+
+@keyframes data-loading-rotation {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 600px) {

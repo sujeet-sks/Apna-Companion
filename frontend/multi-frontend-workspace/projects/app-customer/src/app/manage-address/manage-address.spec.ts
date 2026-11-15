@@ -42,6 +42,9 @@ describe('ManageAddress', () => {
   ) {
     const fixture = TestBed.createComponent(ManageAddress);
     fixture.detectChanges();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('.data-loading'),
+    ).not.toBeNull();
 
     const request = httpTesting.expectOne(
       '/api/v1/customer/getAllSavedAddress/',
@@ -54,6 +57,9 @@ describe('ManageAddress', () => {
       data: addresses,
     });
     fixture.detectChanges();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('.data-loading'),
+    ).toBeNull();
     return fixture;
   }
 

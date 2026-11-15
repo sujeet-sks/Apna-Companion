@@ -1,34 +1,66 @@
 <main class="profile-page">
-  <p class="eyebrow">YOUR ACCOUNT</p>
   <h1>Your profile</h1>
   <p class="intro">Your account details for Bharat Companion.</p>
 
-  <section class="profile-card" aria-labelledby="profile-name">
-    <div class="profile-summary">
-      <div class="profile-avatar" aria-hidden="true">{{ initials }}</div>
-      <div>
-        <h2 id="profile-name">{{ fullName }}</h2>
-        <p>Customer</p>
+  <section class="profile-card" aria-label="Profile details">
+    @if (isLoadingProfile()) {
+      <div class="profile-loading" role="status" aria-live="polite">
+        <span class="profile-loading-spinner" aria-hidden="true"></span>
+        <span>Loading your profile...</span>
       </div>
-    </div>
+    } @else if (profileError()) {
+      <div class="profile-load-error" role="alert">
+        <p>{{ profileError() }}</p>
+        <button class="retry-profile-button" type="button" (click)="loadProfile()">
+          Try again
+        </button>
+      </div>
+    } @else {
+      <div class="profile-summary">
+        <div class="profile-avatar" aria-hidden="true">{{ initials() }}</div>
+        <div>
+          <h2 id="profile-name">{{ fullName() }}</h2>
+          <p>Customer</p>
+        </div>
+      </div>
 
-    <dl class="profile-details">
-      <div>
-        <dt>Name</dt>
-        <dd>{{ fullName }}</dd>
-      </div>
-      <div>
-        <dt>Customer ID</dt>
-        <dd>{{ customerId }}</dd>
-      </div>
-      <div>
-        <dt>Email address</dt>
-        <dd>{{ email }}</dd>
-      </div>
-      <div>
-        <dt>Phone number</dt>
-        <dd>{{ mobileNumber }}</dd>
-      </div>
-    </dl>
+      <dl class="profile-details">
+        <div>
+          <dt>Name</dt>
+          <dd>{{ fullName() }}</dd>
+        </div>
+        <div>
+          <dt>Email address</dt>
+          <dd>{{ email() }}</dd>
+        </div>
+        <div>
+          <dt>Phone number</dt>
+          <dd>{{ mobileNumber() }}</dd>
+        </div>
+        <div>
+          <dt>Date of birth</dt>
+          <dd>{{ dateOfBirth() }}</dd>
+        </div>
+        <div>
+          <dt>Gender</dt>
+          <dd>{{ gender() }}</dd>
+        </div>
+      </dl>
+    }
+
+    <div class="profile-actions">
+      @if (logoutError()) {
+        <p class="logout-error" role="alert">{{ logoutError() }}</p>
+      }
+      <button
+        class="logout-button"
+        type="button"
+        [disabled]="isLoggingOut()"
+        [attr.aria-busy]="isLoggingOut()"
+        (click)="logout()"
+      >
+        {{ isLoggingOut() ? 'Logging out...' : 'Log out' }}
+      </button>
+    </div>
   </section>
 </main>

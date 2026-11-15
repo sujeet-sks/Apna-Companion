@@ -8,12 +8,17 @@ describe('Help', () => {
     }).compileComponents();
   });
 
-  it('should render support questions', () => {
+  it('renders the support contact email addresses', () => {
     const fixture = TestBed.createComponent(Help);
     fixture.detectChanges();
 
     const element = fixture.nativeElement as HTMLElement;
     expect(element.querySelector('h1')?.textContent).toContain('Help and support');
-    expect(element.querySelectorAll('details')).toHaveLength(3);
+    const emailLinks = element.querySelectorAll<HTMLAnchorElement>('.contact-emails a');
+    expect(Array.from(emailLinks).map((link) => link.href)).toEqual([
+      'mailto:sujeet.iitb@gmail.com',
+      'mailto:shubham.paul2002@gmail.com',
+      'mailto:mhhamid634@gmail.com',
+    ]);
   });
 });

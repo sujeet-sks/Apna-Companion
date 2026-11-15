@@ -40,14 +40,25 @@
       <button
       type="button"
       class="find-companion-button"
-      [disabled]="selectedOption === null || isFindingCompanion"
+      [disabled]="selectedOption === null || isFindingCompanion()"
       (click)="submitFindCompanionRequest()"
       >
-        {{ isFindingCompanion ? 'Finding...' : 'Find Companion' }}
+        {{ isFindingCompanion() ? 'Finding...' : 'Find Companion' }}
       </button>
 
-      @if (companionStatus) {
-        <p class="companion-status" role="status">{{ companionStatus }}</p>
+      @if (companionStatus()) {
+        <p class="companion-status" role="status">{{ companionStatus() }}</p>
+      }
+
+      @if (isLoadingAddresses()) {
+        <div class="data-loading" role="status" aria-live="polite">
+          <span class="data-loading-spinner" aria-hidden="true"></span>
+          <span>Loading saved address...</span>
+        </div>
+      }
+
+      @if (addressStatus()) {
+        <p class="companion-status" role="status">{{ addressStatus() }}</p>
       }
 
       @if (defaultAddress; as address) {
@@ -101,9 +112,9 @@
       }
     </section>
 
-    @if (organizations.length > 0) {
+    @if (organizations().length > 0) {
       <section class="organization-results" aria-label="Available companion organizations">
-        @for (organization of organizations; track organization.organizationId) {
+        @for (organization of organizations(); track organization.organizationId) {
           <article class="organization-card">
             <header class="organization-header">
               @if (organization.logoUrl) {
@@ -169,13 +180,16 @@
                     </label>
                     <label>
                       Mobile number
-                      <input
-                        [(ngModel)]="customerMobile"
-                        name="customerMobile"
-                        inputmode="tel"
-                        maxlength="10"
-                        autocomplete="tel"
-                      />
+                      <div class="mobile-number-input">
+                        <span class="mobile-country-code" aria-hidden="true">+91</span>
+                        <input
+                          [(ngModel)]="customerMobile"
+                          name="customerMobile"
+                          inputmode="numeric"
+                          maxlength="10"
+                          autocomplete="tel-national"
+                        />
+                      </div>
                     </label>
                     <div class="booking-fields">
                       <label>
@@ -206,13 +220,13 @@
                     <button
                       type="button"
                       class="service-submit-button"
-                      [disabled]="!canSubmitService() || isSubmitting"
+                      [disabled]="!canSubmitService() || isSubmitting()"
                       (click)="submitService(organization)"
                     >
-                      {{ isSubmitting ? 'Submitting...' : 'Submit request' }}
+                      {{ isSubmitting() ? 'Submitting...' : 'Submit request' }}
                     </button>
-                    @if (submitStatus) {
-                      <p class="submit-status" role="status">{{ submitStatus }}</p>
+                    @if (submitStatus()) {
+                      <p class="submit-status" role="status">{{ submitStatus() }}</p>
                     }
                   </div>
                 }

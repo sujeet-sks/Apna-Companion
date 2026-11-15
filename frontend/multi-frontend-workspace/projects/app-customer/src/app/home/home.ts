@@ -1,6 +1,7 @@
-import { HttpClient } from '@angular/common/http';
-import { Component, inject, OnInit } from '@angular/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 
 type BookingMode = 'formal' | 'everyday';
 
@@ -47,10 +48,15 @@ interface CustomerAddress {
 }
 
 interface CustomerAddressesResponse {
-  success: number;
-  message: string;
-  data: CustomerAddress[];
+  success?: number;
+  message?: string;
+  data?: CustomerAddress[] | CustomerAddress;
 }
+
+type CustomerAddressesApiResponse =
+  | CustomerAddressesResponse
+  | CustomerAddress[]
+  | CustomerAddress;
 
 @Component({
   imports: [FormsModule],
@@ -60,145 +66,89 @@ interface CustomerAddressesResponse {
 })
 export class Home implements OnInit {
   private readonly http = inject(HttpClient);
-  private readonly findCompanionApiUrl = '/companions/find';
-  private readonly addressesApiUrl = '/addresses';
-  private readonly bookingApiUrl = '/bookings/request';
+  private readonly findCompanionApiUrl = '/api/v1/customer/getOrganizationDetails/';
+  private readonly addressesApiUrl = '/api/v1/customer/getAllSavedAddress/';
+  private readonly bookingApiUrl = '/api/v1/customer/requestBooking/';
 
   bookingMode: BookingMode = 'formal';
   selectedOption: string | null = null;
-  isFindingCompanion = false;
-  companionStatus = '';
+  readonly isFindingCompanion = signal(false);
+  readonly companionStatus = signal('');
   latitude: number | null = null;
   longitude: number | null = null;
   address = '';
   selectedServiceId: number | null = null;
-  customerName = this.getStoredCustomerDetail('full_name');
-  customerMobile = this.getStoredCustomerDetail('mobile_number');
+  customerName = '';
+  customerMobile = '';
   bookingDate = '';
   bookingTime = '';
   bookingDuration = '';
   readonly minimumBookingDate = this.getTodayDate();
-  isSubmitting = false;
-  submitStatus = '';
+  readonly isSubmitting = signal(false);
+  readonly submitStatus = signal('');
+  readonly addresses = signal<CustomerAddress[]>([]);
+  readonly addressStatus = signal('');
+  readonly isLoadingAddresses = signal(false);
 
-  addresses: CustomerAddress[] = [
-    {
-      addressId: 101,
-      label: 'HOME',
-      houseNo: 'B-205',
-      buildingStreet: 'Shanti Apartments, MG Road',
-      areaLocality: 'Indiranagar',
-      landmark: 'Opposite Metro Station',
-      city: 'Bengaluru',
-      state: 'Karnataka',
-      pincode: '560038',
-      country: 'India',
-      isDefault: true,
-    },
-    {
-      addressId: 102,
-      label: 'WORK',
-      houseNo: '4th Floor',
-      buildingStreet: 'Tech Park, Outer Ring Road',
-      areaLocality: 'Marathahalli',
-      landmark: 'Near Flyover',
-      city: 'Bengaluru',
-      state: 'Karnataka',
-      pincode: '560037',
-      country: 'India',
-      isDefault: false,
-    },
-  ];
+  readonly organizations = signal<Organization[]>([]);
 
-  organizations: Organization[] = [
-    {
-      organizationId: 501,
-      name: 'Sahara Care Foundation',
-      organizationType: 'NGO',
-      logoUrl: '',
-      rating: 4.6,
-      totalReviews: 238,
-      completedBookings: 1450,
-      service: [
-        {
-          serviceId: 1,
-          serviceName: 'Parks & outdoor outing',
-          serviceDescription: 'Friendly companion for a relaxed park visit',
-          servicePrice: 499,
-        },
-        {
-          serviceId: 2,
-          serviceName: 'Temple visit',
-          serviceDescription: 'Support for travel and time at the temple',
-          servicePrice: 599,
-        },
-      ],
-    },
-    {
-      organizationId: 502,
-      name: 'CareNest Companion Services',
-      organizationType: 'COMPANION SERVICE',
-      logoUrl: '',
-      rating: 4.8,
-      totalReviews: 312,
-      completedBookings: 1890,
-      service: [
-        {
-          serviceId: 3,
-          serviceName: 'Hospital visit companion',
-          serviceDescription: 'Queue support and help during hospital visits',
-          servicePrice: 799,
-        },
-        {
-          serviceId: 4,
-          serviceName: 'Bank assistance',
-          serviceDescription: 'Support for basic in-person banking tasks',
-          servicePrice: 649,
-        },
-      ],
-    },
-    {
-      organizationId: 503,
-      name: 'Helping Hands Network',
-      organizationType: 'NGO',
-      logoUrl: '',
-      rating: 4.5,
-      totalReviews: 174,
-      completedBookings: 960,
-      service: [
-        {
-          serviceId: 5,
-          serviceName: 'Shopping companion',
-          serviceDescription: 'Friendly help for groceries and local shopping',
-          servicePrice: 449,
-        },
-      ],
-    },
-  ];
-
-  readonly formalOptions = ['Hospitals', 'Banks', 'Airport' ];
+  readonly formalOptions = ['hospital', 'bank', 'rto','Airport' ];
   readonly everydayOptions = ['Parks', 'Temple Visit', 'Morning walk', 'Shopping'];
 
   ngOnInit(): void {
-    // this.loadAddresses();
+    this.loadAddresses();
   }
 
   private loadAddresses(): void {
-    const userId = this.getStoredUserIdentity();
-    if (!userId) return;
+    const userId = Number(this.getStoredUserIdentity());
+    if (!Number.isSafeInteger(userId) || userId <= 0) {
+      this.addresses.set([]);
+      this.addressStatus.set('Please log in to view your saved addresses.');
+      return;
+    }
 
+    this.addressStatus.set('');
+    this.isLoadingAddresses.set(true);
     this.http
-      .get<CustomerAddressesResponse>(this.addressesApiUrl, {
-        params: { userId },
-      })
+      .post<CustomerAddressesApiResponse>(this.addressesApiUrl, { userId })
+      .pipe(finalize(() => this.isLoadingAddresses.set(false)))
       .subscribe({
         next: (response) => {
-          if (response.success === 200 && Array.isArray(response.data)) {
-            this.addresses = response.data;
+          if (Array.isArray(response)) {
+            this.addresses.set(response);
+            this.addressStatus.set(response.length ? '' : 'No saved addresses found.');
+            return;
           }
+
+          if ('addressId' in response) {
+            this.addresses.set([response]);
+            this.addressStatus.set('');
+            return;
+          }
+
+          if (response.success !== undefined && response.success !== 200) {
+            this.addresses.set([]);
+            this.addressStatus.set(response.message || 'Unable to load saved addresses.');
+            return;
+          }
+
+          const addresses = Array.isArray(response.data)
+            ? response.data
+            : response.data
+              ? [response.data]
+              : [];
+          this.addresses.set(addresses);
+          this.addressStatus.set(
+            addresses.length
+              ? ''
+              : response.message || 'No saved addresses found.',
+          );
         },
-        error: () => {
-          this.addresses = this.addresses;
+        error: (error: HttpErrorResponse) => {
+          this.addresses.set([]);
+          this.addressStatus.set(
+            error.error?.message ?? 'Unable to load saved addresses. Please try again.',
+          );
         },
       });
   }
@@ -225,7 +175,7 @@ export class Home implements OnInit {
     this.bookingDate = '';
     this.bookingTime = '';
     this.bookingDuration = '';
-    this.submitStatus = '';
+    this.submitStatus.set('');
   }
 
   isSelectedService(service: CompanionService): boolean {
@@ -248,10 +198,10 @@ export class Home implements OnInit {
   }
 
   submitService(organization: Organization): void {
-    if (!this.canSubmitService() || this.isSubmitting) return;
+    if (!this.canSubmitService() || this.isSubmitting()) return;
 
-    this.isSubmitting = true;
-    this.submitStatus = '';
+    this.isSubmitting.set(true);
+    this.submitStatus.set('');
     const defaultAddress = this.defaultAddress;
     const address = defaultAddress ? this.getFullAddress(defaultAddress) : '';
 
@@ -260,7 +210,7 @@ export class Home implements OnInit {
       organizationId: organization.organizationId,
       serviceId: this.selectedServiceId,
       contactName: this.customerName.trim(),
-      contactPhone: this.customerMobile.trim(),
+      contactPhone: `+91${this.customerMobile.trim()}`,
       latitude: defaultAddress?.latitude ?? '',
       longitude: defaultAddress?.longitude ?? '',
       address,
@@ -270,18 +220,28 @@ export class Home implements OnInit {
 
     this.http.post<unknown>(this.bookingApiUrl, bookingPayload).subscribe({
       next: () => {
-        this.submitStatus = 'Service request submitted successfully.';
+        this.submitStatus.set('Service request submitted successfully.');
+        if (typeof window !== 'undefined') {
+          window.location.reload();
+        }
       },
       error: () => {
-        this.submitStatus = 'Unable to submit the service request. Please try again.';
+        this.submitStatus.set(
+          'Unable to submit the service request. Please try again.',
+        );
       },
     }).add(() => {
-      this.isSubmitting = false;
+      this.isSubmitting.set(false);
     });
   }
 
 
-  private submitFindCompanionRequest(): void {
+  protected submitFindCompanionRequest(): void {
+    if (this.selectedOption === null || this.isFindingCompanion()) return;
+
+    this.organizations.set([]);
+    this.companionStatus.set('');
+    this.isFindingCompanion.set(true);
     const requestPayload = {
       userID: this.getStoredUserIdentity(),
       purpose: this.bookingMode === 'formal' ? this.selectedOption : 'ngo',
@@ -293,20 +253,25 @@ export class Home implements OnInit {
     this.http.post<FindCompanionResponse>(this.findCompanionApiUrl, requestPayload).subscribe({
       next: (response) => {
         if (response.success === 200 && Array.isArray(response.data?.organizations)) {
-          this.organizations = response.data.organizations.map((organization) => ({
+          const organizations = response.data.organizations.map((organization) => ({
             ...organization,
             service: Array.isArray(organization.service) ? organization.service : [],
           }));
-          this.companionStatus = response.message || 'Organizations fetched successfully.';
+          this.organizations.set(organizations);
+          this.companionStatus.set(
+            organizations.length
+              ? response.message || 'Organizations fetched successfully.'
+              : response.message || 'No companion organizations found.',
+          );
         } else {
-          this.companionStatus = 'No companion organizations found.';
+          this.companionStatus.set('No companion organizations found.');
         }
       },
       error: () => {
-        this.companionStatus = 'Unable to find a companion. Please try again.';
+        this.companionStatus.set('Unable to find a companion. Please try again.');
       },
     }).add(() => {
-      this.isFindingCompanion = false;
+      this.isFindingCompanion.set(false);
     });
   }
 
@@ -319,11 +284,6 @@ export class Home implements OnInit {
       window.sessionStorage.getItem('userId') ??
       ''
     );
-  }
-
-  private getStoredCustomerDetail(key: 'full_name' | 'mobile_number'): string {
-    if (typeof window === 'undefined') return '';
-    return window.sessionStorage.getItem(key) ?? '';
   }
 
   private getStoredAddress(): string {
@@ -359,7 +319,7 @@ export class Home implements OnInit {
   }
 
   get defaultAddress(): CustomerAddress | null {
-    return this.addresses.find((address) => address.isDefault) ?? null;
+    return this.addresses().find((address) => address.isDefault) ?? null;
   }
 
   getFullAddress(address: CustomerAddress): string {

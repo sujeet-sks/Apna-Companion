@@ -35,6 +35,32 @@
   font-size: 14px;
 }
 
+.data-loading {
+  display: flex;
+  min-height: 180px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #19764e;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.data-loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 4px solid #dce9df;
+  border-top-color: #19764e;
+  border-radius: 50%;
+  animation: data-loading-rotation 800ms linear infinite;
+}
+
+@keyframes data-loading-rotation {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .add-icon,
 .address-icon {
   display: grid;

@@ -1,6 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 
 interface Address {
   addressId: number;
@@ -65,6 +66,7 @@ export class ManageAddress implements OnInit {
   readonly userId: number | null = this.getStoredUserId();
   readonly addresses = signal<Address[]>([]);
   readonly addressStatus = signal('');
+  readonly isLoadingAddresses = signal(false);
 
   formOpen = false;
   editingId: number | null = null;
@@ -105,9 +107,11 @@ export class ManageAddress implements OnInit {
       return;
     }
 
+    this.addressStatus.set('');
+    this.isLoadingAddresses.set(true);
     this.http.post<AddressApiResponse>(this.addressesApiUrl, {
       userId: this.userId,
-    }).subscribe({
+    }).pipe(finalize(() => this.isLoadingAddresses.set(false))).subscribe({
       next: (response) => {
         if (response.success === 200 && Array.isArray(response.data)) {
           this.addresses.set(response.data);

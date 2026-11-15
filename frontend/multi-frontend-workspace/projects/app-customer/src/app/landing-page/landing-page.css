@@ -130,6 +130,16 @@
   box-shadow: 0 0 0 3px rgb(255 255 255 / 25%);
 }
 
+.avatar svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
 .header-greeting {
   padding: 3px 0 0;
 }

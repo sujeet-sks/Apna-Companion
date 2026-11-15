@@ -15,6 +15,13 @@
     <p class="address-status" role="status">{{ addressStatus() }}</p>
   }
 
+  @if (isLoadingAddresses()) {
+    <div class="data-loading" role="status" aria-live="polite">
+      <span class="data-loading-spinner" aria-hidden="true"></span>
+      <span>Loading saved addresses...</span>
+    </div>
+  }
+
   @if (formOpen) {
     <section class="address-form" aria-label="Address details">
       <div class="form-heading">
@@ -118,6 +125,7 @@
     </section>
   }
 
+  @if (!isLoadingAddresses()) {
   <h2 class="saved-heading">SAVED ({{ addresses().length }})</h2>
 
   <section class="address-list" aria-label="Saved addresses">
@@ -164,4 +172,5 @@
       </article>
     }
   </section>
+  }
 </main>

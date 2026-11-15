@@ -1,6 +1,7 @@
-import { HttpClient } from '@angular/common/http';
-import { Component, inject, OnInit } from '@angular/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 
 interface BookingCompanion {
   name: string;
@@ -17,18 +18,20 @@ export interface PastBookingRecord {
   companion: BookingCompanion;
   scheduletimestamp: string;
   durationOfBooking: string;
-  comments?: string;
+  comments?: string | null;
 }
 
 export interface CurrentBookingRecord {
   bookingId: string;
-  status: 'pending' | 'accepted' | 'completed';
+  status: string;
   serviceName: string;
   organizationname: string;
   rating: number;
-  companion: BookingCompanion;
+  companion: BookingCompanion | null;
   scheduletimestamp: string;
-  durationOfBooking: string;
+  durationOfBooking: number | string;
+  contactName: string;
+  contactPhone: string;
   startOtp: string;
   endOtp: string;
 }
@@ -48,9 +51,9 @@ interface BookingListResponse<T> {
 export class Bookings implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly currentBookingsApiUrl =
-    '/api/v1/customer/getAllBookingDetails/';
-  private readonly pastBookingsApiUrl =
     '/api/v1/customer/getCurrentBookingDetails/';
+  private readonly pastBookingsApiUrl =
+    '/api/v1/customer/getAllBookingDetails/';
   private readonly submitReviewApiUrl =
     '/api/v1/customer/submitReview/';
 
@@ -60,118 +63,12 @@ export class Bookings implements OnInit {
   isSubmittingReview: Record<string, boolean> = {};
   reviewStatus: Record<string, string> = {};
 
-  pastBookingRecords: PastBookingRecord[] = [
-    {
-      bookingId: 'PST-101',
-      status: 'completed',
-      service: 'OPD visit companion',
-      organizationname: 'Sahara Care Foundation',
-      rating: 4.6,
-      companion: {
-        name: 'Priya S.',
-        phone: '9876543210',
-        rating: 4.8,
-      },
-      scheduletimestamp: '2026-11-25T10:00:00+05:30',
-      durationOfBooking: '2 hours',
-      comments: 'The companion was punctual and very helpful.',
-    },
-    {
-      bookingId: 'PST-102',
-      status: 'completed',
-      service: 'Temple visit companion',
-      organizationname: 'Helping Hands Network',
-      rating: 4.5,
-      companion: {
-        name: 'Anita R.',
-        phone: '9876501234',
-        rating: 4.7,
-      },
-      scheduletimestamp: '2026-11-20T08:30:00+05:30',
-      durationOfBooking: '3 hours',
-      comments: 'Good support throughout the visit.',
-    },
-    {
-      bookingId: 'PST-103',
-      status: 'rejected',
-      service: 'Bank assistance',
-      organizationname: 'CareNest Companion Services',
-      rating: 4.8,
-      companion: {
-        name: 'Rahul M.',
-        phone: '9876512345',
-        rating: 4.6,
-      },
-      scheduletimestamp: '2026-11-18T11:00:00+05:30',
-      durationOfBooking: '1 hour',
-      comments: 'No companion was available at the requested time.',
-    },
-    {
-      bookingId: 'PST-104',
-      status: 'completed',
-      service: 'Shopping companion',
-      organizationname: 'Helping Hands Network',
-      rating: 4.5,
-      companion: {
-        name: 'Meena K.',
-        phone: '9876523456',
-        rating: 4.9,
-      },
-      scheduletimestamp: '2026-11-14T16:00:00+05:30',
-      durationOfBooking: '2 hours',
-      comments: 'Very patient and helpful.',
-    },
-    {
-      bookingId: 'PST-105',
-      status: 'completed',
-      service: 'Park outing companion',
-      organizationname: 'Sahara Care Foundation',
-      rating: 4.6,
-      companion: {
-        name: 'Priya S.',
-        phone: '9876543210',
-        rating: 4.8,
-      },
-      scheduletimestamp: '2026-11-10T07:30:00+05:30',
-      durationOfBooking: '1 hour',
-      comments: 'Comfortable and enjoyable outing.',
-    },
-  ];
-
-  currentBookingRecords: CurrentBookingRecord[] = [
-    {
-      bookingId: '',
-      status: 'pending',
-      serviceName: 'OPD vist',
-      organizationname: 'Sahara Care Foundation',
-      rating: 4.6,
-      companion: {
-        name: 'Priya S.',
-        phone: '9876543210',
-        rating: 4.8,
-      },
-      scheduletimestamp: '2026-11-25T10:00:00+05:30',
-      durationOfBooking: '',
-      startOtp: '7888',
-      endOtp: '44445',
-    },
-    {
-      bookingId: '',
-      status: 'completed',
-      serviceName: '',
-      organizationname: 'Sahara Care Foundation',
-      rating: 4.6,
-      companion: {
-        name: 'Priya S.',
-        phone: '9876543210',
-        rating: 4.8,
-      },
-      scheduletimestamp: '2026-11-25T10:00:00+05:30',
-      durationOfBooking: '',
-      startOtp: '7888',
-      endOtp: '44445',
-    },
-  ];
+  readonly pastBookingRecords = signal<PastBookingRecord[]>([]);
+  readonly currentBookingRecords = signal<CurrentBookingRecord[]>([]);
+  readonly pastBookingsError = signal('');
+  readonly currentBookingsError = signal('');
+  readonly isLoadingPastBookings = signal(false);
+  readonly isLoadingCurrentBookings = signal(false);
 
   formatBookingDate(scheduletimestamp: string): string {
     const date = new Date(scheduletimestamp);
@@ -193,6 +90,11 @@ export class Bookings implements OnInit {
       minute: '2-digit',
       hour12: true,
     }).format(date);
+  }
+
+  formatCurrentBookingStatus(status: string): string {
+    const formattedStatus = status.replace(/_/g, ' ');
+    return formattedStatus.charAt(0).toUpperCase() + formattedStatus.slice(1);
   }
 
   setOrganizationRating(bookingId: string, rating: number): void {
@@ -230,6 +132,13 @@ export class Bookings implements OnInit {
     this.http.post<unknown>(this.submitReviewApiUrl, requestPayload).subscribe({
       next: () => {
         this.reviewStatus[bookingId] = 'Review submitted successfully.';
+        this.pastBookingRecords.update((records) =>
+          records.map((record) =>
+            record.bookingId === bookingId
+              ? { ...record, comments: requestPayload.Comment }
+              : record,
+          ),
+        );
       },
       error: () => {
         this.reviewStatus[bookingId] =
@@ -242,7 +151,7 @@ export class Bookings implements OnInit {
 
   ngOnInit(): void {
     this.loadCurrentBookings();
-    // this.loadPastBookings();
+    this.loadPastBookings();
   }
 
   private getUserId(): string {
@@ -257,41 +166,93 @@ export class Bookings implements OnInit {
   }
 
   private loadCurrentBookings(): void {
-
+    this.isLoadingCurrentBookings.set(true);
     this.http
       .post<BookingListResponse<CurrentBookingRecord> | CurrentBookingRecord[]>(
         this.currentBookingsApiUrl,
         { userID: this.getUserId() },
       )
+      .pipe(finalize(() => this.isLoadingCurrentBookings.set(false)))
       .subscribe({
         next: (response) => {
+          if (
+            !Array.isArray(response) &&
+            response.success !== undefined &&
+            response.success !== 200
+          ) {
+            this.currentBookingRecords.set([]);
+            this.currentBookingsError.set(
+              response.message || 'Unable to load current bookings.',
+            );
+            return;
+          }
 
           const records = Array.isArray(response)
             ? response
             : response.data;
 
-          if (Array.isArray(records)) {
-            this.currentBookingRecords = records;
+          if (!Array.isArray(records)) {
+            this.currentBookingRecords.set([]);
+            this.currentBookingsError.set(
+              'Unable to load current bookings: the response was incomplete.',
+            );
+            return;
           }
+
+          this.currentBookingRecords.set(records);
+          this.currentBookingsError.set('');
+        },
+        error: (error: HttpErrorResponse) => {
+          this.currentBookingRecords.set([]);
+          this.currentBookingsError.set(
+            error.error?.message ?? 'Unable to load current bookings. Please try again.',
+          );
         },
       });
   }
 
   private loadPastBookings(): void {
+    this.isLoadingPastBookings.set(true);
     this.http
       .post<BookingListResponse<PastBookingRecord> | PastBookingRecord[]>(
         this.pastBookingsApiUrl,
         { userID: this.getUserId() },
       )
+      .pipe(finalize(() => this.isLoadingPastBookings.set(false)))
       .subscribe({
         next: (response) => {
+          if (
+            !Array.isArray(response) &&
+            response.success !== undefined &&
+            response.success !== 200
+          ) {
+            this.pastBookingRecords.set([]);
+            this.pastBookingsError.set(
+              response.message || 'Unable to load past bookings.',
+            );
+            return;
+          }
+
           const records = Array.isArray(response)
             ? response
             : response.data;
 
           if (Array.isArray(records)) {
-            this.pastBookingRecords = records;
+            this.pastBookingRecords.set(records);
+            this.pastBookingsError.set('');
+            return;
           }
+
+          this.pastBookingRecords.set([]);
+          this.pastBookingsError.set(
+            'Unable to load past bookings: the response was incomplete.',
+          );
+        },
+        error: (error: HttpErrorResponse) => {
+          this.pastBookingRecords.set([]);
+          this.pastBookingsError.set(
+            error.error?.message ?? 'Unable to load past bookings. Please try again.',
+          );
         },
       });
   }

@@ -124,6 +124,32 @@ h1 {
   font-size: 13px;
 }
 
+.data-loading {
+  display: flex;
+  min-height: 120px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #19764e;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.data-loading-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid #dce9df;
+  border-top-color: #19764e;
+  border-radius: 50%;
+  animation: data-loading-rotation 800ms linear infinite;
+}
+
+@keyframes data-loading-rotation {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .default-address {
   display: grid;
   gap: 12px;
@@ -365,6 +391,34 @@ h1 {
   font: inherit;
   font-size: 13px;
   padding: 10px;
+}
+
+.mobile-number-input {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid #dfe6e1;
+  border-radius: 7px;
+  background: #fff;
+}
+
+.mobile-country-code {
+  flex: 0 0 auto;
+  padding: 10px 0 10px 10px;
+  color: #52665a;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.service-request-form .mobile-number-input input {
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.mobile-number-input:focus-within {
+  border-color: #398b63;
+  box-shadow: 0 0 0 3px rgb(57 139 99 / 13%);
 }
 
 .booking-fields {
