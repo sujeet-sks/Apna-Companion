@@ -20,11 +20,23 @@
   margin-bottom: 20px;
 }
 
+.dashboard-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
 .dashboard-heading h1 {
   margin: 0;
   font-size: clamp(22px, 1.8vw, 28px);
   font-weight: 700;
   line-height: 1.25;
+}
+
+.static-data-label {
+  color: #c0d4cb;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .dashboard-heading p {
@@ -121,6 +133,11 @@
   gap: 14px;
   min-height: 0;
   margin-top: 14px;
+}
+
+.metrics-grid,
+.dashboard-details {
+  filter: blur(0.75px);
 }
 
 .detail-panel {

@@ -1,14 +1,13 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { finalize } from 'rxjs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
-  clientData,
   ClientDetailField,
   ClientInfo,
-  ClientStatistics,
-  getClientId,
+  formatDocumentType,
   getClientDetailFields,
-  isClientStatistics,
 } from './client.model';
+import { ClientService } from './client.service';
 
 @Component({
   imports: [RouterLink],
@@ -18,37 +17,31 @@ import {
 })
 export class ClientDetail implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly clientService = inject(ClientService);
 
-  protected client: ClientInfo | null = null;
-  protected fields: ClientDetailField[] = [];
-  protected statistics: ClientStatistics | null = null;
-  protected bookingOutcomeTotal = 0;
-  protected isLoading = false;
-  protected errorMessage = '';
+  protected readonly client = signal<ClientInfo | null>(null);
+  protected readonly fields = signal<ClientDetailField[]>([]);
+  protected readonly isLoading = signal(true);
+  protected readonly errorMessage = signal('');
+  protected readonly formatDocumentType = formatDocumentType;
 
   ngOnInit(): void {
     const clientId = this.route.snapshot.paramMap.get('clientId');
     if (!clientId) {
-      this.errorMessage = 'A client ID was not provided.';
+      this.errorMessage.set('A client ID was not provided.');
+      this.isLoading.set(false);
       return;
     }
 
-    this.client =
-      clientData.approvedClients.find((client) => getClientId(client) === clientId) ??
-      null;
-    this.fields = this.client ? getClientDetailFields(this.client) : [];
-    const statistics = this.client?.['statistics'];
-    if (isClientStatistics(statistics)) {
-      this.statistics = statistics;
-      const outcomes = this.statistics.bookingOutcomes;
-      this.bookingOutcomeTotal =
-        outcomes.completed + outcomes.cancelled + outcomes.upcoming;
-    }
-  }
-
-  protected getOutcomeWidth(count: number): number {
-    return this.bookingOutcomeTotal > 0
-      ? (count / this.bookingOutcomeTotal) * 100
-      : 0;
+    this.clientService
+      .getClientById(clientId)
+      .pipe(finalize(() => this.isLoading.set(false)))
+      .subscribe({
+        next: (client) => {
+          this.client.set(client);
+          this.fields.set(client ? getClientDetailFields(client) : []);
+        },
+        error: () => this.errorMessage.set('Unable to get client data.'),
+      });
   }
 }

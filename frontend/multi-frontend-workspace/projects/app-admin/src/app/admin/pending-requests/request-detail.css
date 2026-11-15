@@ -260,6 +260,16 @@ h1 {
   text-decoration: none;
 }
 
+.download-button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
 .download-button:hover {
   border-color: #315b4a;
   background: #f5f8f6;

@@ -26,6 +26,47 @@ h1 {
   background: #fff;
 }
 
+.requests-message {
+  margin: 8px 0;
+  color: #60736a;
+  font-size: 14px;
+}
+
+.requests-message--error {
+  color: #a8262e;
+}
+
+.requests-loading {
+  display: flex;
+  min-height: 100px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #60736a;
+  font-size: 14px;
+}
+
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #e1e8e4;
+  border-top-color: #315b4a;
+  border-radius: 50%;
+  animation: requests-spin 0.8s linear infinite;
+}
+
+@keyframes requests-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner {
+    animation: none;
+  }
+}
+
 .table-scroll {
   overflow-x: auto;
 }
@@ -96,6 +137,37 @@ h1 {
 }
 
 .review-button:focus-visible {
+  outline: 2px solid #315b4a;
+  outline-offset: 2px;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 16px;
+  color: #172f39;
+  font-size: 13px;
+}
+
+.pagination button {
+  min-height: 36px;
+  border: 1px solid #aebcb6;
+  border-radius: 7px;
+  padding: 0 12px;
+  color: #142d38;
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.pagination button:focus-visible {
   outline: 2px solid #315b4a;
   outline-offset: 2px;
 }

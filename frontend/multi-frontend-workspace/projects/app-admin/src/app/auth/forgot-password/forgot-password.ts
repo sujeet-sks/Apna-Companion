@@ -16,6 +16,13 @@ interface ApiResponse {
   message?: string;
 }
 
+interface ForgotPasswordRequestResponse {
+  message: string;
+  request_id: string;
+  expires_in: number;
+  resend_after: number;
+}
+
 @Component({
   imports: [ReactiveFormsModule, RouterLink],
   selector: 'app-forgot-password',
@@ -79,18 +86,17 @@ export class ForgotPassword {
   
     if (!this.otpStage) {
       this.http
-        .post<ApiResponse>('/adminPortal/auth/sendOTP', { email })
+        .post<ForgotPasswordRequestResponse>(
+          '/api/admin/forgot-password/request/',
+          { email },
+        )
         .subscribe({
           next: (response) => {
             this.isSubmitting = false;
-            if (response.status_code !== undefined && response.status_code !== 200) {
-              this.errorMessage =
-                response.message ?? 'Unable to send the OTP. Please try again.';
-              return;
-            }
             this.otpStage = true;
             this.successMessage =
-              response.message ?? 'OTP sent successfully.';
+              response.message ||
+              'If an admin account exists, a code was sent.';
             this.toast.show(this.successMessage);
           },
           error: (error: HttpErrorResponse) => {

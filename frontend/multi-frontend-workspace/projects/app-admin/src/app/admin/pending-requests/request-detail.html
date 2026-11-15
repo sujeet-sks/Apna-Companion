@@ -9,11 +9,7 @@
   } @else if (request; as clientRequest) {
     <header class="detail-header">
       <div>
-        <p class="eyebrow">Client request</p>
         <h1>{{ clientRequest.client }}</h1>
-        <p class="request-subtitle">
-          {{ clientRequest.type }} · Submitted {{ clientRequest.submitted }}
-        </p>
       </div>
       <span
         class="status-badge"
@@ -28,6 +24,10 @@
         <h2 id="organization-heading">Organization details</h2>
         <dl class="detail-list">
           <div>
+            <dt>Organization ID</dt>
+            <dd>{{ clientRequest.id }}</dd>
+          </div>
+          <div>
             <dt>Organization name</dt>
             <dd>{{ clientRequest.client }}</dd>
           </div>
@@ -36,20 +36,12 @@
             <dd>{{ clientRequest.type }}</dd>
           </div>
           <div>
-            <dt>Registration number</dt>
-            <dd>{{ clientRequest.registrationNumber }}</dd>
-          </div>
-          <div>
-            <dt>City</dt>
-            <dd>{{ clientRequest.city }}</dd>
-          </div>
-          <div>
             <dt>Registered address</dt>
             <dd>{{ clientRequest.address }}</dd>
           </div>
           <div>
-            <dt>About</dt>
-            <dd>{{ clientRequest.description }}</dd>
+            <dt>Coordinates</dt>
+            <dd>{{ clientRequest.latitude }}, {{ clientRequest.longitude }}</dd>
           </div>
         </dl>
       </section>
@@ -58,16 +50,8 @@
         <h2 id="contact-heading">Contact information</h2>
         <dl class="detail-list">
           <div>
-            <dt>Contact person</dt>
-            <dd>{{ clientRequest.contactName }}</dd>
-          </div>
-          <div>
             <dt>Email</dt>
             <dd><a [href]="'mailto:' + clientRequest.email">{{ clientRequest.email }}</a></dd>
-          </div>
-          <div>
-            <dt>Phone</dt>
-            <dd><a [href]="'tel:' + clientRequest.phone">{{ clientRequest.phone }}</a></dd>
           </div>
           <div>
             <dt>Request submitted</dt>
@@ -82,8 +66,17 @@
           @for (document of clientRequest.documents; track document.name) {
             <li>
               <span>{{ document.name }}</span>
-              <a class="download-button" [href]="document.link" [attr.download]="''">
-                Download
+              <a
+                class="download-button"
+                [href]="document.link"
+                download=""
+                [attr.aria-label]="'Download ' + document.name"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 3v12m0 0 4-4m-4 4-4-4" />
+                  <path d="M5 17v3h14v-3" />
+                </svg>
+                <span>Download</span>
               </a>
             </li>
           }
@@ -97,13 +90,13 @@
           id="request-remark"
           name="remark"
           [(ngModel)]="remark"
-          [disabled]="isApproving || isRejecting || clientRequest.status === 'Rejected' || clientRequest.status === 'Approved'"
+          [disabled]="isApproving() || isRejecting() || clientRequest.status === 'Rejected' || clientRequest.status === 'Approved'"
           rows="4"
           placeholder="Write a remark about this request..."
         ></textarea>
-        @if (actionMessage) {
-          <p class="action-message" [class.action-message--error]="actionError" [attr.role]="actionError ? 'alert' : 'status'">
-            {{ actionMessage }}
+        @if (actionMessage()) {
+          <p class="action-message" [class.action-message--error]="actionError()" [attr.role]="actionError() ? 'alert' : 'status'">
+            {{ actionMessage() }}
           </p>
         }
       </section>
@@ -115,18 +108,18 @@
           <button
             class="decision-button decision-button--approve"
             type="button"
-            [disabled]="isApproving || isRejecting || clientRequest.status === 'Approved' || clientRequest.status === 'Rejected'"
+            [disabled]="isApproving() || isRejecting() || clientRequest.status === 'Approved' || clientRequest.status === 'Rejected'"
             (click)="approveRequest(clientRequest.id)"
           >
-            {{ isApproving ? 'Approving...' : 'Approve' }}
+            {{ isApproving() ? 'Approving...' : 'Approve' }}
           </button>
           <button
             class="decision-button decision-button--reject"
             type="button"
-            [disabled]="isApproving || isRejecting || clientRequest.status === 'Rejected' || clientRequest.status === 'Approved'"
+            [disabled]="isApproving() || isRejecting() || clientRequest.status === 'Rejected' || clientRequest.status === 'Approved'"
             (click)="rejectRequest(clientRequest.id)"
           >
-            {{ isRejecting ? 'Rejecting...' : 'Reject' }}
+            {{ isRejecting() ? 'Rejecting...' : 'Reject' }}
           </button>
         </div>
       </section>

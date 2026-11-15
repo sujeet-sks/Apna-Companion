@@ -84,6 +84,16 @@ h1 {
   font-size: 14px;
 }
 
+.clients-loading {
+  color: #60736a;
+  font-size: 14px;
+}
+
+.clients-error {
+  color: #a8262e;
+  font-size: 14px;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;

@@ -10,14 +10,16 @@ interface LoginRequest {
 }
 
 interface LoginResponse {
-  status_code: number;
-  data?: {
-    access_token: string;
-    adminId?: string;
-    EmailId?: string;
-    full_name?: string;
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  admin: {
+    admin_id: string;
+    full_name: string;
+    email: string;
+    last_login_at: string;
+    created_at: string;
   };
-  message?: string;
 }
 
 @Component({
@@ -64,27 +66,21 @@ export class Login {
       password,
     };
 
-    this.http.post<LoginResponse>('/adminPortal/auth/login', request).subscribe({
+    this.http.post<LoginResponse>('/api/admin/login/', request).subscribe({
       next: (response: LoginResponse) => {
         this.isSubmitting = false;
 
-        if (response.status_code !== 200 || !response.data?.access_token) {
-          this.errorMessage =
-            response.message ?? 'Login failed. Please try again.';
+        if (!response.access_token || !response.admin) {
+          this.errorMessage = 'Login failed. Please try again.';
           return;
         }
 
-        sessionStorage.setItem('access_token', response.data.access_token);
-        sessionStorage.setItem(
-          'admin_user',
-          JSON.stringify({
-            adminId: response.data.adminId ?? '',
-            EmailId: response.data.EmailId ?? username,
-            full_name: response.data.full_name ?? '',
-          }),
-        );
+        sessionStorage.setItem('access_token', response.access_token);
+        sessionStorage.setItem('token_type', response.token_type);
+        sessionStorage.setItem('expires_in', String(response.expires_in));
+        sessionStorage.setItem('admin_user', JSON.stringify(response.admin));
 
-        this.toast.show(response.message ?? 'Login successful.');
+        this.toast.show('Login successful.');
         void this.router.navigate(['/admin/dashboard']);
       },
       error: (error: HttpErrorResponse) => {

@@ -1,8 +1,9 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PendingRequest } from './pending-request.model';
+import { ToastService } from '../../shared/toast.service';
 import {
   ApproveRequestResponse,
   PendingRequestService,
@@ -17,25 +18,36 @@ import {
 })
 export class RequestDetail implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly pendingRequestService = inject(PendingRequestService);
+  private readonly toast = inject(ToastService);
 
   protected request: PendingRequest | null = null;
   protected isLoading = true;
   protected remark = '';
-  protected isApproving = false;
-  protected isRejecting = false;
-  protected actionMessage = '';
-  protected actionError = false;
+  protected readonly isApproving = signal(false);
+  protected readonly isRejecting = signal(false);
+  protected readonly actionMessage = signal('');
+  protected readonly actionError = signal(false);
 
   ngOnInit(): void {
     const requestId = this.route.snapshot.paramMap.get('requestId');
 
     if (!requestId) {
-      this.isLoading = false;
+      void this.router.navigate(['/admin/pending-requests'], {
+        replaceUrl: true,
+      });
       return;
     }
 
     this.pendingRequestService.getRequestById(requestId).subscribe((request) => {
+      if (!request) {
+        void this.router.navigate(['/admin/pending-requests'], {
+          replaceUrl: true,
+        });
+        return;
+      }
+
       this.request = request;
       this.isLoading = false;
     });
@@ -44,35 +56,36 @@ export class RequestDetail implements OnInit {
   protected rejectRequest(requestId: string): void {
     const reason = this.remark.trim();
     if (!reason) {
-      this.actionMessage = 'Please enter a remark before rejecting this request.';
-      this.actionError = true;
+      this.actionMessage.set('Please enter a remark before rejecting this request.');
+      this.actionError.set(true);
       return;
     }
 
-    this.isRejecting = true;
-    this.actionMessage = '';
-    this.actionError = false;
+    this.isRejecting.set(true);
+    this.actionMessage.set('');
+    this.actionError.set(false);
 
     this.pendingRequestService.rejectRequest(requestId, reason).subscribe({
       next: (response: RejectRequestResponse) => {
-        this.isRejecting = false;
+        this.isRejecting.set(false);
 
         if (response.status_code !== 200 || !response.data) {
-          this.actionMessage =
-            response.message ?? 'The request could not be rejected.';
-          this.actionError = true;
+          this.actionMessage.set(
+            response.message ??
+              response.data?.message ??
+              'The request could not be rejected.',
+          );
+          this.actionError.set(true);
           return;
         }
 
-        if (this.request) {
-          this.request = { ...this.request, status: response.data.status };
-        }
-        this.actionMessage = response.data.message;
+        this.toast.show(response.data.message);
+        void this.router.navigate(['/admin/pending-requests']);
       },
       error: (error: HttpErrorResponse) => {
-        this.isRejecting = false;
-        this.actionMessage = this.getRequestActionErrorMessage(error, 'reject');
-        this.actionError = true;
+        this.isRejecting.set(false);
+        this.actionMessage.set(this.getRequestActionErrorMessage(error, 'reject'));
+        this.actionError.set(true);
       },
     });
   }
@@ -80,35 +93,38 @@ export class RequestDetail implements OnInit {
   protected approveRequest(requestId: string): void {
     const remark = this.remark.trim();
     if (!remark) {
-      this.actionMessage = 'Please enter a remark before approving this request.';
-      this.actionError = true;
+      this.actionMessage.set('Please enter a remark before approving this request.');
+      this.actionError.set(true);
       return;
     }
 
-    this.isApproving = true;
-    this.actionMessage = '';
-    this.actionError = false;
+    this.isApproving.set(true);
+    this.actionMessage.set('');
+    this.actionError.set(false);
 
     this.pendingRequestService.approveRequest(requestId, remark).subscribe({
       next: (response: ApproveRequestResponse) => {
-        this.isApproving = false;
+        this.isApproving.set(false);
 
         if (response.status_code !== 200 || !response.data) {
-          this.actionMessage =
-            response.message ?? 'The request could not be approved.';
-          this.actionError = true;
+          this.actionMessage.set(
+            response.message ??
+              response.data?.message ??
+              'The request could not be approved.',
+          );
+          this.actionError.set(true);
           return;
         }
 
-        if (this.request) {
-          this.request = { ...this.request, status: response.data.status };
-        }
-        this.actionMessage = `${response.data.message} Client ID: ${response.data.clientId}.`;
+        this.toast.show(response.data.message);
+        void this.router.navigate(['/admin/pending-requests']);
       },
       error: (error: HttpErrorResponse) => {
-        this.isApproving = false;
-        this.actionMessage = this.getRequestActionErrorMessage(error, 'approve');
-        this.actionError = true;
+        this.isApproving.set(false);
+        this.actionMessage.set(
+          this.getRequestActionErrorMessage(error, 'approve'),
+        );
+        this.actionError.set(true);
       },
     });
   }
@@ -127,8 +143,8 @@ export class RequestDetail implements OnInit {
     switch (error.status) {
       case 400:
         return action === 'reject'
-          ? 'A request ID and remark are required.'
-          : 'A request ID is required.';
+          ? 'An organization ID and reason are required.'
+          : 'An organization ID and note are required.';
       case 401:
         return 'Your session has expired. Please sign in again.';
       case 403:

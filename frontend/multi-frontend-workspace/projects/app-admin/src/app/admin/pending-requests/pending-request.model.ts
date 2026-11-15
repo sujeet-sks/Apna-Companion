@@ -7,16 +7,12 @@ export interface PendingRequest {
   id: string;
   client: string;
   type: string;
-  city: string;
   submitted: string;
-  documentsVerified: number;
-  documentsTotal: number;
   status: string;
-  registrationNumber: string;
-  contactName: string;
   email: string;
-  phone: string;
   address: string;
-  description: string;
+  latitude: number;
+  longitude: number;
+  approvalRemarks: string | null;
   documents: PendingRequestDocument[];
 }

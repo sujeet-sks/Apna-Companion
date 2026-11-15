@@ -33,13 +33,24 @@ export class Settings {
   }
 
   private readStoredUser(): {
+    admin_id?: string;
     adminId?: string;
+    email?: string;
     EmailId?: string;
     full_name?: string;
   } | null {
     try {
       const storedUser = sessionStorage.getItem('admin_user');
-      return storedUser ? JSON.parse(storedUser) : null;
+      if (!storedUser) {
+        return null;
+      }
+
+      const user = JSON.parse(storedUser);
+      return {
+        adminId: user.admin_id ?? user.adminId,
+        EmailId: user.email ?? user.EmailId,
+        full_name: user.full_name,
+      };
     } catch {
       return null;
     }

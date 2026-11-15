@@ -54,6 +54,70 @@ h1 {
   background: #fff;
 }
 
+.detail-card h2 {
+  margin: 0 0 16px;
+  color: #17352b;
+  font-size: 20px;
+}
+
+.documents-card {
+  margin-top: 16px;
+}
+
+.document-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid #edf0ef;
+  padding-top: 8px;
+  color: #172f39;
+  font-size: 14px;
+}
+
+.download-button {
+  display: inline-flex;
+  min-height: 36px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #aebcb6;
+  border-radius: 7px;
+  padding: 0 12px;
+  color: #315b4a;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.download-button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.download-button:hover {
+  border-color: #315b4a;
+  background: #f5f8f6;
+}
+
+.download-button:focus-visible {
+  outline: 2px solid #315b4a;
+  outline-offset: 2px;
+}
+
+.no-document {
+  margin: 0;
+  color: #60736a;
+  font-size: 14px;
+}
+
 .client-statistics {
   display: grid;
   gap: 16px;

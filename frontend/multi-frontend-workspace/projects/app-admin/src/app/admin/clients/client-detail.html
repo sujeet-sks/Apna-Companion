@@ -1,26 +1,27 @@
 <main class="client-detail-page">
   <a class="back-link" routerLink="/admin/clients">
     <span aria-hidden="true">&larr;</span>
-    Back to approved clients
+    Back to clients
   </a>
 
-  @if (isLoading) {
+  @if (isLoading()) {
     <p class="page-message" role="status">Loading client details...</p>
-  } @else if (errorMessage) {
+  } @else if (errorMessage()) {
     <section class="detail-card">
-      <p class="page-message page-message--error" role="alert">{{ errorMessage }}</p>
+      <p class="page-message page-message--error" role="alert">
+        {{ errorMessage() }}
+      </p>
     </section>
-  } @else if (client) {
+  } @else if (client(); as clientDetails) {
     <header class="detail-header">
       <div>
-        <p class="eyebrow">Approved client</p>
-        <h1>{{ client['clientName'] ?? client['name'] ?? client['organizationName'] ?? 'Client details' }}</h1>
+        <h1>{{ clientDetails.organizationName }}</h1>
       </div>
     </header>
 
     <section class="detail-card" aria-label="All client details">
       <dl class="detail-list">
-        @for (field of fields; track field.label) {
+        @for (field of fields(); track field.label) {
           <div>
             <dt>{{ field.label }}</dt>
             <dd>{{ field.value }}</dd>
@@ -29,67 +30,33 @@
       </dl>
     </section>
 
-    @if (statistics; as clientStatistics) {
-      <section class="client-statistics" aria-label="Client statistics">
-        <div class="statistics-grid">
-          @for (metric of clientStatistics.metrics; track metric.label) {
-            <article class="statistic-card" [class.statistic-card--wide]="metric.wide">
-              <h2>{{ metric.label }}</h2>
-              <p>{{ metric.value }}</p>
-            </article>
-          }
-        </div>
-
-        <section class="booking-outcomes-card" aria-labelledby="booking-outcomes-title">
-          <h2 id="booking-outcomes-title">Booking outcomes</h2>
-          <div
-            class="outcomes-bar"
-            role="img"
-            [attr.aria-label]="
-              'Completed: ' + clientStatistics.bookingOutcomes.completed +
-              ', Cancelled: ' + clientStatistics.bookingOutcomes.cancelled +
-              ', Upcoming or in progress: ' + clientStatistics.bookingOutcomes.upcoming
-            "
+    <section class="detail-card documents-card" aria-labelledby="documents-heading">
+      <h2 id="documents-heading">Submitted documents</h2>
+      @if (clientDetails.documentUrl) {
+        <div class="document-row">
+          <span>{{ formatDocumentType(clientDetails.documentType) }}</span>
+          <a
+            class="download-button"
+            [href]="clientDetails.documentUrl"
+            download=""
+            [attr.aria-label]="'Download ' + formatDocumentType(clientDetails.documentType)"
           >
-            <span
-              class="outcome-segment outcome-segment--completed"
-              [style.width.%]="getOutcomeWidth(clientStatistics.bookingOutcomes.completed)"
-            ></span>
-            <span
-              class="outcome-segment outcome-segment--cancelled"
-              [style.width.%]="getOutcomeWidth(clientStatistics.bookingOutcomes.cancelled)"
-            ></span>
-            <span
-              class="outcome-segment outcome-segment--upcoming"
-              [style.width.%]="getOutcomeWidth(clientStatistics.bookingOutcomes.upcoming)"
-            ></span>
-          </div>
-          <ul class="outcomes-legend">
-            <li>
-              <span class="legend-dot legend-dot--completed"></span>
-              <span>Completed</span>
-              <strong>{{ clientStatistics.bookingOutcomes.completed }}</strong>
-            </li>
-            <li>
-              <span class="legend-dot legend-dot--cancelled"></span>
-              <span>Cancelled</span>
-              <strong>{{ clientStatistics.bookingOutcomes.cancelled }}</strong>
-            </li>
-            <li>
-              <span class="legend-dot legend-dot--upcoming"></span>
-              <span>Upcoming or in progress</span>
-              <strong>{{ clientStatistics.bookingOutcomes.upcoming }}</strong>
-            </li>
-          </ul>
-          <p class="outcomes-note">{{ clientStatistics.bookingOutcomesNote }}</p>
-        </section>
-      </section>
-    }
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3v12m0 0 4-4m-4 4-4-4" />
+              <path d="M5 17v3h14v-3" />
+            </svg>
+            <span>Download</span>
+          </a>
+        </div>
+      } @else {
+        <p class="no-document">No document submitted.</p>
+      }
+    </section>
   } @else {
     <section class="detail-card not-found">
       <h1>Client not found</h1>
       <p>This client may have been removed or the link may be incorrect.</p>
-      <a routerLink="/admin/clients">Return to approved clients</a>
+      <a routerLink="/admin/clients">Return to clients</a>
     </section>
   }
 </main>
