@@ -24,6 +24,19 @@ class Customer(models.Model):
         db_table = "customers"
 
 
+class Admin(models.Model):
+    id = models.UUIDField(primary_key=True, editable=False)
+    full_name = models.CharField(max_length=120)
+    email = models.EmailField(max_length=254, unique=True)
+    password_hash = models.TextField()
+    last_login_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = False
+        db_table = "admins"
+
+
 class Organization(models.Model):
     organization_id = models.CharField(max_length=36, primary_key=True)
     organization_name = models.CharField(max_length=150)
