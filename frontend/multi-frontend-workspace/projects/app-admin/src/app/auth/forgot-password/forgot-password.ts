@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -12,7 +12,6 @@ import { Router, RouterLink } from '@angular/router';
 import { ToastService } from '../../shared/toast.service';
 
 interface ApiResponse {
-  status_code?: number;
   message?: string;
 }
 
@@ -33,11 +32,12 @@ export class ForgotPassword {
   private readonly http = inject(HttpClient);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
+  private requestId = '';
 
-  protected otpStage = false;
-  protected isSubmitting = false;
-  protected errorMessage = '';
-  protected successMessage = '';
+  protected readonly otpStage = signal(false);
+  protected readonly isSubmitting = signal(false);
+  protected readonly errorMessage = signal('');
+  protected readonly successMessage = signal('');
   protected readonly forgotPasswordForm = new FormGroup(
     {
       email: new FormControl('', {
@@ -66,25 +66,25 @@ export class ForgotPassword {
   );
 
   protected onSubmit(): void {
-    this.successMessage = '';
-    this.errorMessage = '';
+    this.successMessage.set('');
+    this.errorMessage.set('');
 
-    if (!this.otpStage && this.forgotPasswordForm.controls.email.invalid) {
+    if (!this.otpStage() && this.forgotPasswordForm.controls.email.invalid) {
       this.forgotPasswordForm.controls.email.markAsTouched();
       return;
     }
 
-    if (this.otpStage && this.forgotPasswordForm.invalid) {
+    if (this.otpStage() && this.forgotPasswordForm.invalid) {
       this.forgotPasswordForm.markAllAsTouched();
       return;
     }
 
-    this.isSubmitting = true;
-    this.errorMessage = '';
+    this.isSubmitting.set(true);
+    this.errorMessage.set('');
     const { email, otp, newPassword, confirmPassword } =
       this.forgotPasswordForm.getRawValue();
-  
-    if (!this.otpStage) {
+
+    if (!this.otpStage()) {
       this.http
         .post<ForgotPasswordRequestResponse>(
           '/api/admin/forgot-password/request/',
@@ -92,47 +92,61 @@ export class ForgotPassword {
         )
         .subscribe({
           next: (response) => {
-            this.isSubmitting = false;
-            this.otpStage = true;
-            this.successMessage =
+            this.isSubmitting.set(false);
+            if (!response.request_id) {
+              this.errorMessage.set(
+                'Unable to continue because the request ID was not returned.',
+              );
+              return;
+            }
+
+            this.requestId = response.request_id;
+            this.otpStage.set(true);
+            this.successMessage.set(
               response.message ||
-              'If an admin account exists, a code was sent.';
-            this.toast.show(this.successMessage);
+                'If an admin account exists, a code was sent.',
+            );
+            this.toast.show(this.successMessage());
           },
           error: (error: HttpErrorResponse) => {
-            this.isSubmitting = false;
-            this.errorMessage =
-              error.error?.message ?? 'Unable to send the OTP. Please try again.';
+            this.isSubmitting.set(false);
+            this.errorMessage.set(
+              error.error?.message ??
+                'Unable to send the OTP. Please try again.',
+            );
           },
         });
       return;
     }
 
+    if (!this.requestId) {
+      this.isSubmitting.set(false);
+      this.errorMessage.set('Please request a new verification code.');
+      return;
+    }
+
     this.http
-      .post<ApiResponse>('/adminPortal/auth/verifyOTP', {
-        email,
-        otp,
-        newPassword,
-        confirmPassword,
+      .post<ApiResponse>('/api/admin/forgot-password/confirm/', {
+        request_id: this.requestId,
+        code: otp,
+        new_password: newPassword,
+        confirm_password: confirmPassword,
       })
       .subscribe({
         next: (response) => {
-          this.isSubmitting = false;
-          if (response.status_code !== undefined && response.status_code !== 200) {
-            this.errorMessage =
-              response.message ?? 'OTP verification failed. Please try again.';
-            return;
-          }
-          this.errorMessage = '';
-          this.successMessage =
-            response.message ?? 'Password changed successfully!';
-          this.toast.show(this.successMessage);
+          this.isSubmitting.set(false);
+          this.errorMessage.set('');
+          this.successMessage.set(
+            response.message ?? 'Password updated successfully.',
+          );
+          this.toast.show(this.successMessage());
           void this.router.navigate(['/login']);
         },
         error: (error: HttpErrorResponse) => {
-          this.isSubmitting = false;
-          this.errorMessage =
-            error.error?.message ?? 'OTP verification failed. Please try again.';
+          this.isSubmitting.set(false);
+          this.errorMessage.set(
+            error.error?.message ?? 'Password cannot be updated.',
+          );
         },
       });
   }

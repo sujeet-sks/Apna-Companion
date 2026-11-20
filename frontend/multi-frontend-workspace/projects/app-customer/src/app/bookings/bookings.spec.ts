@@ -77,7 +77,7 @@ describe('Bookings', () => {
           rating: 4.5,
           companion: null,
           scheduletimestamp: '2026-11-25T10:00:00+05:30',
-          durationOfBooking: 2,
+          durationOfBooking: 140,
           contactName: 'Asha Customer',
           contactPhone: '+919876543210',
           startOtp: '1234',
@@ -109,6 +109,16 @@ describe('Bookings', () => {
     expect(text).toContain('Asha Customer');
     expect(text).toContain('+919876543210');
     expect(text).toContain('Companion not assigned yet.');
+    expect(text).toContain('Duration: 2 hr and 20 min');
+    expect(text).toContain('Duration: 3 hours');
+  });
+
+  it('formats numeric duration strings while preserving existing text durations', () => {
+    const component = TestBed.createComponent(Bookings).componentInstance;
+
+    expect(component.formatBookingDuration('140')).toBe('2 hr and 20 min');
+    expect(component.formatBookingDuration('60')).toBe('1 hr');
+    expect(component.formatBookingDuration('3 hours')).toBe('3 hours');
   });
 
   it('lets customers review completed past bookings without comments', () => {

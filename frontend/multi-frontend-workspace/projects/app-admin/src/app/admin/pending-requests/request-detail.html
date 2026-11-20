@@ -69,8 +69,9 @@
               <a
                 class="download-button"
                 [href]="document.link"
-                download=""
-                [attr.aria-label]="'Download ' + document.name"
+                target="_blank"
+                rel="noopener noreferrer"
+                [attr.aria-label]="'Open ' + document.name + ' in a new tab'"
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M12 3v12m0 0 4-4m-4 4-4-4" />

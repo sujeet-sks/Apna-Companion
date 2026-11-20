@@ -206,14 +206,28 @@
                         <input [(ngModel)]="bookingTime" name="bookingTime" type="time" />
                       </label>
                       <label>
-                        Duration
+                        Duration (hours)
                         <input
-                          [(ngModel)]="bookingDuration"
-                          name="bookingDuration"
+                          [(ngModel)]="bookingDurationHours"
+                          name="bookingDurationHours"
                           type="number"
                           inputmode="numeric"
-                          min="1"
-                          placeholder="Hours"
+                          min="0"
+                          step="1"
+                          placeholder="0"
+                        />
+                      </label>
+                      <label>
+                        Duration (minutes)
+                        <input
+                          [(ngModel)]="bookingDurationMinutes"
+                          name="bookingDurationMinutes"
+                          type="number"
+                          inputmode="numeric"
+                          min="0"
+                          max="59"
+                          step="1"
+                          placeholder="0"
                         />
                       </label>
                     </div>

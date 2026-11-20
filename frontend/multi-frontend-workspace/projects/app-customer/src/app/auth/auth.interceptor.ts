@@ -11,7 +11,8 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     request.url.includes('/api/customer/register/complete/') ||
     request.url.includes('/api/customer/login/') ||
     request.url.includes('/api/customer/forgot-password/request/') ||
-    request.url.includes('/api/customer/forgot-password/confirm/');
+    request.url.includes('/api/customer/forgot-password/confirm/') ||
+    request.url.includes('https://nominatim.openstreetmap.org/');
 
   if (!accessToken || isPublicAuthRequest) {
     return next(request);

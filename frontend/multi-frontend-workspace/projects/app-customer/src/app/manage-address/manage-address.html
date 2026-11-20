@@ -26,44 +26,8 @@
     <section class="address-form" aria-label="Address details">
       <div class="form-heading">
         <h2>{{ editingId === null ? 'Add a new address' : 'Edit address' }}</h2>
-        <button class="close-button" type="button" aria-label="Close form" (click)="closeForm()">×</button>
+        <button class="close-button" type="button" aria-label="Close form" [disabled]="isSavingAddress()" (click)="closeForm()">×</button>
       </div>
-
-      @if (editingId === null) {
-        <div class="location-options" aria-label="Location options">
-          <button class="location-option" type="button" (click)="useCurrentLocation()">
-            <span class="location-option-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="3" />
-                <circle cx="12" cy="12" r="7" />
-                <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
-              </svg>
-            </span>
-            <span class="location-option-copy">
-              <strong>Use my current location</strong>
-              <small>Uses your phone's GPS</small>
-            </span>
-          </button>
-
-          <button class="location-option" type="button" disabled>
-            <span class="location-option-icon map-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24">
-                <path d="m3 6 5-3 8 3 5-3v15l-5 3-8-3-5 3V6Z" />
-                <path d="M8 3v15M16 6v15" />
-              </svg>
-            </span>
-            <span class="location-option-copy">
-              <strong>Pick on map</strong>
-              <small>Drag the pin to the exact spot</small>
-            </span>
-            <span class="disabled-arrow" aria-hidden="true">›</span>
-          </button>
-
-          @if (locationStatus) {
-            <p class="location-status" role="status">{{ locationStatus }}</p>
-          }
-        </div>
-      }
 
       <label>
         Address label
@@ -117,9 +81,9 @@
       </div>
 
       <div class="form-actions">
-        <button class="cancel-button" type="button" (click)="closeForm()">Cancel</button>
-        <button class="save-button" type="button" (click)="saveAddress()" [disabled]="!canSaveAddress()">
-          {{ editingId === null ? 'Save address' : 'Edit address' }}
+        <button class="cancel-button" type="button" [disabled]="isSavingAddress()" (click)="closeForm()">Cancel</button>
+        <button class="save-button" type="button" (click)="saveAddress()" [disabled]="!canSaveAddress() || isSavingAddress()">
+          {{ isSavingAddress() ? 'Finding location...' : editingId === null ? 'Save address' : 'Edit address' }}
         </button>
       </div>
     </section>

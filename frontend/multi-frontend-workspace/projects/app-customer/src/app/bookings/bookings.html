@@ -38,7 +38,7 @@
               <div class="booking-details">
                 <p><strong>Date:</strong> {{ formatBookingDate(booking.scheduletimestamp) }}</p>
                 <p><strong>Time:</strong> {{ formatBookingTime(booking.scheduletimestamp) }}</p>
-                <p><strong>Duration:</strong> {{ booking.durationOfBooking }}</p>
+                <p><strong>Duration:</strong> {{ formatBookingDuration(booking.durationOfBooking) }}</p>
                 <p><strong>Organization rating:</strong> ★ {{ booking.rating }}</p>
               </div>
 
@@ -159,7 +159,7 @@
               <div class="booking-details">
                 <p><strong>Date:</strong> {{ formatBookingDate(booking.scheduletimestamp) }}</p>
                 <p><strong>Time:</strong> {{ formatBookingTime(booking.scheduletimestamp) }}</p>
-                <p><strong>Duration:</strong> {{ booking.durationOfBooking }}</p>
+                <p><strong>Duration:</strong> {{ formatBookingDuration(booking.durationOfBooking) }}</p>
                 <p><strong>Organization rating:</strong> ★ {{ booking.rating }}</p>
               </div>
 

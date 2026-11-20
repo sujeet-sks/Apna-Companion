@@ -4,7 +4,9 @@ import {
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { of, throwError } from 'rxjs';
 import { ManageAddress } from './manage-address';
+import { GeocodingService, LatLng } from '../shared/geocoding.service';
 
 const savedAddress = {
   addressId: 101,
@@ -22,11 +24,27 @@ const savedAddress = {
 
 describe('ManageAddress', () => {
   let httpTesting: HttpTestingController;
+  let geocodedLocation: LatLng | null;
+  let geocodingError: Error | null;
 
   beforeEach(async () => {
+    geocodedLocation = null;
+    geocodingError = null;
     await TestBed.configureTestingModule({
       imports: [ManageAddress],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        {
+          provide: GeocodingService,
+          useValue: {
+            geocode: () =>
+              geocodingError
+                ? throwError(() => geocodingError)
+                : of(geocodedLocation),
+          },
+        },
+      ],
     }).compileComponents();
     httpTesting = TestBed.inject(HttpTestingController);
     sessionStorage.setItem('customer_id', '42');
@@ -80,7 +98,7 @@ describe('ManageAddress', () => {
     expect(fixture.componentInstance.addressStatus()).toContain('Please log in');
   });
 
-  it('saves a new address using the save API', () => {
+  it('saves an address with fallback coordinates when geocoding finds no result', () => {
     const fixture = createComponentWithAddresses();
     const component = fixture.componentInstance;
     component.label = 'HOME';
@@ -95,45 +113,77 @@ describe('ManageAddress', () => {
 
     component.saveAddress();
 
+    const request = httpTesting.expectOne('/api/v1/customer/saveNewAddress/');
+    expect(request.request.body.latitude).toBe(19.1326204);
+    expect(request.request.body.longitude).toBe(72.9109825);
+    request.flush({ success: 200, message: 'Address added successfully' });
+    httpTesting.expectOne('/api/v1/customer/getAllSavedAddress/').flush({
+      success: 200,
+      message: 'Addresses fetched successfully',
+      data: [],
+    });
+
+    expect(component.addressStatus()).toContain('default coordinates were used');
+  });
+
+  it('saves an address with fallback coordinates when geocoding errors', () => {
+    const fixture = createComponentWithAddresses();
+    const component = fixture.componentInstance;
+    geocodingError = new Error('Geocoding request failed');
+    component.houseNo = '12';
+    component.buildingStreet = 'Oak Street';
+    component.areaLocality = 'Central';
+    component.city = 'Mumbai';
+    component.state = 'Maharashtra';
+    component.pincode = '400001';
+    component.country = 'India';
+
+    component.saveAddress();
+
+    const request = httpTesting.expectOne('/api/v1/customer/saveNewAddress/');
+    expect(request.request.body.latitude).toBe(19.1326204);
+    expect(request.request.body.longitude).toBe(72.9109825);
+    request.flush({ success: 200, message: 'Address added successfully' });
+    httpTesting.expectOne('/api/v1/customer/getAllSavedAddress/').flush({
+      success: 200,
+      message: 'Addresses fetched successfully',
+      data: [],
+    });
+
+    expect(component.addressStatus()).toContain('default coordinates were used');
+  });
+
+  it('saves geocoded coordinates when the address is found', () => {
+    const fixture = createComponentWithAddresses();
+    const component = fixture.componentInstance;
+    geocodedLocation = { lat: 19.076, lng: 72.8777 };
+    component.houseNo = '12';
+    component.buildingStreet = 'Oak Street';
+    component.areaLocality = 'Central';
+    component.city = 'Mumbai';
+    component.state = 'Maharashtra';
+    component.pincode = '400001';
+    component.country = 'India';
+
+    component.saveAddress();
+
     const request = httpTesting.expectOne(
       '/api/v1/customer/saveNewAddress/',
     );
-    expect(request.request.method).toBe('POST');
-    expect(request.request.body).toEqual({
-      userId: 42,
-      label: 'HOME',
-      houseNo: '12',
-      buildingStreet: 'Oak Street',
-      areaLocality: 'Central',
-      landmark: 'Library',
-      city: 'Mumbai',
-      state: 'Maharashtra',
-      pincode: '400001',
-      country: 'India',
-      latitude: null,
-      longitude: null,
-      isDefault: true,
-    });
-    request.flush({
-      success: 200,
-      data: { message: 'Address added successfully' },
-    });
-
-    const refreshRequest = httpTesting.expectOne(
-      '/api/v1/customer/getAllSavedAddress/',
-    );
-    refreshRequest.flush({
+    expect(request.request.body.latitude).toBe(19.076);
+    expect(request.request.body.longitude).toBe(72.8777);
+    request.flush({ success: 200, message: 'Address added successfully' });
+    httpTesting.expectOne('/api/v1/customer/getAllSavedAddress/').flush({
       success: 200,
       message: 'Addresses fetched successfully',
-      data: [savedAddress],
+      data: [],
     });
-    fixture.detectChanges();
-    expect(component.addressStatus()).toBe('Address added successfully');
   });
 
   it('edits an address with its addressId', () => {
     const fixture = createComponentWithAddresses([savedAddress]);
     const component = fixture.componentInstance;
+    geocodedLocation = { lat: 12.9716, lng: 77.5946 };
     component.openEditForm(component.addresses()[0]!);
     component.houseNo = '12B';
 
@@ -155,8 +205,8 @@ describe('ManageAddress', () => {
       state: 'Karnataka',
       pincode: '560038',
       country: 'India',
-      latitude: null,
-      longitude: null,
+      latitude: 12.9716,
+      longitude: 77.5946,
       isDefault: true,
     });
     request.flush({
@@ -170,7 +220,7 @@ describe('ManageAddress', () => {
       data: [{ ...savedAddress, houseNo: '12B' }],
     });
     fixture.detectChanges();
-    expect(component.addressStatus()).toBe('Address modified successfully');
+    expect(component.addressStatus()).toContain('Address modified successfully');
   });
 
   it('deletes an address using the delete API', () => {

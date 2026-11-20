@@ -1,7 +1,32 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { Observable, catchError, finalize, map, of, switchMap, timeout } from 'rxjs';
+import { GeocodingAddress, GeocodingService, LatLng } from '../shared/geocoding.service';
+
+interface AddressFields {
+  houseNo: string;
+  buildingStreet: string;
+  areaLocality: string;
+  label: string;
+  landmark: string;
+  city: string;
+  state: string;
+  pincode: string;
+  country: string;
+}
+
+interface AddressMutationPayload extends AddressFields {
+  userId: number;
+  latitude: number;
+  longitude: number;
+  isDefault: boolean;
+}
+
+interface AddressCoordinatesResult {
+  coordinates: LatLng;
+  usedFallback: boolean;
+}
 
 interface Address {
   addressId: number;
@@ -33,23 +58,6 @@ interface AddressActionResponse {
   };
 }
 
-interface ReverseGeocodeResponse {
-  success: number;
-  data?: Partial<
-    Pick<
-      Address,
-      | 'houseNo'
-      | 'buildingStreet'
-      | 'areaLocality'
-      | 'landmark'
-      | 'city'
-      | 'state'
-      | 'pincode'
-      | 'country'
-    >
-  >;
-}
-
 @Component({
   selector: 'app-manage-address',
   imports: [FormsModule],
@@ -58,15 +66,18 @@ interface ReverseGeocodeResponse {
 })
 export class ManageAddress implements OnInit {
   private readonly http = inject(HttpClient);
+  private readonly geocoding = inject(GeocodingService);
+  private readonly fallbackLatitude = 19.1326204;
+  private readonly fallbackLongitude = 72.9109825;
   private readonly addressesApiUrl = '/api/v1/customer/getAllSavedAddress/';
   private readonly deleteAddressApiUrl = '/api/v1/customer/deleteAddress/';
   private readonly editAddressApiUrl = '/api/v1/customer/editExistingAddress/';
   private readonly saveAddressApiUrl = '/api/v1/customer/saveNewAddress/';
-  private readonly reverseGeocodeUrl = '/addresses/reverse-geocode';
   readonly userId: number | null = this.getStoredUserId();
   readonly addresses = signal<Address[]>([]);
   readonly addressStatus = signal('');
   readonly isLoadingAddresses = signal(false);
+  readonly isSavingAddress = signal(false);
 
   formOpen = false;
   editingId: number | null = null;
@@ -79,9 +90,6 @@ export class ManageAddress implements OnInit {
   state = '';
   pincode = '';
   country = 'India';
-  locationStatus = '';
-  latitude: number | null = null;
-  longitude: number | null = null;
 
   private getStoredUserId(): number | null {
     if (typeof window === 'undefined') return null;
@@ -153,17 +161,11 @@ export class ManageAddress implements OnInit {
     this.editingId = null;
     this.label = 'HOME';
     this.resetAddressFields();
-    this.latitude = null;
-    this.longitude = null;
-    this.locationStatus = '';
     this.formOpen = true;
   }
 
   openEditForm(address: Address): void {
     this.editingId = address.addressId;
-    this.locationStatus = '';
-    this.latitude = address.latitude ?? 19.1326204;
-    this.longitude = address.longitude ?? 72.9109825;
     this.label = address.label;
     this.houseNo = address.houseNo;
     this.buildingStreet = address.buildingStreet;
@@ -187,72 +189,6 @@ export class ManageAddress implements OnInit {
     this.country = 'India';
   }
 
-  useCurrentLocation(): void {
-    if (!navigator.geolocation) {
-      this.locationStatus = 'Current location is not supported by this device.';
-      return;
-    }
-
-    this.locationStatus = 'Fetching your location...';
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        this.latitude = position.coords.latitude;
-        this.longitude = position.coords.longitude;
-        this.locationStatus =
-          `Current location fetched successfully. Latitude: ${this.latitude.toFixed(6)}, Longitude: ${this.longitude.toFixed(6)}`;
-        this.prefillAddressFromCoordinates();
-      },
-      (error) => {
-        if (error.code === error.PERMISSION_DENIED) {
-          this.locationStatus = 'Location permission was denied.';
-        } else {
-          this.locationStatus = 'Unable to fetch your current location.';
-        }
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
-    );
-  }
-
-  prefillAddressFromCoordinates(): void {
-    if (this.latitude === null || this.longitude === null) return;
-
-    this.locationStatus = 'Fetching address details...';
-    this.http
-      .get<ReverseGeocodeResponse>(this.reverseGeocodeUrl, {
-        params: {
-          lat: this.latitude.toString(),
-          lon: this.longitude.toString(),
-        },
-      })
-      .subscribe({
-        next: (result) => {
-          const address = result.data;
-          if (result.success !== 200 || !address) {
-            this.locationStatus = 'Location fetched, but address details were unavailable.';
-            return;
-          }
-
-          this.houseNo = address.houseNo ?? '';
-          this.buildingStreet = address.buildingStreet ?? '';
-          this.areaLocality = address.areaLocality ?? '';
-          this.landmark = address.landmark ?? '';
-          this.city = address.city ?? '';
-          this.state = address.state ?? '';
-          this.pincode = address.pincode ?? '';
-          this.country = address.country ?? '';
-
-          this.locationStatus =
-            `Current location fetched successfully. Latitude: ${this.latitude!.toFixed(6)}, Longitude: ${this.longitude!.toFixed(6)}`
-            + ' Address fields have been prefilled.';
-        },
-        error: () => {
-          this.locationStatus =
-            `Current location fetched successfully. Latitude: ${this.latitude!.toFixed(6)}, Longitude: ${this.longitude!.toFixed(6)}`
-            + ' Unable to prefill address details.';
-        },
-      });
-  }
-
   canSaveAddress(): boolean {
     const requiredFieldsPresent = [
       this.label,
@@ -273,24 +209,58 @@ export class ManageAddress implements OnInit {
     this.formOpen = false;
   }
 
+  // 1. Get latitude/longitude from the address. On any failure, use the static defaults.
+  private getAddressCoordinates(
+    address: GeocodingAddress,
+  ): Observable<AddressCoordinatesResult> {
+    const fallback: AddressCoordinatesResult = {
+      coordinates: { lat: this.fallbackLatitude, lng: this.fallbackLongitude },
+      usedFallback: true,
+    };
+
+    return this.geocoding
+      .geocode(address)
+      .pipe(
+        timeout(8000),
+        map((coordinates): AddressCoordinatesResult =>
+          coordinates ? { coordinates, usedFallback: false } : fallback,
+        ),
+        catchError(() => of(fallback)),
+      );
+  }
+
+  // 2. Call the backend: save a new address, or edit an existing one when editingId is set.
+  private submitAddress(
+    payload: AddressMutationPayload,
+    editingId: number | null,
+  ): Observable<AddressActionResponse> {
+    if (editingId === null) {
+      return this.http.post<AddressActionResponse>(this.saveAddressApiUrl, payload);
+    }
+    return this.http.post<AddressActionResponse>(this.editAddressApiUrl, {
+      ...payload,
+      addressId: editingId,
+    });
+  }
+
+  // Save button: get coordinates first, then send them to the backend.
   saveAddress(): void {
-    if (!this.canSaveAddress()) return;
-    if (this.userId === null) {
+    if (!this.canSaveAddress() || this.isSavingAddress()) return;
+    const userId = this.userId;
+    if (userId === null) {
       this.addressStatus.set('Please log in to save an address.');
       return;
     }
 
-    const existingAddress =
-      this.editingId !== null
-        ? this.addresses().find((item) => item.addressId === this.editingId)
-        : undefined;
-    const isDefault = existingAddress?.isDefault ?? this.addresses().length === 0;
+    const editingId = this.editingId;
+    const isEdit = editingId !== null;
+    const existing = isEdit
+      ? this.addresses().find((address) => address.addressId === editingId)
+      : undefined;
+    const isDefault = existing?.isDefault ?? this.addresses().length === 0;
 
-    this.addressStatus.set('');
-    const addressPayload = {
-      userId: this.userId,
-      ...(this.editingId !== null ? { addressId: this.editingId } : {}),
-      label: this.label,
+    const fields: AddressFields = {
+      label: this.label.trim(),
       houseNo: this.houseNo.trim(),
       buildingStreet: this.buildingStreet.trim(),
       areaLocality: this.areaLocality.trim(),
@@ -299,65 +269,56 @@ export class ManageAddress implements OnInit {
       state: this.state.trim(),
       pincode: this.pincode.trim(),
       country: this.country.trim(),
-      latitude: this.latitude ?? 19.1326204,
-      longitude: this.longitude ?? 72.9109825,
-      isDefault,
     };
 
-    if (this.editingId !== null) {
-      this.http
-        .post<AddressActionResponse>(this.editAddressApiUrl, addressPayload)
-        .subscribe({
-          next: (response) => {
-            if (response.success !== 200) {
-              this.addressStatus.set(
-                response.data?.message ??
-                  response.message ??
-                  'Unable to update the address. Please try again.',
-              );
-              return;
-            }
+    this.isSavingAddress.set(true);
+    this.addressStatus.set('Finding the address location...');
 
-            this.addressStatus.set(
-              response.data?.message ?? response.message ?? 'Address updated successfully.',
-            );
-            this.closeForm();
-            this.loadAddresses();
-          },
-          error: (error: HttpErrorResponse) => {
-            this.addressStatus.set(
-              error.error?.message ??
-                'Unable to update the address. Please try again.',
-            );
-          },
-        });
-    } else {
-      this.http
-        .post<AddressActionResponse>(this.saveAddressApiUrl, addressPayload)
-        .subscribe({
-          next: (response) => {
-            if (response.success !== 200) {
-              this.addressStatus.set(
-                response.data?.message ??
-                  response.message ??
-                  'Unable to save the address. Please try again.',
-              );
-              return;
-            }
+    this.getAddressCoordinates({
+      city: fields.city,
+      state: fields.state,
+      pincode: fields.pincode,
+      country: fields.country,
+    })
+      .pipe(
+        switchMap(({ coordinates, usedFallback }) => {
+          const payload: AddressMutationPayload = {
+            userId,
+            ...fields,
+            latitude: coordinates.lat,
+            longitude: coordinates.lng,
+            isDefault,
+          };
+          return this.submitAddress(payload, editingId).pipe(
+            map((response) => ({ response, usedFallback })),
+          );
+        }),
+        finalize(() => this.isSavingAddress.set(false)),
+      )
+      .subscribe({
+        next: ({ response, usedFallback }) => {
+          const msg = response.data?.message ?? response.message;
+          if (response.success !== 200) {
+            this.addressStatus.set(msg ?? 'Unable to save the address. Please try again.');
+            return;
+          }
 
-            this.addressStatus.set(
-              response.data?.message ?? response.message ?? 'Address added successfully.',
-            );
-            this.closeForm();
-            this.loadAddresses();
-          },
-          error: (error: HttpErrorResponse) => {
-            this.addressStatus.set(
-              error.error?.message ?? 'Unable to save the address. Please try again.',
-            );
-          },
-        });
-    }
+          this.closeForm();
+          this.loadAddresses();
+          const success =
+            msg ?? (isEdit ? 'Address updated successfully.' : 'Address added successfully.');
+          this.addressStatus.set(
+            usedFallback
+              ? `${success} Address coordinates could not be fetched, so default coordinates were used.`
+              : success,
+          );
+        },
+        error: (error: HttpErrorResponse) => {
+          this.addressStatus.set(
+            error.error?.message ?? 'Unable to save the address. Please try again.',
+          );
+        },
+      });
   }
 
   deleteAddress(id: number): void {
@@ -404,6 +365,12 @@ export class ManageAddress implements OnInit {
 
     const address = this.addresses().find((item) => item.addressId === id);
     if (!address) return;
+    if (address.latitude == null || address.longitude == null) {
+      this.addressStatus.set(
+        'This address has no saved coordinates. Edit and save it to find its location first.',
+      );
+      return;
+    }
 
     const addressPayload = {
       userId: this.userId,
@@ -417,8 +384,8 @@ export class ManageAddress implements OnInit {
       state: address.state,
       pincode: address.pincode,
       country: address.country,
-      latitude: address.latitude ?? 19.1326204,
-      longitude: address.longitude ?? 72.9109825,
+      latitude: address.latitude,
+      longitude: address.longitude,
       isDefault: true,
     };
 

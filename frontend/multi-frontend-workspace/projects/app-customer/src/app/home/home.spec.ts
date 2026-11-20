@@ -189,15 +189,18 @@ describe('Home', () => {
     component.customerMobile = '9876543210';
     component.bookingDate = '2026-11-25';
     component.bookingTime = '10:00';
-    component.bookingDuration = '2';
+    component.bookingDurationHours = 2;
+    component.bookingDurationMinutes = 30;
     fixture.detectChanges();
 
     const element = fixture.nativeElement as HTMLElement;
     expect(element.querySelector('.mobile-country-code')?.textContent).toContain('+91');
+    expect(component.canSubmitService()).toBe(true);
 
     component.submitService(organization);
     const request = httpTesting.expectOne('/api/v1/customer/requestBooking/');
     expect(request.request.body.contactPhone).toBe('+919876543210');
+    expect(request.request.body.durationOfBooking).toBe(150);
     request.flush(
       { message: 'Invalid request' },
       { status: 400, statusText: 'Bad Request' },

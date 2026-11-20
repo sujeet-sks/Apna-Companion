@@ -13,6 +13,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const isPublicAuthRequest =
     backendRequest.url.includes('/api/admin/login/') ||
     backendRequest.url.includes('/api/admin/forgot-password/request/') ||
+    backendRequest.url.includes('/api/admin/forgot-password/confirm/') ||
     backendRequest.url.includes('/auth/login') ||
     backendRequest.url.includes('/auth/sendOTP') ||
     backendRequest.url.includes('/auth/verifyOTP');

@@ -82,7 +82,8 @@ export class Home implements OnInit {
   customerMobile = '';
   bookingDate = '';
   bookingTime = '';
-  bookingDuration = '';
+  bookingDurationHours: number | null = null;
+  bookingDurationMinutes: number | null = null;
   readonly minimumBookingDate = this.getTodayDate();
   readonly isSubmitting = signal(false);
   readonly submitStatus = signal('');
@@ -174,7 +175,8 @@ export class Home implements OnInit {
     this.selectedServiceId = service.serviceId;
     this.bookingDate = '';
     this.bookingTime = '';
-    this.bookingDuration = '';
+    this.bookingDurationHours = null;
+    this.bookingDurationMinutes = null;
     this.submitStatus.set('');
   }
 
@@ -187,18 +189,22 @@ export class Home implements OnInit {
   }
 
   canSubmitService(): boolean {
+    const durationInMinutes = this.durationInMinutes;
     return (
       this.selectedServiceId !== null &&
       this.customerName.trim().length > 0 &&
       /^\d{10}$/.test(this.customerMobile.trim()) &&
       this.bookingDate.length > 0 &&
       this.bookingTime.length > 0 &&
-      Number(this.bookingDuration) > 0
+      durationInMinutes !== null &&
+      durationInMinutes > 0
     );
   }
 
   submitService(organization: Organization): void {
     if (!this.canSubmitService() || this.isSubmitting()) return;
+    const durationInMinutes = this.durationInMinutes;
+    if (durationInMinutes === null) return;
 
     this.isSubmitting.set(true);
     this.submitStatus.set('');
@@ -214,7 +220,7 @@ export class Home implements OnInit {
       latitude: defaultAddress?.latitude ?? '',
       longitude: defaultAddress?.longitude ?? '',
       address,
-      durationOfBooking: this.bookingDuration,
+      durationOfBooking: durationInMinutes,
       scheduletimestamp: `${this.bookingDate}T${this.bookingTime}:00+05:30`,
     };
 
@@ -316,6 +322,23 @@ export class Home implements OnInit {
     return this.bookingMode === 'formal'
       ? this.formalOptions
       : this.everydayOptions;
+  }
+
+  private get durationInMinutes(): number | null {
+    const hours = this.bookingDurationHours ?? 0;
+    const minutes = this.bookingDurationMinutes ?? 0;
+    if (
+      !Number.isSafeInteger(hours) ||
+      hours < 0 ||
+      !Number.isSafeInteger(minutes) ||
+      minutes < 0 ||
+      minutes > 59
+    ) {
+      return null;
+    }
+
+    const duration = hours * 60 + minutes;
+    return Number.isSafeInteger(duration) ? duration : null;
   }
 
   get defaultAddress(): CustomerAddress | null {

@@ -92,6 +92,32 @@ export class Bookings implements OnInit {
     }).format(date);
   }
 
+  formatBookingDuration(duration: number | string): string {
+    const rawDuration = typeof duration === 'string' ? duration.trim() : duration;
+    const minutes =
+      typeof rawDuration === 'number'
+        ? rawDuration
+        : /^\d+$/.test(rawDuration)
+          ? Number(rawDuration)
+          : null;
+
+    if (
+      minutes === null ||
+      !Number.isSafeInteger(minutes) ||
+      minutes < 0
+    ) {
+      return String(duration);
+    }
+
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    if (hours > 0 && remainingMinutes > 0) {
+      return `${hours} hr and ${remainingMinutes} min`;
+    }
+    if (hours > 0) return `${hours} hr`;
+    return `${remainingMinutes} min`;
+  }
+
   formatCurrentBookingStatus(status: string): string {
     const formattedStatus = status.replace(/_/g, ' ');
     return formattedStatus.charAt(0).toUpperCase() + formattedStatus.slice(1);
