@@ -1,6 +1,6 @@
 :host {
   display: block;
-  flex: 0 0 248px;
+  flex: 0 0 216px;
 }
 
 .sidebar {
@@ -11,7 +11,7 @@
   flex-direction: column;
   min-height: 100vh;
   padding: 25px 16px;
-  background: #fff;
+  background: #f3f1eb;
   border-right: 1px solid #e8ece6;
   color: #243b36;
 }
@@ -21,7 +21,7 @@
   align-items: center;
   gap: 11px;
   padding: 4px 8px 32px;
-  color: #274f42;
+  color: #233746;
   text-decoration: none;
   font-size: 16px;
   font-weight: 700;
@@ -34,7 +34,7 @@
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: #2e604d;
+  background: #245b79;
   color: #fff;
   font-size: 17px;
   letter-spacing: -3px;
@@ -64,26 +64,20 @@
   gap: 12px;
   padding: 11px 12px;
   border-radius: 7px;
-  color: #52675a;
+  color: #465c67;
   text-decoration: none;
   font-size: 13px;
 }
 
 .sidebar nav a:hover {
-  background: #f5f7f3;
-  color: #274f42;
+  background: #eceae3;
+  color: #233746;
 }
 
 .sidebar nav a.active {
-  background: #edf3eb;
-  color: #2e604d;
+  background: #e5edf1;
+  color: #245b79;
   font-weight: 700;
-}
-
-.nav-icon {
-  width: 17px;
-  text-align: center;
-  font-size: 16px;
 }
 
 .preview-note {

@@ -13,15 +13,10 @@
   <section class="content">
     <div class="heading-row">
       <div>
-        <p class="eyebrow">ORGANIZATION PORTAL</p>
         <h1>{{ profile?.organization_name || 'Your dashboard' }}</h1>
-        <p class="subheading">
-          @if (isPreview) {
-            Sample dashboard data · not connected to the backend.
-          } @else {
-            A quick overview of your companions and bookings.
-          }
-        </p>
+        @if (isPreview) {
+          <p class="subheading">Showing sample data.</p>
+        }
       </div>
       <button type="button" class="refresh-button" (click)="refresh()" [disabled]="loading">
         {{ loading ? 'Refreshing…' : 'Refresh' }}
@@ -40,17 +35,14 @@
 
     <div class="stats">
       <article class="stat-card">
-        <span class="stat-icon">♙</span>
         <p>Companions</p>
         <strong>{{ loading ? '—' : summary?.companions_total }}</strong>
       </article>
       <article class="stat-card">
-        <span class="stat-icon">◷</span>
         <p>Pending bookings</p>
         <strong>{{ loading ? '—' : summary?.pending_bookings }}</strong>
       </article>
       <article class="stat-card">
-        <span class="stat-icon">↗</span>
         <p>Active bookings</p>
         <strong>{{ loading ? '—' : summary?.active_bookings }}</strong>
       </article>
@@ -59,7 +51,6 @@
     <section class="panel" id="bookings">
       <div class="panel-heading">
         <div>
-          <p class="eyebrow">LATEST ACTIVITY</p>
           <h2>Bookings to review and assign</h2>
         </div>
         <span class="count">{{ bookings.length }} shown</span>
@@ -69,7 +60,6 @@
         <p class="empty">Loading your bookings…</p>
       } @else if (!loading && !bookings.length) {
         <div class="empty-state">
-          <span class="empty-icon">◷</span>
           <h3>No bookings yet</h3>
           <p>New customer bookings will appear here.</p>
         </div>

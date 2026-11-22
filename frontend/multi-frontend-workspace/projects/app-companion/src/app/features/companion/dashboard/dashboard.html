@@ -13,15 +13,10 @@
   <section class="content">
     <div class="heading-row">
       <div>
-        <p class="eyebrow">COMPANION PORTAL</p>
-        <h1>Welcome back</h1>
-        <p class="subheading">
-          @if (isPreview) {
-            Sample dashboard data · not connected to the backend.
-          } @else {
-            {{ auth.session()?.email }} · Here’s what’s happening with your journeys.
-          }
-        </p>
+        <h1>My schedule</h1>
+        @if (isPreview) {
+          <p class="subheading">Showing sample data.</p>
+        }
       </div>
       <button type="button" class="refresh-button" (click)="refresh()" [disabled]="loading">
         {{ loading ? 'Refreshing…' : 'Refresh' }}
@@ -37,12 +32,10 @@
 
     <div class="stats">
       <article class="stat-card">
-        <span class="stat-icon">↗</span>
         <p>Active journeys</p>
         <strong>{{ loading ? '—' : summary?.active_count }}</strong>
       </article>
       <article class="stat-card">
-        <span class="stat-icon">✓</span>
         <p>Past journeys</p>
         <strong>{{ loading ? '—' : summary?.past_count }}</strong>
       </article>
@@ -51,33 +44,34 @@
     <section class="panel" id="journeys">
       <div class="panel-heading">
         <div>
-          <p class="eyebrow">YOUR SCHEDULE</p>
           <h2>Assigned journeys</h2>
         </div>
-        <span class="count">{{ bookings.length }} shown</span>
+        <span class="count">{{ bookings.length }} journeys</span>
       </div>
 
       @if (loading && !bookings.length) {
         <p class="empty">Loading your journeys…</p>
       } @else if (!loading && !bookings.length) {
         <div class="empty-state">
-          <span class="empty-icon">✦</span>
-          <h3>You’re all caught up</h3>
-          <p>When your organization assigns a journey, it will appear here.</p>
+          <h3>No assigned journeys</h3>
+          <p>New assignments from your organization will appear here.</p>
         </div>
       } @else {
         <div class="booking-list">
           @for (booking of bookings; track booking.id) {
             <article class="booking-row">
-              <div class="booking-mark">✦</div>
+              <div class="journey-date" aria-label="Journey date">
+                <span>{{ booking.scheduled_at | date: 'EEE' }}</span>
+                <strong>{{ booking.scheduled_at | date: 'd' }}</strong>
+                <span>{{ booking.scheduled_at | date: 'MMM' }}</span>
+              </div>
               <div class="booking-info">
-                <strong>{{ booking.service_name }}</strong>
-                <span>{{ booking.customer_name }} · {{ booking.scheduled_at | date: 'medium' }} · {{ booking.duration }} min</span>
-                <span>{{ booking.pickup_address || 'No pickup address provided' }}</span>
-                <span>Organization: {{ booking.organization_name }}</span>
-                <span>Fee: ₹{{ booking.price_inr }}</span>
+                <strong>{{ booking.service_name }} · {{ booking.customer_name }}</strong>
+                <span>{{ booking.scheduled_at | date: 'shortTime' }} · {{ booking.duration }} min</span>
+                <span>{{ booking.pickup_address || 'Pickup address not provided' }}</span>
+                <span>{{ booking.organization_name }} · ₹{{ booking.price_inr }}</span>
                 @if (booking.service_notes) {
-                  <span>Notes: {{ booking.service_notes }}</span>
+                  <span class="service-notes">{{ booking.service_notes }}</span>
                 }
                 @if (booking.latitude !== null && booking.longitude !== null) {
                   <a
@@ -94,7 +88,5 @@
         </div>
       }
     </section>
-
-    <p class="footer-note">Your organization manages your profile and service assignments.</p>
   </section>
 </main>

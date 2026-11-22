@@ -6,25 +6,15 @@
 
   <p class="nav-caption">ORGANIZATION</p>
   <nav aria-label="Organization navigation">
-    <a [routerLink]="dashboardPath" [class.active]="active === 'dashboard'">
-      <span class="nav-icon">⌂</span> Dashboard
-    </a>
+    <a [routerLink]="dashboardPath" [class.active]="active === 'dashboard'"> Dashboard </a>
     <a [routerLink]="dashboardPath" fragment="bookings" [class.active]="active === 'bookings'">
-      <span class="nav-icon">◷</span> Bookings
+      Bookings
     </a>
-    <a [routerLink]="companionsPath" [class.active]="active === 'companions'">
-      <span class="nav-icon">♙</span> Companions
-    </a>
-    <a [routerLink]="servicesPath" [class.active]="active === 'services'">
-      <span class="nav-icon">▤</span> Services
-    </a>
-    <a [routerLink]="profilePath" [class.active]="active === 'profile'">
-      <span class="nav-icon">♙</span> Organization profile
-    </a>
+    <a [routerLink]="companionsPath" [class.active]="active === 'companions'"> Companions </a>
+    <a [routerLink]="servicesPath" [class.active]="active === 'services'"> Services </a>
+    <a [routerLink]="profilePath" [class.active]="active === 'profile'"> Organization profile </a>
     @if (!preview) {
-      <a routerLink="/change-password">
-        <span class="nav-icon">⌑</span> Change password
-      </a>
+      <a routerLink="/change-password"> Change password </a>
     }
   </nav>
 

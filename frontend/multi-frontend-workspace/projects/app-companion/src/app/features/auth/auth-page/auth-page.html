@@ -1,27 +1,14 @@
 <div class="layout">
-  <aside>
-    <a class="brand" routerLink="/login"><span class="mark">a<span>c</span></span> apna companion</a>
-    <div class="story">
-      <span class="eyebrow">COMPANION PORTAL</span>
-      <h1>A little support.<br />A world of<br /><em>difference.</em></h1>
-      <p>Be there for the moments that matter. Your next meaningful day starts here.</p>
-      <div class="illustration">
-        <div class="sun"></div><div class="arch"></div><span class="person one"></span>
-        <span class="person two"></span><span class="ground"></span><span class="spark">✦</span>
-      </div>
-    </div>
-    <p class="foot">Everyday assistance. Human connection.</p>
-  </aside>
-
+  <header>
+    <a class="brand" routerLink="/login">Apna Companion</a>
+  </header>
   <main>
-    <div class="top">
-      <div class="portal-badge"><span class="portal-icon" aria-hidden="true">✦</span><strong>For companions</strong></div>
-      <span class="secure-label">● Secure account access</span>
-    </div>
     <section>
-      <span class="eyebrow">WELCOME TO APNA COMPANION</span>
-      <h2>{{ title }}</h2>
-      <p class="description">{{ description }}</p>
+      <p class="portal">Companion portal</p>
+      <h1>{{ title }}</h1>
+      @if (page !== 'login') {
+        <p class="description">{{ description }}</p>
+      }
 
       @if (error) { <div class="alert error" role="alert">{{ error }}</div> }
       @if (message) { <div class="alert" role="status">{{ message }} <a routerLink="/login">Back to login</a></div> }
@@ -82,7 +69,7 @@
 
           @if (page === 'login') { <a class="forgot" routerLink="/forgot-password">Forgot password?</a> }
           <button class="primary" type="submit" [disabled]="busy">
-            {{ busy ? 'Please wait…' : page === 'login' ? 'Sign in →' : page === 'forgot' ? 'Send reset code →' : 'Update password' }}
+            {{ busy ? 'Please wait…' : page === 'login' ? 'Sign in' : page === 'forgot' ? 'Send reset code →' : 'Update password' }}
           </button>
         </form>
 
@@ -92,6 +79,5 @@
         @if (page !== 'login') { <a class="back" routerLink="/login">← Back to login</a> }
       }
     </section>
-    <footer>Care starts with connection. <span>Apna Companion</span></footer>
   </main>
 </div>

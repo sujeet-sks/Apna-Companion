@@ -1,27 +1,14 @@
 <div class="layout">
   <aside>
-    <a class="brand" routerLink="/login"><span class="mark">a<span>c</span></span> apna companion</a>
-    <div class="story">
-      <span class="eyebrow">ORGANIZATION PORTAL</span>
-      <h1>A little support.<br />A world of<br /><em>difference.</em></h1>
-      <p>Bring your people, services and care together in one thoughtful space.</p>
-      <div class="illustration">
-        <div class="sun"></div><div class="arch"></div><span class="person one"></span>
-        <span class="person two"></span><span class="ground"></span><span class="spark">✦</span>
-      </div>
-    </div>
-    <p class="foot">Everyday assistance. Human connection.</p>
+    <a class="brand" routerLink="/login">Apna Companion</a>
+    <p class="portal">Organization portal</p>
   </aside>
-
   <main>
-    <div class="top">
-      <div class="portal-badge"><span class="portal-icon" aria-hidden="true">✦</span><strong>For organizations</strong></div>
-      <span class="secure-label">● Secure account access</span>
-    </div>
     <section>
-      <span class="eyebrow">WELCOME TO APNA COMPANION</span>
-      <h2>{{ title }}</h2>
-      <p class="description">{{ description }}</p>
+      <h1>{{ title }}</h1>
+      @if (page !== 'login') {
+        <p class="description">{{ description }}</p>
+      }
 
       @if (error) { <div class="alert error" role="alert">{{ error }}</div> }
       @if (message) { <div class="alert" role="status">{{ message }} <a routerLink="/login">Back to login</a></div> }
@@ -154,7 +141,7 @@
 
           @if (page === 'login') { <a class="forgot" routerLink="/forgot-password">Forgot password?</a> }
           <button class="primary" type="submit" [disabled]="busy">
-            {{ busy ? 'Please wait…' : page === 'login' ? 'Sign in →' : page === 'register' ? 'Continue to email verification →' : page === 'verify' ? 'Verify email' : page === 'forgot' ? 'Send reset code →' : page === 'resubmit' ? 'Submit for review' : 'Update password' }}
+            {{ busy ? 'Please wait…' : page === 'login' ? 'Sign in' : page === 'register' ? 'Continue to email verification →' : page === 'verify' ? 'Verify email' : page === 'forgot' ? 'Send reset code →' : page === 'resubmit' ? 'Submit for review' : 'Update password' }}
           </button>
         </form>
 
@@ -164,6 +151,5 @@
         @if (page !== 'login') { <a class="back" routerLink="/login">← Back to login</a> }
       }
     </section>
-    <footer>Care starts with connection. <span>Apna Companion</span></footer>
   </main>
 </div>
