@@ -1,6 +1,7 @@
 from django.urls import path
 
 from . import customer_booking_views as cu
+from . import customer_address_views as ca
 from . import companion_booking_views as cb, companion_views as c, org_booking_views as b, org_views as o
 
 urlpatterns = [
@@ -9,6 +10,10 @@ urlpatterns = [
     path("customer/getAllBookingDetails/", cu.get_all_booking_details),
     path("customer/getCurrentBookingDetails/", cu.get_current_booking_details),
     path("customer/submitReview/", cu.submit_review),
+    path("customer/saveNewAddress/", ca.save_new_address),
+    path("customer/editExistingAddress/", ca.edit_existing_address),
+    path("customer/getAllSavedAddress/", ca.get_all_saved_address),
+    path("customer/deleteAddress/", ca.delete_address),
 
     path("org/register/start/", o.org_register_start),
     path("org/register/complete/", o.org_register_complete),
