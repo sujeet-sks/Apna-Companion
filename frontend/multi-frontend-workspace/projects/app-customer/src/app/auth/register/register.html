@@ -7,12 +7,12 @@
     />
 
     <div class="auth-heading">
-      <p class="eyebrow">GET STARTED</p>
       <h1 id="register-title">Create your account</h1>
-      <p>Enter your details and verify your mobile number to register.</p>
+      <p>Enter your details and verify your email and mobile number to register.</p>
     </div>
 
-    <form [formGroup]="registrationForm" (ngSubmit)="sendOtp()" novalidate>
+    @if (!otpSent()) {
+      <form [formGroup]="registrationForm" (ngSubmit)="sendOtp()" novalidate>
       <label for="register-name">Full name</label>
       <input
         id="register-name"
@@ -118,70 +118,150 @@
         </p>
       }
 
-      @if (!otpVerified) {
+      <label for="register-password">Password</label>
+      <div class="password-input">
+        <input
+          id="register-password"
+          formControlName="password"
+          [type]="showPassword ? 'text' : 'password'"
+          autocomplete="new-password"
+          placeholder="Create a password"
+          required
+          aria-describedby="register-password-error"
+        />
+        <button
+          class="password-toggle"
+          type="button"
+          [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+          [attr.aria-pressed]="showPassword"
+          (click)="showPassword = !showPassword"
+        >
+          {{ showPassword ? 'Hide' : 'Show' }}
+        </button>
+      </div>
+      @if (
+        registrationForm.controls.password.touched &&
+        registrationForm.controls.password.invalid
+      ) {
+        <p id="register-password-error" class="field-error" role="alert">
+          Enter a password.
+        </p>
+      }
+
+      <label for="register-confirm-password">Confirm password</label>
+      <div class="password-input">
+        <input
+          id="register-confirm-password"
+          formControlName="confirm_password"
+          [type]="showConfirmPassword ? 'text' : 'password'"
+          autocomplete="new-password"
+          placeholder="Re-enter your password"
+          required
+          aria-describedby="register-confirm-password-error"
+        />
+        <button
+          class="password-toggle"
+          type="button"
+          [attr.aria-label]="
+            showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'
+          "
+          [attr.aria-pressed]="showConfirmPassword"
+          (click)="showConfirmPassword = !showConfirmPassword"
+        >
+          {{ showConfirmPassword ? 'Hide' : 'Show' }}
+        </button>
+      </div>
+      @if (
+        registrationForm.controls.confirm_password.touched &&
+        (registrationForm.controls.confirm_password.invalid ||
+          registrationForm.hasError('passwordMismatch'))
+      ) {
+        <p id="register-confirm-password-error" class="field-error" role="alert">
+          @if (registrationForm.controls.confirm_password.hasError('required')) {
+            Confirm your password.
+          } @else if (registrationForm.hasError('passwordMismatch')) {
+            Passwords do not match.
+          }
+        </p>
+      }
+
         <button
           class="primary-button"
           type="submit"
           [disabled]="
             registrationForm.invalid ||
-            isSendingOtp ||
-            isVerifyingOtp ||
-            isRegistering ||
-            registered
+            isSendingOtp() ||
+            isCompletingRegistration()
           "
         >
-          {{ isSendingOtp ? 'Sending OTP…' : otpSent ? 'Resend OTP' : 'Send OTP' }}
-        </button>
-      }
-    </form>
-
-    @if (otpSent && !otpVerified) {
-      <p class="form-message" role="status">An OTP was sent to +91 {{ otpMobile }}.</p>
-      <form [formGroup]="otpForm" (ngSubmit)="verifyOtp()" novalidate>
-        <label for="register-otp">Mobile verification code</label>
-        <input
-          id="register-otp"
-          formControlName="otp"
-          type="text"
-          inputmode="numeric"
-          autocomplete="one-time-code"
-          placeholder="Enter the 6-digit OTP"
-          maxlength="6"
-          required
-          aria-describedby="register-otp-error"
-        />
-        @if (otpForm.controls.otp.touched && otpForm.controls.otp.invalid) {
-          <p id="register-otp-error" class="field-error" role="alert">Enter the 6-digit OTP.</p>
-        }
-        <button
-          class="primary-button"
-          type="submit"
-          [disabled]="!canVerifyOtp"
-        >
-          {{ isVerifyingOtp ? 'Verifying…' : 'Verify OTP' }}
+          {{ isSendingOtp() ? 'Sending OTP…' : otpSent() ? 'Resend OTP' : 'Send OTP' }}
         </button>
       </form>
     }
 
-    @if (otpVerified && !registered) {
+    @if (otpSent()) {
       <p class="form-message" role="status">
-        Mobile number verified. You can now create your account.
+        Verification codes were sent to your email address and mobile number.
       </p>
-      <button
-        class="primary-button"
-        type="button"
-        [disabled]="!canRegisterCustomer"
-        (click)="registerCustomer()"
+      <form
+        [formGroup]="otpForm"
+        (ngSubmit)="completeRegistration()"
+        novalidate
       >
-        {{ isRegistering ? 'Creating account…' : 'Create account' }}
-      </button>
+        <label for="register-email-code">Email verification code</label>
+        <input
+          id="register-email-code"
+          formControlName="email_code"
+          type="text"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          placeholder="Enter the email code"
+          maxlength="6"
+          required
+          aria-describedby="register-email-code-error"
+        />
+        @if (
+          otpForm.controls.email_code.touched &&
+          otpForm.controls.email_code.invalid
+        ) {
+          <p id="register-email-code-error" class="field-error" role="alert">
+            Enter the 6-digit email code.
+          </p>
+        }
+
+        <label for="register-mobile-code">Mobile verification code</label>
+        <input
+          id="register-mobile-code"
+          formControlName="mobile_code"
+          type="text"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          placeholder="Enter the mobile code"
+          maxlength="6"
+          required
+          aria-describedby="register-mobile-code-error"
+        />
+        @if (
+          otpForm.controls.mobile_code.touched &&
+          otpForm.controls.mobile_code.invalid
+        ) {
+          <p id="register-mobile-code-error" class="field-error" role="alert">
+            Enter the 6-digit mobile code.
+          </p>
+        }
+
+        <button
+          class="primary-button"
+          type="submit"
+          [disabled]="!canCompleteRegistration"
+        >
+          {{ isCompletingRegistration() ? 'Registering…' : 'Verify and register' }}
+        </button>
+      </form>
     }
 
-    @if (errorMessage) {
-      <p class="field-error form-error" role="alert">{{ errorMessage }}</p>
-    }
-    @if (registered) {
-      <p class="form-message" role="status">Your account has been registered successfully.</p>
+    @if (errorMessage()) {
+      <p class="field-error form-error" role="alert">{{ errorMessage() }}</p>
     }
 
     <p class="auth-footer">

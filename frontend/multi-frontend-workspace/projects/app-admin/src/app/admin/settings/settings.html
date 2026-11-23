@@ -1,0 +1,50 @@
+<main class="settings-page">
+  <section class="settings-card">
+    <h1>Admin Settings</h1>
+
+    <form [formGroup]="profileForm" (ngSubmit)="updateProfile()">
+      <h2>Profile</h2>
+      <div class="admin-avatar" aria-label="Admin profile">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 20a8 8 0 0 1 16 0" />
+        </svg>
+      </div>
+
+      <label for="admin-id">Admin ID</label>
+      <input
+        id="admin-id"
+        formControlName="adminId"
+        type="text"
+        autocomplete="off"
+        readonly
+      />
+
+      <label for="full-name">Full name</label>
+      <input
+        id="full-name"
+        formControlName="full_name"
+        type="text"
+        autocomplete="name"
+        readonly
+      />
+
+      <label for="profile-email">Email</label>
+      <input
+        id="profile-email"
+        formControlName="EmailId"
+        type="email"
+        autocomplete="email"
+        readonly
+      />
+
+      <button type="submit" disabled>
+        Update profile
+      </button>
+
+      @if (profileMessage) {
+        <p role="status">{{ profileMessage }}</p>
+      }
+    </form>
+  </section>
+</main>

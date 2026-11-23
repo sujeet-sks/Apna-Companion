@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './auth/auth.guard';
 
 export const routes: Routes = [
   {
@@ -22,6 +23,7 @@ export const routes: Routes = [
   },
   {
     path: 'admin',
+    // canActivate: [authGuard],
     loadComponent: () =>
       import('./admin/admin-layout/admin-layout').then(
         (component) => component.AdminLayout,
@@ -49,11 +51,27 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'pending-requests/:requestId',
+        title: 'Review Request | Bharat Companion',
+        loadComponent: () =>
+          import('./admin/pending-requests/request-detail').then(
+            (component) => component.RequestDetail,
+          ),
+      },
+      {
         path: 'clients',
         title: 'Clients | Bharat Companion',
         loadComponent: () =>
           import('./admin/clients/clients').then(
             (component) => component.Clients,
+          ),
+      },
+      {
+        path: 'clients/:clientId',
+        title: 'Client Details | Bharat Companion',
+        loadComponent: () =>
+          import('./admin/clients/client-detail').then(
+            (component) => component.ClientDetail,
           ),
       },
       {

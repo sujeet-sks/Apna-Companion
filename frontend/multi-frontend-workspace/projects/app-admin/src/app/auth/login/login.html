@@ -16,7 +16,6 @@
           <circle class="shield-line" cx="80" cy="68" r="24" />
           <path class="shield-line" d="M45 125c5-29 18-43 35-43s30 14 35 43" />
         </svg>
-        <h2>Secure Administration</h2>
       </div>
     </aside>
 
@@ -37,10 +36,15 @@
           <input
             id="login-username"
             formControlName="username"
-            type="text"
+            type="email"
             autocomplete="username"
             placeholder="admin@example.com"
           />
+          @if (loginForm.controls.username.touched && loginForm.controls.username.hasError('required')) {
+            <small class="field-error">Email is required.</small>
+          } @else if (loginForm.controls.username.touched && loginForm.controls.username.hasError('email')) {
+            <small class="field-error">Enter a valid email address.</small>
+          }
         </div>
 
         <div class="field-group password-group">
@@ -62,7 +66,17 @@
           </div>
         </div>
 
-        <button class="submit-button" type="submit">Sign in to dashboard</button>
+        <button
+          class="submit-button"
+          type="submit"
+          [disabled]="loginForm.invalid || isSubmitting"
+        >
+          {{ isSubmitting ? 'Signing in...' : 'Sign in' }}
+        </button>
+
+        @if (errorMessage) {
+          <p class="access-note login-error" role="alert">{{ errorMessage }}</p>
+        }
       </form>
     </div>
   </section>

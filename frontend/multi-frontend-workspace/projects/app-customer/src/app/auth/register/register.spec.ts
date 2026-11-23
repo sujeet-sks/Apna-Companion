@@ -4,7 +4,8 @@ import {
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
+import { ToastService } from '../../shared/toast.service';
 import { Register } from './register';
 
 describe('Register', () => {
@@ -30,7 +31,7 @@ describe('Register', () => {
 
     const element = fixture.nativeElement as HTMLElement;
     expect(element.querySelector('h1')?.textContent).toContain('Create your account');
-    expect(element.querySelectorAll('input[required]')).toHaveLength(4);
+    expect(element.querySelectorAll('input[required]')).toHaveLength(6);
     expect(element.querySelector('select[required]')).not.toBeNull();
     expect(element.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled).toBe(true);
     expect(element.querySelector('a[href="/login"]')?.textContent).toContain('Log in');
@@ -51,7 +52,43 @@ describe('Register', () => {
 
     setInput(element, '#register-mobile', '9876543210');
     fixture.detectChanges();
+    expect(sendOtpButton.disabled).toBe(true);
+
+    setInput(element, '#register-password', 'secret');
+    setInput(element, '#register-confirm-password', 'different');
+    fixture.detectChanges();
+    expect(sendOtpButton.disabled).toBe(true);
+
+    setInput(element, '#register-confirm-password', 'secret');
+    fixture.detectChanges();
     expect(sendOtpButton.disabled).toBe(false);
+  });
+
+  it('lets the customer show or hide each password independently', () => {
+    const fixture = TestBed.createComponent(Register);
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    const passwordInput =
+      element.querySelector<HTMLInputElement>('#register-password')!;
+    const confirmPasswordInput =
+      element.querySelector<HTMLInputElement>('#register-confirm-password')!;
+    const passwordToggle =
+      element.querySelectorAll<HTMLButtonElement>('.password-toggle')[0]!;
+    const confirmPasswordToggle =
+      element.querySelectorAll<HTMLButtonElement>('.password-toggle')[1]!;
+
+    expect(passwordInput.type).toBe('password');
+    expect(confirmPasswordInput.type).toBe('password');
+
+    passwordToggle.click();
+    fixture.detectChanges();
+    expect(passwordInput.type).toBe('text');
+    expect(confirmPasswordInput.type).toBe('password');
+
+    confirmPasswordToggle.click();
+    fixture.detectChanges();
+    expect(confirmPasswordInput.type).toBe('text');
   });
 
   it('disables dates of birth after today', () => {
@@ -67,8 +104,12 @@ describe('Register', () => {
     expect(dateInput.max).toBe(expectedMax);
   });
 
-  it('requires mobile OTP verification before registering the customer', () => {
+  it('starts registration and completes it with email and mobile OTPs', () => {
     const fixture = TestBed.createComponent(Register);
+    const router = TestBed.inject(Router);
+    const navigateSpy = spyOn(router, 'navigate').and.returnValue(
+      Promise.resolve(true),
+    );
     fixture.detectChanges();
     const element = fixture.nativeElement as HTMLElement;
 
@@ -77,56 +118,80 @@ describe('Register', () => {
     setSelect(element, '#register-gender', 'female');
     setInput(element, '#register-email', 'asha@example.com');
     setInput(element, '#register-mobile', '9876543210');
+    setInput(element, '#register-password', 'secret');
+    setInput(element, '#register-confirm-password', 'secret');
     fixture.detectChanges();
 
     element.querySelector('form')!.dispatchEvent(
       new Event('submit', { bubbles: true, cancelable: true }),
     );
-    const sendOtpRequest = httpTesting.expectOne('/generateOTP');
-    expect(sendOtpRequest.request.method).toBe('POST');
-    expect(sendOtpRequest.request.body).toEqual({ mobile: '+919876543210' });
-    sendOtpRequest.flush({});
-    fixture.detectChanges();
-
-    const otpInput = element.querySelector<HTMLInputElement>('#register-otp');
-    const verifyButton =
-      element.querySelectorAll('form')[1].querySelector<HTMLButtonElement>('button[type="submit"]');
-    expect(otpInput).not.toBeNull();
-    expect(verifyButton?.disabled).toBe(true);
-    expect(element.textContent).not.toContain('Create account');
-
-    setInput(element, '#register-otp', '123456');
-    fixture.detectChanges();
-    expect(verifyButton?.disabled).toBe(false);
-    element.querySelectorAll('form')[1].dispatchEvent(
-      new Event('submit', { bubbles: true, cancelable: true }),
-    );
-    const verifyOtpRequest = httpTesting.expectOne('/submitOTP');
-    expect(verifyOtpRequest.request.body).toEqual({
-      mobile: '+919876543210',
-      otp: '123456',
-    });
-    verifyOtpRequest.flush({});
-    fixture.detectChanges();
-
-    const registerButton = element.querySelector<HTMLButtonElement>('button[type="button"]')!;
-    expect(registerButton.disabled).toBe(false);
-    registerButton.click();
-    const registerRequest = httpTesting.expectOne('/registerCustomer');
-    expect(registerRequest.request.body).toEqual({
-      fullName: 'Asha Rao',
+    const startRequest = httpTesting.expectOne('/api/customer/register/start/');
+    expect(startRequest.request.method).toBe('POST');
+    expect(startRequest.request.body).toEqual({
+      full_name: 'Asha Rao',
+      email_id: 'asha@example.com',
+      mobile_number: '9876543210',
       dob: '1998-04-12',
       gender: 'female',
-      email: 'asha@example.com',
-      mobile: '+919876543210',
+      password: 'secret',
+      confirm_password: 'secret',
     });
-    registerRequest.flush({});
+    startRequest.flush({ verification_id: 'verification-123', expires_in: 300 });
     fixture.detectChanges();
 
-    expect(element.textContent).toContain('Your account has been registered successfully.');
+    const toastService = TestBed.inject(ToastService);
+    const toast = toastService.toasts()[0]!;
+    expect(toast.message).toBe('otp has been send to mobile and email');
+    toastService.dismiss(toast.id);
+    const emailCodeInput = element.querySelector<HTMLInputElement>('#register-email-code');
+    const mobileCodeInput = element.querySelector<HTMLInputElement>('#register-mobile-code');
+    const completeButton =
+      element.querySelector<HTMLButtonElement>('form button[type="submit"]');
+    expect(element.querySelector('#register-name')).toBeNull();
+    expect(element.textContent).not.toContain('Sending OTP');
+    expect(element.querySelector('#edit-registration')).toBeNull();
+    expect(emailCodeInput).not.toBeNull();
+    expect(mobileCodeInput).not.toBeNull();
+    expect(completeButton?.disabled).toBe(true);
+
+    setInput(element, '#register-email-code', '123456');
+    setInput(element, '#register-mobile-code', '654321');
+    fixture.detectChanges();
+    expect(completeButton?.disabled).toBe(false);
+    element.querySelector('form')!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+    const completeRequest = httpTesting.expectOne(
+      '/api/customer/register/complete/',
+    );
+    expect(completeRequest.request.method).toBe('POST');
+    expect(completeRequest.request.body).toEqual({
+      verification_id: 'verification-123',
+      email_code: '123456',
+      mobile_code: '654321',
+    });
+    completeRequest.flush({
+      message: 'Customer registered.',
+      customer: {
+        customer_id: 42,
+        full_name: 'Asha Rao',
+        email_id: 'asha@example.com',
+        mobile_number: '+919876543210',
+        dob: '1998-04-12',
+        gender: 'female',
+        account_status: 'active',
+        created_at: '',
+        updated_at: '',
+      },
+    });
+    const successToast = toastService.toasts()[0]!;
+    expect(successToast.message).toBe('Customer registered.');
+    expect(successToast.type).toBe('success');
+    toastService.dismiss(successToast.id);
+    expect(navigateSpy).toHaveBeenCalledWith(['/login']);
   });
 
-  it('clears OTP verification when the mobile number changes', () => {
+  it('shows an error toast when registration completion fails', () => {
     const fixture = TestBed.createComponent(Register);
     fixture.detectChanges();
     const element = fixture.nativeElement as HTMLElement;
@@ -136,29 +201,61 @@ describe('Register', () => {
     setSelect(element, '#register-gender', 'female');
     setInput(element, '#register-email', 'asha@example.com');
     setInput(element, '#register-mobile', '9876543210');
+    setInput(element, '#register-password', 'secret');
+    setInput(element, '#register-confirm-password', 'secret');
     fixture.detectChanges();
     element.querySelector('form')!.dispatchEvent(
       new Event('submit', { bubbles: true, cancelable: true }),
     );
-    httpTesting.expectOne('/generateOTP').flush({});
+    httpTesting
+      .expectOne('/api/customer/register/start/')
+      .flush({ verification_id: 'verification-123', expires_in: 300 });
     fixture.detectChanges();
 
-    setInput(element, '#register-otp', '123456');
+    setInput(element, '#register-email-code', '123456');
+    setInput(element, '#register-mobile-code', '654321');
     fixture.detectChanges();
-    element.querySelectorAll('form')[1].dispatchEvent(
+    element.querySelector('form')!.dispatchEvent(
       new Event('submit', { bubbles: true, cancelable: true }),
     );
-    httpTesting.expectOne('/submitOTP').flush({});
-    fixture.detectChanges();
+    httpTesting
+      .expectOne('/api/customer/register/complete/')
+      .flush(
+        { message: 'The verification codes are invalid.' },
+        { status: 400, statusText: 'Bad Request' },
+      );
 
-    setInput(element, '#register-mobile', '9123456789');
-    fixture.detectChanges();
+    const toastService = TestBed.inject(ToastService);
+    const errorToast = toastService.toasts()[1]!;
+    expect(errorToast.message).toBe('The verification codes are invalid.');
+    expect(errorToast.type).toBe('error');
+    toastService.dismiss(errorToast.id);
+    toastService.dismiss(toastService.toasts()[0]!.id);
+  });
 
-    expect(element.querySelector('#register-otp')).toBeNull();
-    expect(element.textContent).not.toContain('Mobile number verified.');
-    expect(element.querySelector<HTMLButtonElement>('button[type="submit"]')?.textContent).toContain(
-      'Send OTP',
+  it('does not show an edit button during OTP verification', () => {
+    const fixture = TestBed.createComponent(Register);
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+
+    setInput(element, '#register-name', 'Asha Rao');
+    setInput(element, '#register-dob', '1998-04-12');
+    setSelect(element, '#register-gender', 'female');
+    setInput(element, '#register-email', 'asha@example.com');
+    setInput(element, '#register-mobile', '9876543210');
+    setInput(element, '#register-password', 'secret');
+    setInput(element, '#register-confirm-password', 'secret');
+    fixture.detectChanges();
+    element.querySelector('form')!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
     );
+    httpTesting
+      .expectOne('/api/customer/register/start/')
+      .flush({ verification_id: 'verification-123', expires_in: 300 });
+    fixture.detectChanges();
+
+    expect(element.querySelector('#register-email-code')).not.toBeNull();
+    expect(element.querySelector('#edit-registration')).toBeNull();
   });
 });
 
