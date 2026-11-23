@@ -1,5 +1,5 @@
 from django.urls import path
-from . import admin_views
+from . import admin_request_views, admin_views
 
 from .customer_views import (
     forgot_password_confirm, forgot_password_request,
@@ -21,4 +21,8 @@ urlpatterns = [
     path("admin/forgot-password/request/", admin_views.forgot_password_request),
     path("admin/forgot-password/confirm/", admin_views.forgot_password_confirm),
     path("admin/logout/", admin_views.logout),
+    path("admin/requests/list/", admin_request_views.requests_list),
+    path("admin/requests/approve/", admin_request_views.approve),
+    path("admin/requests/reject/", admin_request_views.reject),
+    path("admin/organization/list/", admin_request_views.organization_list),
 ]
