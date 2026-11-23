@@ -29,6 +29,49 @@
         <button class="close-button" type="button" aria-label="Close form" [disabled]="isSavingAddress()" (click)="closeForm()">×</button>
       </div>
 
+      @if (editingId === null) {
+        <section class="location-options" aria-label="Choose how to set your location">
+          <button
+            class="location-option"
+            type="button"
+            (click)="useCurrentLocation()"
+            [disabled]="isFetchingLocation()"
+          >
+            <span class="location-option-icon current-location-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="7" />
+                <circle cx="12" cy="12" r="2" />
+                <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+              </svg>
+            </span>
+            <span class="location-option-copy">
+              <strong>{{ isFetchingLocation() ? 'Fetching location...' : 'Use my current location' }}</strong>
+              <small>Uses your phone's GPS</small>
+            </span>
+          </button>
+
+          <button class="location-option map-location-option" type="button" disabled>
+            <span class="location-option-icon map-location-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3z" />
+                <path d="M9 3v15M15 6v15" />
+              </svg>
+            </span>
+            <span class="location-option-copy">
+              <strong>Pick on map</strong>
+              <small>Drag the pin to the exact spot</small>
+            </span>
+            <span class="map-location-arrow" aria-hidden="true">›</span>
+          </button>
+
+          @if (isFetchingLocation()) {
+            <p class="location-status" role="status">Fetching location...</p>
+          } @else if (locationStatus()) {
+            <p class="location-status" role="status">{{ locationStatus() }}</p>
+          }
+        </section>
+      }
+
       <label>
         Address label
         <select [(ngModel)]="label">
@@ -51,7 +94,7 @@
 
         <label>
           Area / locality
-          <input [(ngModel)]="areaLocality" required />
+          <input [(ngModel)]="areaLocality" />
         </label>
 
         <label>

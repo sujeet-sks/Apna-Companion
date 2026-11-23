@@ -127,6 +127,105 @@
   font-size: 17px;
 }
 
+.location-options {
+  overflow: hidden;
+  border: 1px solid #e8eee9;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.location-option {
+  display: flex;
+  width: 100%;
+  min-height: 66px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 0;
+  background: #fff;
+  color: #183329;
+  text-align: left;
+  cursor: pointer;
+}
+
+.location-option + .location-option {
+  border-top: 1px solid #edf1ed;
+}
+
+.location-option:not(:disabled):hover {
+  background: #fbfdfb;
+}
+
+.location-option:disabled {
+  color: #67766d;
+  cursor: not-allowed;
+}
+
+.location-option-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.location-option-icon svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.current-location-icon {
+  background: #e6f1e9;
+  color: #16875a;
+}
+
+.map-location-icon {
+  background: #e7eefb;
+  color: #4971b7;
+}
+
+.location-option-copy {
+  display: grid;
+  flex: 1;
+  gap: 3px;
+}
+
+.location-option-copy strong {
+  color: #244735;
+  font-size: 14px;
+}
+
+.location-option-copy small {
+  color: #718078;
+  font-size: 12px;
+}
+
+.map-location-option:disabled .location-option-copy strong,
+.map-location-option:disabled .location-option-copy small {
+  color: #68766e;
+}
+
+.map-location-arrow {
+  color: #51645a;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.location-status {
+  margin: 0;
+  padding: 9px 12px;
+  border-top: 1px solid #edf1ed;
+  color: #19764e;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .close-button {
   border: 0;
   background: transparent;

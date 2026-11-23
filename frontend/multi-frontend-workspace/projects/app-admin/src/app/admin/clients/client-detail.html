@@ -36,12 +36,11 @@
         <div class="document-row">
           <span>{{ formatDocumentType(clientDetails.documentType) }}</span>
           <a
-            class="download-button"
-            [href]="clientDetails.documentUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-            [attr.aria-label]="'Open ' + formatDocumentType(clientDetails.documentType) + ' in a new tab'"
-          >
+  class="download-button"
+  [href]="clientDetails.documentUrl"
+  [attr.download]="getDownloadFileName(clientDetails)"
+  [attr.aria-label]="'Download ' + formatDocumentType(clientDetails.documentType)"
+>
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M12 3v12m0 0 4-4m-4 4-4-4" />
               <path d="M5 17v3h14v-3" />
