@@ -2,6 +2,14 @@ import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { Observable, finalize, tap } from 'rxjs';
+
+import { HttpClient } from '@angular/common/http';
+
+interface CloudinaryUploadResponse {
+  secure_url: string;
+  public_id: string;
+}
 
 const ORGANIZATION_TYPES = [
   {
@@ -63,6 +71,9 @@ export class AuthPage {
   readonly router = inject(Router);
   readonly route = inject(ActivatedRoute);
   readonly organization = true;
+  private readonly http = inject(HttpClient);
+
+  
 
   get page(): string {
     return this.route.snapshot.data['page'] || 'login';
@@ -171,10 +182,68 @@ export class AuthPage {
     );
   }
 
-  selectDocument(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.hasRegistrationDocument = Boolean(input.files?.length);
+  // selectDocument(event: Event): void {
+  //   const input = event.target as HTMLInputElement;
+  //   this.hasRegistrationDocument = Boolean(input.files && input.files.length > 0);
+  // }
+
+  // Add these fields to the component
+registrationDocumentUrl = '';
+isUploadingDocument = false;
+documentError = '';
+
+selectDocument(event: Event): void {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+
+  // reset state
+  this.hasRegistrationDocument = false;
+  this.registrationDocumentUrl = '';
+  this.documentError = '';
+
+  if (!file) return;
+
+  if (file.type !== 'application/pdf') {
+    this.documentError = 'Please select a PDF file.';
+    input.value = '';
+    return;
   }
+  if (file.size > 10 * 1024 * 1024) {
+    this.documentError = 'File must be smaller than 10 MB.';
+    input.value = '';
+    return;
+  }
+
+  this.isUploadingDocument = true;
+  this.uploadToCloudinary(file)
+    .pipe(finalize(() => (this.isUploadingDocument = false)))
+    .subscribe({
+      error: (err) => {
+        this.documentError = err.error?.error?.message ?? 'Upload failed. Please try again.';
+        input.value = '';
+      },
+    });
+}
+
+
+private uploadToCloudinary(file: File): Observable<CloudinaryUploadResponse> {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', 'organisation-docs');
+
+  return this.http
+    .post<CloudinaryUploadResponse>(
+      'https://api.cloudinary.com/v1_1/vtdy659s/image/upload',
+      formData,
+    )
+    .pipe(
+      tap((res) => {
+        // save the response so other API calls can use it
+        this.registrationDocumentUrl = res.secure_url;
+        this.hasRegistrationDocument = true;
+      }),
+    );
+}
 
   async submit(form: NgForm): Promise<void> {
     this.error = '';
@@ -222,7 +291,7 @@ export class AuthPage {
             confirm_password: this.confirm,
             address: this.address,
             document_type: this.documentType,
-            document_url: 'https://example.com/registration-document-placeholder.pdf',
+            document_url: this.registrationDocumentUrl,
             latitude: this.latitude,
             longitude: this.longitude,
           });
