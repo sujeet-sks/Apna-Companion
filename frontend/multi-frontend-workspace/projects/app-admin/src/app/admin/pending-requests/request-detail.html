@@ -1,0 +1,135 @@
+<main class="request-detail-page">
+  <a class="back-link" routerLink="/admin/pending-requests">
+    <span aria-hidden="true">&larr;</span>
+    Back to pending requests
+  </a>
+
+  @if (isLoading) {
+    <p class="page-message" role="status">Loading request details...</p>
+  } @else if (request; as clientRequest) {
+    <header class="detail-header">
+      <div>
+        <h1>{{ clientRequest.client }}</h1>
+      </div>
+      <span
+        class="status-badge"
+        [class.status-badge--duplicate]="clientRequest.status === 'Possible duplicate'"
+      >
+        {{ clientRequest.status }}
+      </span>
+    </header>
+
+    <div class="detail-grid">
+      <section class="detail-card" aria-labelledby="organization-heading">
+        <h2 id="organization-heading">Organization details</h2>
+        <dl class="detail-list">
+          <div>
+            <dt>Organization ID</dt>
+            <dd>{{ clientRequest.id }}</dd>
+          </div>
+          <div>
+            <dt>Organization name</dt>
+            <dd>{{ clientRequest.client }}</dd>
+          </div>
+          <div>
+            <dt>Organization type</dt>
+            <dd>{{ clientRequest.type }}</dd>
+          </div>
+          <div>
+            <dt>Registered address</dt>
+            <dd>{{ clientRequest.address }}</dd>
+          </div>
+          <div>
+            <dt>Coordinates</dt>
+            <dd>{{ clientRequest.latitude }}, {{ clientRequest.longitude }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="detail-card" aria-labelledby="contact-heading">
+        <h2 id="contact-heading">Contact information</h2>
+        <dl class="detail-list">
+          <div>
+            <dt>Email</dt>
+            <dd><a [href]="'mailto:' + clientRequest.email">{{ clientRequest.email }}</a></dd>
+          </div>
+          <div>
+            <dt>Request submitted</dt>
+            <dd>{{ clientRequest.submitted }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="detail-card documents-card" aria-labelledby="documents-heading">
+        <h2 id="documents-heading">Submitted documents</h2>
+        <ul class="document-list">
+          @for (document of clientRequest.documents; track document.name) {
+            <li>
+              <span>{{ document.name }}</span>
+              <a
+                class="download-button"
+                [href]="document.link"
+                target="_blank"
+                rel="noopener noreferrer"
+                [attr.aria-label]="'Open ' + document.name + ' in a new tab'"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 3v12m0 0 4-4m-4 4-4-4" />
+                  <path d="M5 17v3h14v-3" />
+                </svg>
+                <span>Download</span>
+              </a>
+            </li>
+          }
+        </ul>
+      </section>
+
+      <section class="detail-card review-card" aria-labelledby="review-heading">
+        <h2 id="review-heading">Admin remark</h2>
+        <label class="remark-label" for="request-remark">Add a remark</label>
+        <textarea
+          id="request-remark"
+          name="remark"
+          [(ngModel)]="remark"
+          [disabled]="isApproving() || isRejecting() || clientRequest.status === 'Rejected' || clientRequest.status === 'Approved'"
+          rows="4"
+          placeholder="Write a remark about this request..."
+        ></textarea>
+        @if (actionMessage()) {
+          <p class="action-message" [class.action-message--error]="actionError()" [attr.role]="actionError() ? 'alert' : 'status'">
+            {{ actionMessage() }}
+          </p>
+        }
+      </section>
+
+      <section class="detail-card decision-card" aria-labelledby="decision-heading">
+        <h2 id="decision-heading">Request decision</h2>
+        <p>Choose whether to approve or reject this client request.</p>
+        <div class="decision-actions">
+          <button
+            class="decision-button decision-button--approve"
+            type="button"
+            [disabled]="isApproving() || isRejecting() || clientRequest.status === 'Approved' || clientRequest.status === 'Rejected'"
+            (click)="approveRequest(clientRequest.id)"
+          >
+            {{ isApproving() ? 'Approving...' : 'Approve' }}
+          </button>
+          <button
+            class="decision-button decision-button--reject"
+            type="button"
+            [disabled]="isApproving() || isRejecting() || clientRequest.status === 'Rejected' || clientRequest.status === 'Approved'"
+            (click)="rejectRequest(clientRequest.id)"
+          >
+            {{ isRejecting() ? 'Rejecting...' : 'Reject' }}
+          </button>
+        </div>
+      </section>
+    </div>
+  } @else {
+    <section class="detail-card not-found" aria-labelledby="not-found-heading">
+      <h1 id="not-found-heading">Request not found</h1>
+      <p>This request may have been removed or the link may be incorrect.</p>
+      <a routerLink="/admin/pending-requests">Return to pending requests</a>
+    </section>
+  }
+</main>

@@ -1,0 +1,62 @@
+<main class="client-detail-page">
+  <a class="back-link" routerLink="/admin/clients">
+    <span aria-hidden="true">&larr;</span>
+    Back to clients
+  </a>
+
+  @if (isLoading()) {
+    <p class="page-message" role="status">Loading client details...</p>
+  } @else if (errorMessage()) {
+    <section class="detail-card">
+      <p class="page-message page-message--error" role="alert">
+        {{ errorMessage() }}
+      </p>
+    </section>
+  } @else if (client(); as clientDetails) {
+    <header class="detail-header">
+      <div>
+        <h1>{{ clientDetails.organizationName }}</h1>
+      </div>
+    </header>
+
+    <section class="detail-card" aria-label="All client details">
+      <dl class="detail-list">
+        @for (field of fields(); track field.label) {
+          <div>
+            <dt>{{ field.label }}</dt>
+            <dd>{{ field.value }}</dd>
+          </div>
+        }
+      </dl>
+    </section>
+
+    <section class="detail-card documents-card" aria-labelledby="documents-heading">
+      <h2 id="documents-heading">Submitted documents</h2>
+      @if (clientDetails.documentUrl) {
+        <div class="document-row">
+          <span>{{ formatDocumentType(clientDetails.documentType) }}</span>
+          <a
+  class="download-button"
+  [href]="clientDetails.documentUrl"
+  [attr.download]="getDownloadFileName(clientDetails)"
+  [attr.aria-label]="'Download ' + formatDocumentType(clientDetails.documentType)"
+>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3v12m0 0 4-4m-4 4-4-4" />
+              <path d="M5 17v3h14v-3" />
+            </svg>
+            <span>Download</span>
+          </a>
+        </div>
+      } @else {
+        <p class="no-document">No document submitted.</p>
+      }
+    </section>
+  } @else {
+    <section class="detail-card not-found">
+      <h1>Client not found</h1>
+      <p>This client may have been removed or the link may be incorrect.</p>
+      <a routerLink="/admin/clients">Return to clients</a>
+    </section>
+  }
+</main>

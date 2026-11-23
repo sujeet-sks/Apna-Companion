@@ -11,4 +11,13 @@
     <a routerLink="/admin/clients" routerLinkActive="active">Clients</a>
     <a routerLink="/admin/settings" routerLinkActive="active">Settings</a>
   </nav>
+
+  <button class="logout-button" type="button" (click)="logout()" [disabled]="isLoggingOut">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M10 17l5-5-5-5" />
+      <path d="M15 12H3" />
+      <path d="M14 4h4a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3h-4" />
+    </svg>
+    <span>{{ isLoggingOut ? 'Logging out...' : 'Logout' }}</span>
+  </button>
 </aside>

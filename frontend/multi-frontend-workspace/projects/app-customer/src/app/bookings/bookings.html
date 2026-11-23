@@ -1,10 +1,239 @@
 <main class="page-shell">
-  <p class="eyebrow">YOUR VISITS</p>
-  <h1>Bookings</h1>
-  <section class="empty-state" aria-labelledby="bookings-empty-title">
-    <span class="empty-icon" aria-hidden="true">♡</span>
-    <h2 id="bookings-empty-title">Your bookings will appear here</h2>
-    <p>When you have a companionship visit arranged, you’ll find its details on this page.</p>
-    <a routerLink="/help">Need help? Visit Help <span aria-hidden="true">→</span></a>
-  </section>
+  <div class="bookings-layout">
+    <section class="booking-section" aria-labelledby="current-heading">
+      <h1 id="current-heading">Current bookings</h1>
+
+      @if (isLoadingCurrentBookings()) {
+        <div class="data-loading" role="status" aria-live="polite">
+          <span class="data-loading-spinner" aria-hidden="true"></span>
+          <span>Loading current bookings...</span>
+        </div>
+      } @else if (currentBookingsError()) {
+        <p class="empty-message" role="alert">{{ currentBookingsError() }}</p>
+      } @else if (currentBookingRecords().length === 0) {
+        <p class="empty-message">No current bookings.</p>
+      } @else {
+        <div class="booking-list">
+          @for (booking of currentBookingRecords(); track booking.bookingId) {
+            <article class="booking-card">
+              <div class="booking-card-heading">
+                <div>
+                  <h2>{{ booking.serviceName }}</h2>
+                  <p>{{ booking.organizationname }}</p>
+                </div>
+                <span
+                  class="status-badge"
+                  [class.pending]="booking.status === 'pending'"
+                  [class.accepted]="booking.status === 'accepted'"
+                  [class.assigned]="booking.status === 'assigned'"
+                  [class.on-the-way]="booking.status === 'on_the_way'"
+                  [class.arrived]="booking.status === 'arrived'"
+                  [class.in-progress]="booking.status === 'in_progress'"
+                  [class.completed]="booking.status === 'completed'"
+                >
+                  {{ formatCurrentBookingStatus(booking.status) }}
+                </span>
+              </div>
+
+              <div class="booking-details">
+                <p><strong>Date:</strong> {{ formatBookingDate(booking.scheduletimestamp) }}</p>
+                <p><strong>Time:</strong> {{ formatBookingTime(booking.scheduletimestamp) }}</p>
+                <p><strong>Duration:</strong> {{ formatBookingDuration(booking.durationOfBooking) }}</p>
+                <p><strong>Organization rating:</strong> ★ {{ booking.rating }}</p>
+              </div>
+
+              <div class="booking-contact-details">
+                <strong>Contact:</strong>
+                <span>{{ booking.contactName }}</span>
+                <span>{{ booking.contactPhone }}</span>
+              </div>
+
+              @if (booking.companion; as companion) {
+                <div class="companion-details">
+                  <strong>{{ companion.name }}</strong>
+                  <span>{{ companion.phone }}</span>
+                  <span>★ {{ companion.rating }}</span>
+                </div>
+              } @else {
+                <p class="booking-comments">Companion not assigned yet.</p>
+              }
+
+              <div class="otp-details">
+                <p><strong>Start OTP:</strong> {{ booking.startOtp }}</p>
+                <p><strong>End OTP:</strong> {{ booking.endOtp }}</p>
+              </div>
+
+              @if (booking.status === 'completed') {
+                <section class="review-section" aria-label="Booking review">
+                  <h3>Give your review</h3>
+
+                  <div class="review-row">
+                    <span>Organization</span>
+                    <div class="star-rating" aria-label="Organization rating">
+                      @for (star of [1, 2, 3, 4, 5]; track star) {
+                        <button
+                          type="button"
+                          [class.selected]="(organizationRatings[booking.bookingId] ?? 0) >= star"
+                          [attr.aria-label]="star + ' stars'"
+                          (click)="setOrganizationRating(booking.bookingId, star)"
+                        >★</button>
+                      }
+                    </div>
+                  </div>
+
+                  <div class="review-row">
+                    <span>Companion</span>
+                    <div class="star-rating" aria-label="Companion rating">
+                      @for (star of [1, 2, 3, 4, 5]; track star) {
+                        <button
+                          type="button"
+                          [class.selected]="(companionRatings[booking.bookingId] ?? 0) >= star"
+                          [attr.aria-label]="star + ' stars'"
+                          (click)="setCompanionRating(booking.bookingId, star)"
+                        >★</button>
+                      }
+                    </div>
+                  </div>
+
+                  <label class="review-comment">
+                    Comments
+                    <textarea
+                      rows="3"
+                      [(ngModel)]="reviewComments[booking.bookingId]"
+                      [name]="'comments-' + booking.bookingId"
+                    ></textarea>
+                  </label>
+
+                  <button
+                    type="button"
+                    class="submit-review-button"
+                    [disabled]="!canSubmitReview(booking.bookingId) || isSubmittingReview[booking.bookingId]"
+                    (click)="submitReview(booking.bookingId)"
+                  >
+                    {{ isSubmittingReview[booking.bookingId] ? 'Submitting...' : 'Submit review' }}
+                  </button>
+
+                  @if (reviewStatus[booking.bookingId]) {
+                    <p class="review-status" role="status">
+                      {{ reviewStatus[booking.bookingId] }}
+                    </p>
+                  }
+                </section>
+              }
+            </article>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="booking-section" aria-labelledby="past-heading">
+      <h1 id="past-heading">Past bookings</h1>
+
+      @if (isLoadingPastBookings()) {
+        <div class="data-loading" role="status" aria-live="polite">
+          <span class="data-loading-spinner" aria-hidden="true"></span>
+          <span>Loading past bookings...</span>
+        </div>
+      } @else if (pastBookingsError()) {
+        <p class="empty-message" role="alert">{{ pastBookingsError() }}</p>
+      } @else if (pastBookingRecords().length === 0) {
+        <p class="empty-message">No past bookings.</p>
+      } @else {
+        <div class="booking-list">
+          @for (booking of pastBookingRecords(); track booking.bookingId) {
+            <article class="booking-card">
+              <div class="booking-card-heading">
+                <div>
+                  <h2>{{ booking.service }}</h2>
+                  <p>{{ booking.organizationname }}</p>
+                </div>
+                <span
+                  class="status-badge"
+                  [class.completed]="booking.status === 'completed'"
+                  [class.rejected]="booking.status === 'rejected'"
+                >
+                  {{ booking.status }}
+                </span>
+              </div>
+
+              <div class="booking-details">
+                <p><strong>Date:</strong> {{ formatBookingDate(booking.scheduletimestamp) }}</p>
+                <p><strong>Time:</strong> {{ formatBookingTime(booking.scheduletimestamp) }}</p>
+                <p><strong>Duration:</strong> {{ formatBookingDuration(booking.durationOfBooking) }}</p>
+                <p><strong>Organization rating:</strong> ★ {{ booking.rating }}</p>
+              </div>
+
+              <div class="companion-details">
+                <strong>{{ booking.companion.name }}</strong>
+                <span>{{ booking.companion.phone }}</span>
+                <span>★ {{ booking.companion.rating }}</span>
+              </div>
+
+              @if (booking.comments) {
+                <p class="booking-comments"><strong>Comments:</strong> {{ booking.comments }}</p>
+              }
+
+              @if (booking.status === 'completed' && !booking.comments) {
+                <section class="review-section" aria-label="Booking review">
+                  <h3>Give your review</h3>
+
+                  <div class="review-row">
+                    <span>Organization</span>
+                    <div class="star-rating" aria-label="Organization rating">
+                      @for (star of [1, 2, 3, 4, 5]; track star) {
+                        <button
+                          type="button"
+                          [class.selected]="(organizationRatings[booking.bookingId] ?? 0) >= star"
+                          [attr.aria-label]="star + ' stars'"
+                          (click)="setOrganizationRating(booking.bookingId, star)"
+                        >★</button>
+                      }
+                    </div>
+                  </div>
+
+                  <div class="review-row">
+                    <span>Companion</span>
+                    <div class="star-rating" aria-label="Companion rating">
+                      @for (star of [1, 2, 3, 4, 5]; track star) {
+                        <button
+                          type="button"
+                          [class.selected]="(companionRatings[booking.bookingId] ?? 0) >= star"
+                          [attr.aria-label]="star + ' stars'"
+                          (click)="setCompanionRating(booking.bookingId, star)"
+                        >★</button>
+                      }
+                    </div>
+                  </div>
+
+                  <label class="review-comment">
+                    Comments
+                    <textarea
+                      rows="3"
+                      [(ngModel)]="reviewComments[booking.bookingId]"
+                      [name]="'past-comments-' + booking.bookingId"
+                    ></textarea>
+                  </label>
+
+                  <button
+                    type="button"
+                    class="submit-review-button"
+                    [disabled]="!canSubmitReview(booking.bookingId) || isSubmittingReview[booking.bookingId]"
+                    (click)="submitReview(booking.bookingId)"
+                  >
+                    {{ isSubmittingReview[booking.bookingId] ? 'Submitting...' : 'Submit review' }}
+                  </button>
+
+                  @if (reviewStatus[booking.bookingId]) {
+                    <p class="review-status" role="status">
+                      {{ reviewStatus[booking.bookingId] }}
+                    </p>
+                  }
+                </section>
+              }
+            </article>
+          }
+        </div>
+      }
+    </section>
+  </div>
 </main>

@@ -1,6 +1,26 @@
 import { Component, inject } from '@angular/core';
 import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
+import { ToastService } from '../../shared/toast.service';
+
+interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+interface LoginResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  admin: {
+    admin_id: string;
+    full_name: string;
+    email: string;
+    last_login_at: string;
+    created_at: string;
+  };
+}
 
 @Component({
   imports: [ReactiveFormsModule, RouterLink],
@@ -9,13 +29,17 @@ import { Router, RouterLink } from '@angular/router';
   templateUrl: './login.html',
 })
 export class Login {
+  private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly toast = inject(ToastService);
 
   protected showPassword = false;
+  protected isSubmitting = false;
+  protected errorMessage = '';
   protected readonly loginForm = new FormGroup({
     username: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required],
+      validators: [Validators.required, Validators.email],
     }),
     password: new FormControl('', {
       nonNullable: true,
@@ -33,6 +57,38 @@ export class Login {
       return;
     }
 
-    void this.router.navigate(['/admin/dashboard']);
+    this.isSubmitting = true;
+    this.errorMessage = '';
+
+    const { username, password } = this.loginForm.getRawValue();
+    const request: LoginRequest = {
+      email: username,
+      password,
+    };
+
+    this.http.post<LoginResponse>('/api/admin/login/', request).subscribe({
+      next: (response: LoginResponse) => {
+        this.isSubmitting = false;
+
+        if (!response.access_token || !response.admin) {
+          this.errorMessage = 'Login failed. Please try again.';
+          return;
+        }
+
+        sessionStorage.setItem('access_token', response.access_token);
+        sessionStorage.setItem('token_type', response.token_type);
+        sessionStorage.setItem('expires_in', String(response.expires_in));
+        sessionStorage.setItem('admin_user', JSON.stringify(response.admin));
+
+        this.toast.show('Login successful.');
+        void this.router.navigate(['/admin/dashboard']);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isSubmitting = false;
+        this.errorMessage =
+          error.error?.message ??
+          'Unable to sign in. Please check your email and password.';
+      },
+    });
   }
 }
