@@ -51,13 +51,16 @@ def companion_active_bookings(request):
 
     bookings = Booking.objects.filter(
         companion=companion, status__in=ACTIVE_STATUSES
-    ).select_related("service", "customer", "organization").order_by("scheduled_at", "id")
+    ).select_related("service", "customer", "organization").order_by(
+        "scheduled_at", "id"
+    )
     start = (page - 1) * page_size
     items = [
         {
             "id": booking.id,
             "service_name": booking.service.name,
             "customer_name": booking.customer.full_name,
+            "customer_mobile": booking.customer.mobile_number,
             "organization_name": booking.organization.organization_name,
             "status": booking.status,
             "scheduled_at": booking.scheduled_at,
@@ -65,6 +68,8 @@ def companion_active_bookings(request):
             "price_inr": str(booking.price_inr),
             "service_notes": booking.service_notes,
             "pickup_address": booking.pickup_address,
+            "pickup_contact_name": booking.pickup_contact_name,
+            "pickup_contact_phone": booking.pickup_contact_phone,
             "latitude": float(booking.latitude) if booking.latitude is not None else None,
             "longitude": float(booking.longitude) if booking.longitude is not None else None,
         }
@@ -101,6 +106,8 @@ def companion_booking_history(request):
             "cancelled_at": booking.cancelled_at,
             "cancelled_by": booking.cancelled_by,
             "cancellation_reason": booking.cancellation_reason,
+            "companion_rating": booking.companion_rating,
+            "customer_comment": booking.customer_comment,
         }
         for booking in bookings[start:start + page_size]
     ]
@@ -125,6 +132,7 @@ def companion_booking_detail(request, booking_id):
         "id": booking.id,
         "organization_id": booking.organization_id,
         "customer_name": booking.customer.full_name,
+        "customer_mobile": booking.customer.mobile_number,
         "service_id": booking.service_id,
         "service_name": booking.service.name,
         "status": booking.status,
@@ -133,6 +141,8 @@ def companion_booking_detail(request, booking_id):
         "price_inr": str(booking.price_inr),
         "service_notes": booking.service_notes,
         "pickup_address": booking.pickup_address,
+        "pickup_contact_name": booking.pickup_contact_name,
+        "pickup_contact_phone": booking.pickup_contact_phone,
         "latitude": float(booking.latitude) if booking.latitude is not None else None,
         "longitude": float(booking.longitude) if booking.longitude is not None else None,
         "cancellation_reason": booking.cancellation_reason,
@@ -141,6 +151,8 @@ def companion_booking_detail(request, booking_id):
         "completed_at": booking.completed_at,
         "assigned_at": booking.assigned_at,
         "cancelled_by": booking.cancelled_by,
+        "companion_rating": booking.companion_rating,
+        "customer_comment": booking.customer_comment,
     })
 
 

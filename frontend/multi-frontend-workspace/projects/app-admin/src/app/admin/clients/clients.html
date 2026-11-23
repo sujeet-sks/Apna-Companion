@@ -1,0 +1,46 @@
+<main class="clients-page">
+  <h1>Clients</h1>
+
+  @if (isLoading()) {
+    <section class="clients-card clients-loading" role="status">
+      Loading clients...
+    </section>
+  } @else if (errorMessage()) {
+    <section class="clients-card">
+      <p class="clients-error" role="alert">{{ errorMessage() }}</p>
+    </section>
+  } @else if (clients().length === 0) {
+    <section class="clients-card empty-state">
+      <p>No clients found.</p>
+    </section>
+  } @else {
+    <section class="clients-card" aria-label="Clients">
+      <div class="table-scroll">
+        <table class="clients-table">
+          <thead>
+            <tr>
+              @for (column of columns; track column.key) {
+                <th scope="col">{{ column.label }}</th>
+              }
+              <th scope="col"><span class="visually-hidden">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (client of clients(); track getClientId(client)) {
+              <tr>
+                @for (column of columns; track column.key) {
+                  <td>{{ formatClientValue(client[column.key]) }}</td>
+                }
+                <td>
+                  <a class="details-button" [routerLink]="[getClientId(client)]">
+                    View Details
+                  </a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+</main>

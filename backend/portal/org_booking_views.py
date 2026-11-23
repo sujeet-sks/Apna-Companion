@@ -60,7 +60,9 @@ def org_bookings(request):
             "latitude": float(booking.latitude) if booking.latitude is not None else None,
             "longitude": float(booking.longitude) if booking.longitude is not None else None,
             "companion_id": booking.companion_id,
-            "companion_name": booking.companion.name if booking.companion else None,
+            "companion_name": booking.companion.name if booking.companion_id else None,
+            "organization_rating": booking.customer_rating,
+            "customer_comment": booking.customer_comment,
         }
         for booking in bookings[start:start + page_size]
     ]
@@ -72,9 +74,9 @@ def org_booking_detail(request, booking_id):
     org, failed = _org(request, approved=True)
     if failed is not None:
         return failed
-    booking = Booking.objects.filter(
-        id=booking_id, organization=org
-    ).select_related("customer", "service", "companion").first()
+    booking = Booking.objects.filter(id=booking_id, organization=org).select_related(
+        "customer", "service", "companion"
+    ).first()
     if booking is None:
         return error("Booking not found.", 404)
 
@@ -86,7 +88,7 @@ def org_booking_detail(request, booking_id):
         "service_id": booking.service_id,
         "service_name": booking.service.name,
         "companion_id": booking.companion_id,
-        "companion_name": booking.companion.name if booking.companion else None,
+        "companion_name": booking.companion.name if booking.companion_id else None,
         "status": booking.status,
         "scheduled_at": booking.scheduled_at,
         "duration": booking.duration,
@@ -103,6 +105,8 @@ def org_booking_detail(request, booking_id):
         "started_at": booking.started_at,
         "completed_at": booking.completed_at,
         "rejected_at": booking.rejected_at,
+        "organization_rating": booking.customer_rating,
+        "customer_comment": booking.customer_comment,
     })
 
 

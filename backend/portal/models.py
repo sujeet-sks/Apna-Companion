@@ -24,6 +24,19 @@ class Customer(models.Model):
         db_table = "customers"
 
 
+class Admin(models.Model):
+    id = models.UUIDField(primary_key=True, editable=False)
+    full_name = models.CharField(max_length=120)
+    email = models.EmailField(max_length=254, unique=True)
+    password_hash = models.TextField()
+    last_login_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = False
+        db_table = "admins"
+
+
 class Organization(models.Model):
     organization_id = models.CharField(max_length=36, primary_key=True)
     organization_name = models.CharField(max_length=150)
@@ -112,6 +125,8 @@ class Booking(models.Model):
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     pickup_address = models.TextField(null=True, blank=True)
+    pickup_contact_name = models.CharField(max_length=100, null=True, blank=True)
+    pickup_contact_phone = models.CharField(max_length=16, null=True, blank=True)
     duration = models.IntegerField()
     status = models.CharField(max_length=20, default="pending")
     start_code_hash = models.CharField(max_length=255, null=True, blank=True)
@@ -119,6 +134,10 @@ class Booking(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     price_inr = models.DecimalField(max_digits=10, decimal_places=2)
+    customer_rating = models.SmallIntegerField(null=True, blank=True)
+    companion_rating = models.SmallIntegerField(null=True, blank=True)
+    customer_comment = models.TextField(null=True, blank=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
     cancelled_at = models.DateTimeField(null=True, blank=True)
     cancelled_by = models.CharField(max_length=20, null=True, blank=True)
     cancellation_reason = models.TextField(null=True, blank=True)
@@ -127,3 +146,27 @@ class Booking(models.Model):
     class Meta:
         managed = False
         db_table = "bookings"
+
+
+class CustomerAddress(models.Model):
+    address_id = models.BigAutoField(primary_key=True)
+    customer = models.ForeignKey(
+        Customer, on_delete=models.PROTECT, db_column="customer_id"
+    )
+    label = models.CharField(max_length=20)
+    house_no = models.CharField(max_length=50)
+    building_street = models.CharField(max_length=150)
+    area_locality = models.CharField(max_length=150, null=True, blank=True)
+    landmark = models.CharField(max_length=150, null=True, blank=True)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    pincode = models.CharField(max_length=6)
+    country = models.CharField(max_length=50, default="India")
+    is_default = models.BooleanField(default=False)
+    latitude = models.DecimalField(max_digits=10, decimal_places=7)
+    longitude = models.DecimalField(max_digits=10, decimal_places=7)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        managed = False
+        db_table = "customer_addresses"

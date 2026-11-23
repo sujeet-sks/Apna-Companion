@@ -1,0 +1,42 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+}
+
+.app-shell {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 100dvh;
+  flex-direction: column;
+}
+
+.global-spinner {
+  position: fixed;
+  z-index: 9999;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgb(255 255 255 / 72%);
+  color: #19764e;
+  font-size: 14px;
+  font-weight: 700;
+  backdrop-filter: blur(2px);
+}
+
+.spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid #dce9df;
+  border-top-color: #19764e;
+  border-radius: 50%;
+  animation: spinner-rotation 800ms linear infinite;
+}
+
+@keyframes spinner-rotation {
+  to {
+    transform: rotate(360deg);
+  }
+}
