@@ -1,6 +1,6 @@
 <div class="layout">
   <header>
-    <a class="brand" routerLink="/login">Apna Companion</a>
+    <a class="brand" [routerLink]="page === 'password' && !message ? '/profile' : '/login'">Apna Companion</a>
   </header>
   <main>
     <section>
@@ -76,7 +76,13 @@
         @if (page === 'login') {
           <p class="below">Your organization creates your account.<br />Contact them if you need access.</p>
         }
-        @if (page !== 'login') { <a class="back" routerLink="/login">← Back to login</a> }
+        @if (page === 'password') {
+          @if (!message && !busy) {
+            <a class="back" routerLink="/profile">Back to profile</a>
+          }
+        } @else if (page !== 'login') {
+          <a class="back" routerLink="/login">← Back to login</a>
+        }
       }
     </section>
   </main>

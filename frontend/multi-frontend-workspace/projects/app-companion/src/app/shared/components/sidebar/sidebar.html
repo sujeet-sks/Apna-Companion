@@ -7,16 +7,10 @@
   <p class="nav-caption">COMPANION PORTAL</p>
   <nav aria-label="Companion navigation">
     <a [routerLink]="dashboardPath" [class.active]="active === 'dashboard'"> Dashboard </a>
-    <a [routerLink]="dashboardPath" fragment="journeys" [class.active]="active === 'journeys'">
-      Assigned journeys
+    <a [routerLink]="pastJourneysPath" [class.active]="active === 'journeys'">
+      Past journeys
     </a>
     <a [routerLink]="profilePath" [class.active]="active === 'profile'"> My profile </a>
-    @if (!preview) {
-      <a routerLink="/change-password"> Change password </a>
-    }
+    <a routerLink="/change-password"> Change password </a>
   </nav>
-
-  @if (preview) {
-    <div class="preview-note">Preview mode · sample data</div>
-  }
 </aside>

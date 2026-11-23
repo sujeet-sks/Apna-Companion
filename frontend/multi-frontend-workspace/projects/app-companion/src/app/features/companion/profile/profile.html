@@ -1,18 +1,15 @@
-<app-sidebar [preview]="isPreview" active="profile" />
+<app-sidebar active="profile" />
 <main class="profile-page">
   <header class="topbar">
     <nav class="profile-actions" aria-label="Profile actions">
-      <a class="back-link" [routerLink]="isPreview ? '/dashboard-preview' : '/dashboard'">Back to dashboard</a>
+      <a class="back-link" routerLink="/change-password">Change password</a>
+      <a class="back-link" routerLink="/dashboard">Back to dashboard</a>
     </nav>
   </header>
   <section class="content">
     <p class="eyebrow">COMPANION PORTAL</p>
     <h1>My profile</h1>
-    @if (isPreview) {
-      <p class="subheading">Sample profile · not connected to the backend.</p>
-    } @else {
-      <p class="subheading">Your contact details and organization information.</p>
-    }
+    <p class="subheading">Your contact details and organization information.</p>
     @if (loading) {
       <p class="notice">Loading profile…</p>
     } @else if (error) {

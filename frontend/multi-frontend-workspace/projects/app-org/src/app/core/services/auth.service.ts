@@ -172,9 +172,20 @@ export class AuthService {
 
   async logout(): Promise<void> {
     try {
-      await this.call(
+      const response = await firstValueFrom(
         this.http.post<ApiEnvelope<unknown>>(`${API_BASE_URL}/org/logout/`, {}),
       );
+      if (!response || !('data' in response)) {
+        throw new Error('The server returned an unexpected response.');
+      }
+    } catch (error) {
+      if (error instanceof HttpErrorResponse && error.status === 401) {
+        return;
+      }
+      if (error instanceof Error && !(error instanceof HttpErrorResponse)) {
+        throw error;
+      }
+      throw this.toAuthError(error);
     } finally {
       this.clearSession();
     }

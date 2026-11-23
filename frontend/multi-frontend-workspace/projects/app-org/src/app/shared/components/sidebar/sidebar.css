@@ -70,13 +70,6 @@
   color: #fff;
   font-weight: 700;
 }
-.preview-note {
-  margin-top: auto;
-  padding: 12px 8px 2px;
-  color: #e4c791;
-  font-size: 11px;
-  border-top: 1px solid #486257;
-}
 @media (max-width: 760px) {
   :host {
     flex: 0 0 auto;
@@ -103,9 +96,5 @@
     flex: 0 0 auto;
     padding: 9px;
     font-size: 12px;
-  }
-  .preview-note {
-    margin-top: 10px;
-    padding: 8px 4px 0;
   }
 }

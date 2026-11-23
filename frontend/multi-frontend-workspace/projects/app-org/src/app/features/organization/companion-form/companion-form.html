@@ -1,8 +1,8 @@
-<app-sidebar [preview]="isPreview" active="companions" />
+<app-sidebar active="companions" />
 <main class="companion-page">
   <header class="topbar">
     <nav>
-      <a class="back-link" [routerLink]="isPreview ? '/dashboard-preview' : '/dashboard'">Back to dashboard</a>
+      <a class="back-link" routerLink="/dashboard">Back to dashboard</a>
     </nav>
   </header>
 
@@ -12,7 +12,6 @@
     <p class="subheading">
       Add a team member and select the services they can provide.
       A temporary password will be sent to their email.
-      @if (isPreview) { This preview does not save or send email. }
     </p>
 
     @if (error) {
@@ -21,7 +20,7 @@
     @if (success) {
       <div class="notice success" role="status">
         {{ success }}
-        @if (createdCompanionId && !isPreview) {
+        @if (createdCompanionId) {
           <span> Companion ID: {{ createdCompanionId }}</span>
         }
       </div>
@@ -74,12 +73,8 @@
             <input name="languages" [(ngModel)]="languageInput" placeholder="Hindi, English">
           </label>
           <label>
-            <span>Identity document URL</span>
-            <input name="identityProofUrl" type="url" [(ngModel)]="form.identityProofUrl" placeholder="Share a secure document link">
-          </label>
-          <label>
-            <span>Photo URL</span>
-            <input name="photoUrl" type="url" [(ngModel)]="form.photoUrl">
+            <span>Photo</span>
+            <input name="photo" type="file" accept="image/*" (change)="selectPhoto($event)">
           </label>
         </div>
 

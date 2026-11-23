@@ -1,6 +1,6 @@
 <div class="layout">
   <aside>
-    <a class="brand" routerLink="/login">Apna Companion</a>
+    <a class="brand" [routerLink]="page === 'password' && !message ? passwordBackPath : '/login'">Apna Companion</a>
     <p class="portal">Organization portal</p>
   </aside>
   <main>
@@ -16,15 +16,15 @@
       @if (page === 'approval' || page === 'account') {
         <div class="account">
           <strong>{{ auth.session()?.email }}</strong>
-          <p>Approval: <span class="badge">{{ auth.session()?.approval_status }}</span></p>
-          @if (auth.session()?.approval_status === 'pending') {
+          <p>Approval: <span class="badge">{{ approvalStatus }}</span></p>
+          @if (approvalStatus === 'pending') {
             <p>Your registration is awaiting admin review. Profile viewing and password changes remain available.</p>
           }
-          @if (auth.session()?.approval_status === 'rejected') {
+          @if (approvalStatus === 'rejected') {
             <p>Your registration needs corrections. Use the verified link in your review email to resubmit.</p>
             <a routerLink="/resubmit">Resubmit details →</a>
           }
-          @if (auth.session()?.approval_status === 'approved') {
+          @if (approvalStatus === 'approved') {
             <p>Your organization is approved.</p>
           }
           <a routerLink="/change-password">Change password →</a>
@@ -83,10 +83,16 @@
                 <input name="documentType" [(ngModel)]="documentType" required />
               </label>
             }
-            <label>Verification document URL
-              <input type="url" name="documentUrl" [(ngModel)]="documentUrl" required placeholder="Paste your Google Drive share link" />
-            </label>
-            <p class="hint">Upload the document to Google Drive, set General access to “Anyone with the link” (Viewer), then paste the share link here.</p>
+            @if (page === 'register') {
+              <label>Upload verification document
+                <input type="file" name="document" required (change)="selectDocument($event)" />
+              </label>
+            } @else {
+              <label>Verification document URL
+                <input type="url" name="documentUrl" [(ngModel)]="documentUrl" required placeholder="Paste your Google Drive share link" />
+              </label>
+              <p class="hint">Upload the document to Google Drive, set General access to “Anyone with the link” (Viewer), then paste the share link here.</p>
+            }
             @if (page === 'register') {
               <div class="location-field">
                 <label>Current location</label>
@@ -148,7 +154,13 @@
         @if (page === 'login') {
           <p class="below">New to Apna Companion? <a routerLink="/register">Register your organization</a></p>
         }
-        @if (page !== 'login') { <a class="back" routerLink="/login">← Back to login</a> }
+        @if (page === 'password') {
+          @if (!message && !busy) {
+            <a class="back" [routerLink]="passwordBackPath">{{ passwordBackLabel }}</a>
+          }
+        } @else if (page !== 'login') {
+          <a class="back" routerLink="/login">← Back to login</a>
+        }
       }
     </section>
   </main>

@@ -16,22 +16,25 @@ export type OrganizationNavigationItem =
   styleUrl: './sidebar.css',
 })
 export class Sidebar {
-  @Input() preview = false;
   @Input() active: OrganizationNavigationItem = 'dashboard';
 
   get dashboardPath(): string {
-    return this.preview ? '/dashboard-preview' : '/dashboard';
+    return '/dashboard';
+  }
+
+  get bookingsPath(): string {
+    return '/bookings';
   }
 
   get companionsPath(): string {
-    return this.preview ? '/companions-preview' : '/companions';
+    return '/companions';
   }
 
   get servicesPath(): string {
-    return this.preview ? '/services-preview' : '/services';
+    return '/services';
   }
 
   get profilePath(): string {
-    return this.preview ? '/profile-preview' : '/profile';
+    return '/profile';
   }
 }

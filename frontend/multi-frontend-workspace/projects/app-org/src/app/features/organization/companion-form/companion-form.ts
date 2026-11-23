@@ -1,7 +1,6 @@
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
 import {
   CreateCompanionInput,
   OrganizationService,
@@ -17,11 +16,9 @@ import { Sidebar } from '../../../shared/components/sidebar/sidebar';
   styleUrls: ['./companion-form.css', '../../../shared/organization-page-layout.css'],
 })
 export class OrganizationCompanionForm implements OnInit {
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly organizations = inject(OrganizationService);
-  private readonly route = inject(ActivatedRoute);
-  private readonly destroyRef = inject(DestroyRef);
 
-  isPreview = this.route.snapshot.data['preview'] === true;
   services: OrganizationServiceOption[] = [];
   loading = true;
   submitting = false;
@@ -36,6 +33,13 @@ export class OrganizationCompanionForm implements OnInit {
     priceInr: '',
   };
 
+  photo: File | null = null;
+
+  selectPhoto(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.photo = input.files?.[0] ?? null;
+  }
+
   form = {
     name: '',
     email: '',
@@ -44,38 +48,24 @@ export class OrganizationCompanionForm implements OnInit {
     dob: '',
     gender: '',
     address: '',
-    identityProofUrl: '',
-    photoUrl: '',
     speciality: '',
     experienceYears: '',
   };
 
   ngOnInit(): void {
-    this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((data) => {
-      this.isPreview = data['preview'] === true;
-      void this.loadServices();
-    });
+    void this.loadServices();
   }
 
   async loadServices(): Promise<void> {
     this.loading = true;
     this.error = '';
-    if (this.isPreview) {
-      this.services = [
-        { id: 1, name: 'Pharmacy visit', price_inr: '450.00', is_active: true },
-        { id: 2, name: 'Grocery assistance', price_inr: '600.00', is_active: true },
-        { id: 3, name: 'Clinic visit', price_inr: '500.00', is_active: true },
-      ];
-      this.loading = false;
-      return;
-    }
-
     try {
       this.services = (await this.organizations.services()).filter((service) => service.is_active);
     } catch (error) {
       this.error = error instanceof Error ? error.message : 'Could not load organization services.';
     } finally {
       this.loading = false;
+      this.changeDetector.markForCheck();
     }
   }
 
@@ -105,30 +95,22 @@ export class OrganizationCompanionForm implements OnInit {
 
     this.creatingService = true;
     try {
-      if (this.isPreview) {
-        const id = Math.max(0, ...this.services.map((service) => service.id)) + 1;
-        this.services = [
-          ...this.services,
-          { id, name, price_inr: Number(rawPrice).toFixed(2), is_active: true },
-        ];
-        this.form.serviceIds = [...this.form.serviceIds, id];
-      } else {
-        const created = await this.organizations.createService({
-          name,
-          price_inr: rawPrice,
-        });
-        this.services = [
-          ...this.services,
-          { id: created.id, name, price_inr: Number(rawPrice).toFixed(2), is_active: created.is_active },
-        ];
-        this.form.serviceIds = [...this.form.serviceIds, created.id];
-      }
+      const created = await this.organizations.createService({
+        name,
+        price_inr: rawPrice,
+      });
+      this.services = [
+        ...this.services,
+        { id: created.id, name, price_inr: Number(rawPrice).toFixed(2), is_active: created.is_active },
+      ];
+      this.form.serviceIds = [...this.form.serviceIds, created.id];
       this.newService = { name: '', priceInr: '' };
       this.serviceFeedback = `${name} added and selected for this companion.`;
     } catch (error) {
       this.error = error instanceof Error ? error.message : 'Could not add the service.';
     } finally {
       this.creatingService = false;
+      this.changeDetector.markForCheck();
     }
   }
 
@@ -169,10 +151,6 @@ export class OrganizationCompanionForm implements OnInit {
       ...(this.form.dob && { dob: this.form.dob }),
       ...(this.form.gender && { gender: this.form.gender }),
       ...(this.form.address.trim() && { address: this.form.address.trim() }),
-      ...(this.form.identityProofUrl.trim() && {
-        identity_proof_url: this.form.identityProofUrl.trim(),
-      }),
-      ...(this.form.photoUrl.trim() && { photo_url: this.form.photoUrl.trim() }),
       ...(this.form.speciality.trim() && { speciality: this.form.speciality.trim() }),
       ...(this.form.experienceYears && {
         experience_years: Number(this.form.experienceYears),
@@ -181,18 +159,14 @@ export class OrganizationCompanionForm implements OnInit {
 
     this.submitting = true;
     try {
-      if (this.isPreview) {
-        this.createdCompanionId = 'preview-companion';
-        this.success = 'Preview only: companion was not saved or emailed.';
-      } else {
-        const result = await this.organizations.createCompanion(input);
-        this.createdCompanionId = result.companion_id;
-        this.success = 'Companion created. A temporary password was sent to their email address.';
-      }
+      const result = await this.organizations.createCompanion(input, this.photo);
+      this.createdCompanionId = result.companion_id;
+      this.success = 'Companion created. A temporary password was sent to their email address.';
     } catch (error) {
       this.error = error instanceof Error ? error.message : 'Could not create the companion.';
     } finally {
       this.submitting = false;
+      this.changeDetector.markForCheck();
     }
   }
 }

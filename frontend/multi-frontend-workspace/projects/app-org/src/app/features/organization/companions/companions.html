@@ -1,10 +1,7 @@
-<app-sidebar [preview]="isPreview" active="companions" />
+<app-sidebar active="companions" />
 <main class="companions-page">
   <header class="topbar">
     <span class="organization-label">ORGANIZATION PORTAL</span>
-    @if (isPreview) {
-      <span class="preview-label">Preview mode</span>
-    }
   </header>
 
   <section class="content">
@@ -14,7 +11,7 @@
         <h1>Companions</h1>
         <p class="subheading">Manage the companions who provide services for your organization.</p>
       </div>
-      <a class="primary-button" [routerLink]="isPreview ? '/companions/new-preview' : '/companions/new'">
+      <a class="primary-button" routerLink="/companions/new">
         <span aria-hidden="true">＋</span> Add companion
       </a>
     </div>
@@ -23,6 +20,13 @@
       <div class="notice error" role="alert">
         {{ error }} <button type="button" (click)="load()">Try again</button>
       </div>
+    }
+
+    @if (statusError) {
+      <p class="notice error" role="alert">{{ statusError }}</p>
+    }
+    @if (statusMessage) {
+      <p class="notice" role="status">{{ statusMessage }}</p>
     }
 
     <section class="directory">
@@ -69,7 +73,7 @@
               : 'Add a companion to start building your organization team.' }}
           </p>
           @if (!search && !availability) {
-            <a class="primary-button" [routerLink]="isPreview ? '/companions/new-preview' : '/companions/new'">
+            <a class="primary-button" routerLink="/companions/new">
               Add your first companion
             </a>
           }
@@ -77,19 +81,76 @@
       } @else {
         <div class="companion-list">
           @for (companion of companions; track companion.companion_id) {
-            <article class="companion-row">
-              <span class="avatar" aria-hidden="true">{{ companion.name.charAt(0).toUpperCase() }}</span>
-              <div class="companion-info">
-                <h3>{{ companion.name }}</h3>
-                <p>{{ companion.companion_id }}</p>
-              </div>
-              <span class="status" [attr.data-status]="companion.availability_status">
-                {{ companion.availability_status }}
-              </span>
-              <span class="active-state" [class.inactive]="!companion.is_active">
-                {{ companion.is_active ? 'Active' : 'Inactive' }}
-              </span>
-            </article>
+            <div class="companion-entry">
+              <article class="companion-row">
+                <span class="avatar" aria-hidden="true">{{ companion.name.charAt(0).toUpperCase() }}</span>
+                <div class="companion-info">
+                  <h3>
+                    <button
+                      type="button"
+                      class="companion-details-toggle"
+                      [attr.aria-expanded]="expandedCompanionId === companion.companion_id"
+                      [attr.aria-controls]="expandedCompanionId === companion.companion_id ? 'companion-details-' + companion.companion_id : null"
+                      (click)="toggleDetails(companion)"
+                    >
+                      {{ companion.name }}
+                      <span class="details-toggle-label">
+                        {{ expandedCompanionId === companion.companion_id ? 'Hide details' : 'View details' }}
+                      </span>
+                    </button>
+                  </h3>
+                  <p>{{ companion.companion_id }}</p>
+                </div>
+                <span class="status" [attr.data-status]="companion.availability_status">
+                  {{ companion.availability_status }}
+                </span>
+                <span class="active-state" [class.inactive]="!companion.is_active">
+                  {{ companion.is_active ? 'Active' : 'Inactive' }}
+                </span>
+                @if (companion.is_active && companion.availability_status !== 'busy') {
+                  <button
+                    class="status-button"
+                    type="button"
+                    [disabled]="updatingStatusId !== null"
+                    [attr.aria-label]="'Set ' + companion.name + ' as ' + (companion.availability_status === 'available' ? 'unavailable' : 'available')"
+                    (click)="toggleAvailability(companion)"
+                  >{{ companion.availability_status === 'available' ? 'Set unavailable' : 'Set available' }}</button>
+                }
+                <button
+                  class="status-button"
+                  [class.deactivate]="companion.is_active"
+                  type="button"
+                  [disabled]="updatingStatusId !== null"
+                  [attr.aria-label]="(companion.is_active ? 'Deactivate ' : 'Reactivate ') + companion.name"
+                  (click)="toggleActive(companion)"
+                >{{ updatingStatusId === companion.companion_id ? 'Updating…' : companion.is_active ? 'Deactivate' : 'Reactivate' }}</button>
+              </article>
+              @if (expandedCompanionId === companion.companion_id) {
+                <section
+                  class="companion-details"
+                  [id]="'companion-details-' + companion.companion_id"
+                  [attr.aria-label]="companion.name + ' details'"
+                >
+                  @if (detailsLoading) {
+                    <p role="status">Loading companion details…</p>
+                  } @else if (detailsError) {
+                    <p class="details-error" role="alert">
+                      {{ detailsError }}
+                      <button type="button" (click)="loadDetails(companion.companion_id)">Try again</button>
+                    </p>
+                  } @else if (companionDetails; as details) {
+                    <dl class="details-grid">
+                      <div><dt>Email</dt><dd><a [href]="'mailto:' + details.email">{{ details.email }}</a></dd></div>
+                      <div><dt>Mobile</dt><dd><a [href]="'tel:' + details.mobile">{{ details.mobile }}</a></dd></div>
+                      <div><dt>Speciality</dt><dd>{{ details.speciality || 'Not provided' }}</dd></div>
+                      <div><dt>Experience</dt><dd>{{ details.experience_years === null ? 'Not provided' : details.experience_years + ' years' }}</dd></div>
+                      <div><dt>Languages</dt><dd>{{ details.languages_known.length ? details.languages_known.join(', ') : 'Not provided' }}</dd></div>
+                      <div><dt>Service IDs</dt><dd>{{ details.service_ids.length ? details.service_ids.join(', ') : 'None assigned' }}</dd></div>
+                    </dl>
+                  }
+                </section>
+              }
+            </div>
           }
         </div>
         @if (pageCount > 1) {

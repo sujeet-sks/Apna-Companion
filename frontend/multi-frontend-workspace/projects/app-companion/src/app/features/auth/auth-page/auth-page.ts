@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -11,6 +11,7 @@ import { AuthService } from '../../../core/services/auth.service';
   styleUrl: './auth-page.css',
 })
 export class AuthPage {
+  private readonly changeDetector = inject(ChangeDetectorRef);
   readonly auth = inject(AuthService);
   readonly router = inject(Router);
   readonly route = inject(ActivatedRoute);
@@ -39,7 +40,7 @@ export class AuthPage {
         forgot: 'Enter your registered email to request a reset code.',
         reset: 'Enter your email code and choose your new password.',
         account: 'Your companion account details.',
-        password: 'Keep your account secure with a new password.',
+        password: 'After you change your password, sign in again with the new password.',
       } as Record<string, string>
     )[this.page];
   }
@@ -92,13 +93,14 @@ export class AuthPage {
           this.password = '';
           this.confirm = '';
           this.current = '';
-          this.message = 'Password changed. Please sign in again.';
+          this.message = 'Password changed. Sign in with your new password.';
           break;
       }
     } catch (error) {
       this.error = error instanceof Error ? error.message : 'Please try again.';
     } finally {
       this.busy = false;
+      this.changeDetector.markForCheck();
     }
   }
 
@@ -111,6 +113,7 @@ export class AuthPage {
       this.message = `Your local session was cleared, but server sign out failed: ${
         error instanceof Error ? error.message : 'Please try again.'
       }`;
+      this.changeDetector.markForCheck();
     }
   }
 }

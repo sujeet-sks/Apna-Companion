@@ -1,6 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { TimeoutError, firstValueFrom, timeout } from 'rxjs';
+import { AuthService } from './auth.service';
 
 export interface OrganizationDashboardSummary {
   companions_total: number;
@@ -33,10 +34,19 @@ export interface OrganizationBooking {
   duration: number;
   price_inr: string;
   pickup_address: string | null;
+  organization_rating: number | null;
+  customer_comment: string | null;
   latitude: number | null;
   longitude: number | null;
   companion_id: string | null;
   companion_name: string | null;
+}
+
+export interface OrganizationBookingPage {
+  items: OrganizationBooking[];
+  total: number;
+  page: number;
+  page_size: number;
 }
 
 export interface EligibleCompanion {
@@ -49,6 +59,16 @@ export interface OrganizationCompanion {
   name: string;
   is_active: boolean;
   availability_status: 'available' | 'unavailable' | 'busy';
+}
+
+export interface OrganizationCompanionDetails extends OrganizationCompanion {
+  email: string;
+  mobile: string;
+  organization_id: string;
+  languages_known: string[];
+  speciality: string | null;
+  experience_years: number | null;
+  service_ids: number[];
 }
 
 export interface OrganizationCompanionPage {
@@ -91,12 +111,60 @@ interface ApiResponse<T> {
 
 const API_BASE_URL = 'http://localhost:8000/api/v1';
 
+interface LoadedOrganizationData {
+  summary?: OrganizationDashboardSummary;
+  companionTotal?: number;
+  companionPages?: Map<number, OrganizationCompanion[]>;
+}
+
 @Injectable({ providedIn: 'root' })
 export class OrganizationService {
   private readonly http = inject(HttpClient);
 
-  dashboard(): Promise<OrganizationDashboardSummary> {
-    return this.get(`${API_BASE_URL}/org/dashboard/`);
+  private readonly auth = inject(AuthService);
+  private readonly loaded = signal<{
+    session: ReturnType<AuthService['session']>;
+    data: LoadedOrganizationData;
+  } | null>(null);
+
+  readonly dashboardCounts = computed(() => {
+    const loaded = this.loaded();
+    const data = loaded?.session === this.auth.session() ? loaded?.data : undefined;
+    const companions = new Map<string, OrganizationCompanion>();
+    for (const page of data?.companionPages?.values() ?? []) {
+      for (const companion of page) {
+        companions.set(companion.companion_id, companion);
+      }
+    }
+    const allCompanionsLoaded = data?.companionTotal === companions.size;
+    return {
+      servicesInProgress: data?.summary?.active_bookings,
+      companionsEmployed: data?.companionTotal ?? data?.summary?.companions_total,
+      companionsBusy: allCompanionsLoaded
+        ? [...companions.values()].filter((companion) => companion.is_active && companion.availability_status === 'busy').length
+        : undefined,
+      companionsAvailable: allCompanionsLoaded
+        ? [...companions.values()].filter((companion) => companion.is_active && companion.availability_status === 'available').length
+        : undefined,
+    };
+  });
+
+  private updateLoaded(
+    session: ReturnType<AuthService['session']>,
+    update: (data: LoadedOrganizationData) => LoadedOrganizationData,
+  ): void {
+    if (!session || session !== this.auth.session()) return;
+    this.loaded.update((loaded) => ({
+      session,
+      data: update(loaded?.session === session ? loaded.data : {}),
+    }));
+  }
+
+  async dashboard(): Promise<OrganizationDashboardSummary> {
+    const session = this.auth.session();
+    const summary = await this.get<OrganizationDashboardSummary>(`${API_BASE_URL}/org/dashboard/`);
+    this.updateLoaded(session, (data) => ({ ...data, summary }));
+    return summary;
   }
 
   profile(): Promise<OrganizationProfile> {
@@ -112,11 +180,21 @@ export class OrganizationService {
     return this.patch(`${API_BASE_URL}/org/profile/`, input);
   }
 
-  async recentBookings(): Promise<OrganizationBooking[]> {
-    const response = await this.get<{
-      items: OrganizationBooking[];
-    }>(`${API_BASE_URL}/org/bookings/?page=1&page_size=5`);
-    return response.items;
+  async allBookings(): Promise<OrganizationBooking[]> {
+    const firstPage = await this.get<OrganizationBookingPage>(
+      `${API_BASE_URL}/org/bookings/?page=1&page_size=50`,
+    );
+    const bookings = [...firstPage.items];
+    const pageCount = Math.ceil(firstPage.total / firstPage.page_size);
+
+    for (let page = 2; page <= pageCount; page += 1) {
+      const response = await this.get<OrganizationBookingPage>(
+        `${API_BASE_URL}/org/bookings/?page=${page}&page_size=${firstPage.page_size}`,
+      );
+      bookings.push(...response.items);
+    }
+
+    return bookings;
   }
 
   acceptBooking(bookingId: number): Promise<{ id: number; status: string }> {
@@ -156,7 +234,17 @@ export class OrganizationService {
     });
   }
 
-  companions(input: {
+  updateCompanionStatus(
+    companionId: string,
+    status: { is_active: boolean } | { availability_status: 'available' | 'unavailable' },
+  ): Promise<{ message: string }> {
+    return this.patch(
+      `${API_BASE_URL}/org/companions/${encodeURIComponent(companionId)}/status/`,
+      status,
+    );
+  }
+
+  async companions(input: {
     page: number;
     pageSize: number;
     search?: string;
@@ -168,15 +256,46 @@ export class OrganizationService {
     });
     if (input.search) params.set('search', input.search);
     if (input.availability) params.set('availability_status', input.availability);
-    return this.get(`${API_BASE_URL}/org/companions/?${params.toString()}`);
+    const session = this.auth.session();
+    const result = await this.get<OrganizationCompanionPage>(
+      `${API_BASE_URL}/org/companions/?${params.toString()}`,
+    );
+    if (!input.search && !input.availability) {
+      this.updateLoaded(session, (data) => {
+        const companionPages = new Map(
+          result.page === 1 || result.total !== data.companionTotal ? undefined : data.companionPages,
+        );
+        companionPages.set(result.page, result.items);
+        return { ...data, companionPages, companionTotal: result.total };
+      });
+    }
+    return result;
   }
 
-  createCompanion(input: CreateCompanionInput): Promise<{
+  companionDetails(companionId: string): Promise<OrganizationCompanionDetails> {
+    return this.get(
+      `${API_BASE_URL}/org/companions/${encodeURIComponent(companionId)}/`,
+    );
+  }
+
+  createCompanion(input: CreateCompanionInput, photo: File | null = null): Promise<{
     companion_id: string;
     email: string;
     message: string;
   }> {
-    return this.post(`${API_BASE_URL}/org/companions/`, input);
+    const url = `${API_BASE_URL}/org/companions/`;
+    if (!photo) {
+      return this.post(url, input);
+    }
+
+    const body = new FormData();
+    for (const [name, value] of Object.entries(input)) {
+      if (value !== undefined) {
+        body.set(name, Array.isArray(value) ? JSON.stringify(value) : String(value));
+      }
+    }
+    body.set('photo', photo);
+    return this.post(url, body);
   }
 
   private async post<T>(url: string, body: object | null = null): Promise<T> {
@@ -225,12 +344,17 @@ export class OrganizationService {
 
   private async get<T>(url: string): Promise<T> {
     try {
-      const response = await firstValueFrom(this.http.get<ApiResponse<T>>(url));
+      const response = await firstValueFrom(
+        this.http.get<ApiResponse<T>>(url).pipe(timeout(15_000)),
+      );
       if (!response || !('data' in response)) {
         throw new Error('The server returned an unexpected response.');
       }
       return response.data;
     } catch (error) {
+      if (error instanceof TimeoutError) {
+        throw new Error('The API took too long to respond. Please try again.');
+      }
       if (error instanceof HttpErrorResponse) {
         if (error.status === 0) {
           throw new Error('Unable to reach the API at http://localhost:8000.');

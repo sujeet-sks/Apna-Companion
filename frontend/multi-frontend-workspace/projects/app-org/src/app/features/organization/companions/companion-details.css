@@ -1,0 +1,82 @@
+.companion-entry {
+  border-bottom: 1px solid #eef0ec;
+}
+
+.companion-entry .companion-row {
+  border-bottom: 0;
+}
+
+.companion-details-toggle {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.companion-details-toggle:hover {
+  text-decoration: underline;
+}
+
+.details-toggle-label {
+  margin-left: 8px;
+  color: #78857b;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.companion-details {
+  padding: 14px 16px 18px 56px;
+  background: #fbfcfa;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 12px 20px;
+  margin: 0;
+}
+
+.details-grid > div {
+  min-width: 0;
+}
+
+.details-grid dt {
+  margin-bottom: 4px;
+  color: #78857b;
+  font-size: 11px;
+}
+
+.details-grid dd {
+  margin: 0;
+  color: #243b36;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.details-grid a {
+  color: inherit;
+}
+
+.details-error {
+  margin: 0;
+  color: #973d2c;
+  font-size: 12px;
+}
+
+.details-error button {
+  margin-left: 8px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-width: 760px) {
+  .companion-details {
+    padding: 14px 12px 18px;
+  }
+}

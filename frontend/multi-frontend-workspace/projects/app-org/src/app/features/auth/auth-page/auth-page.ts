@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -38,93 +38,6 @@ const ORGANIZATION_TYPES = [
     ],
   },
   {
-    value: 'municipal_corporation',
-    label: 'Municipal Corporation',
-    documents: ['Municipal Authority Authorization Letter', 'Official Establishment Order'],
-  },
-  {
-    value: 'district_collector_office',
-    label: 'District Collector Office',
-    documents: ['District Administration Authorization Letter', 'Government Office Order'],
-  },
-  {
-    value: 'pension_office',
-    label: 'Pension Office',
-    documents: ['Pension Department Authorization Letter', 'Official Establishment Order'],
-  },
-  {
-    value: 'passport_seva_kendra',
-    label: 'Passport Seva Kendra',
-    documents: ['Passport Office Authorization Letter', 'Government Establishment Order'],
-  },
-  {
-    value: 'aadhaar_seva_kendra',
-    label: 'Aadhaar Seva Kendra',
-    documents: [
-      'UIDAI Authorization Letter',
-      'Aadhaar Enrolment Agency Authorization Certificate',
-    ],
-  },
-  {
-    value: 'post_office',
-    label: 'Post Office',
-    documents: ['Department of Posts Authorization Letter', 'Official Establishment Order'],
-  },
-  {
-    value: 'electricity_board_office',
-    label: 'Electricity Board / Office',
-    documents: [
-      'Electricity Distribution Licence',
-      'Utility Authorization Letter',
-      'Government Establishment Order',
-    ],
-  },
-  {
-    value: 'water_supply_office',
-    label: 'Water Supply Office',
-    documents: ['Water Supply Department Authorization Letter', 'Government Establishment Order'],
-  },
-  {
-    value: 'gas_distribution_office',
-    label: 'Gas Distribution Office',
-    documents: [
-      'Authorized Gas Distributorship Certificate',
-      'Oil/Gas Company Authorization Letter',
-    ],
-  },
-  {
-    value: 'school',
-    label: 'School',
-    documents: [
-      'School Recognition Certificate',
-      'School Registration Certificate',
-      'Affiliation Certificate',
-    ],
-  },
-  {
-    value: 'college_university',
-    label: 'College / University',
-    documents: [
-      'University Establishment Act/Notification',
-      'University Affiliation Letter',
-      'Institution Recognition Certificate',
-    ],
-  },
-  {
-    value: 'police_station',
-    label: 'Police Station',
-    documents: ['Police Department Authorization Letter', 'Official Establishment Order'],
-  },
-  {
-    value: 'court_legal_aid_centre',
-    label: 'Court / Legal Aid Centre',
-    documents: [
-      'Legal Services Authority Authorization Letter',
-      'Government Establishment Notification',
-      'Official Court Administration Authorization',
-    ],
-  },
-  {
     value: 'others',
     label: 'Others',
     documents: [
@@ -145,6 +58,7 @@ const ORGANIZATION_TYPES = [
 })
 export class AuthPage {
   readonly organizationTypes = ORGANIZATION_TYPES;
+  private readonly changeDetector = inject(ChangeDetectorRef);
   readonly auth = inject(AuthService);
   readonly router = inject(Router);
   readonly route = inject(ActivatedRoute);
@@ -152,6 +66,18 @@ export class AuthPage {
 
   get page(): string {
     return this.route.snapshot.data['page'] || 'login';
+  }
+
+  get approvalStatus() {
+    return this.auth.session()?.approval_status;
+  }
+
+  get passwordBackPath(): string {
+    return this.auth.session()?.approval_status === 'approved' ? '/profile' : '/approval';
+  }
+
+  get passwordBackLabel(): string {
+    return this.passwordBackPath === '/profile' ? 'Back to profile' : 'Back to account';
   }
 
   get title(): string {
@@ -183,7 +109,7 @@ export class AuthPage {
         resubmit:
           'Use the token from your review email to update your address and verification document.',
         account: 'Your organization account details.',
-        password: 'Keep your account secure with a new password.',
+        password: 'After you change your password, sign in again with the new password.',
       } as Record<string, string>
     )[this.page];
   }
@@ -198,6 +124,7 @@ export class AuthPage {
   address = '';
   documentType = '';
   documentUrl = '';
+  private hasRegistrationDocument = false;
   latitude: number | null = null;
   longitude: number | null = null;
   locationMessage = '';
@@ -244,11 +171,20 @@ export class AuthPage {
     );
   }
 
+  selectDocument(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.hasRegistrationDocument = Boolean(input.files?.length);
+  }
+
   async submit(form: NgForm): Promise<void> {
     this.error = '';
     this.message = '';
     form.control.markAllAsTouched();
     if (form.invalid) {
+      return;
+    }
+    if (this.page === 'register' && !this.hasRegistrationDocument) {
+      this.error = 'Choose a verification document to continue.';
       return;
     }
     if (this.page === 'register' && (this.latitude === null || this.longitude === null)) {
@@ -286,7 +222,7 @@ export class AuthPage {
             confirm_password: this.confirm,
             address: this.address,
             document_type: this.documentType,
-            document_url: this.documentUrl,
+            document_url: 'https://example.com/registration-document-placeholder.pdf',
             latitude: this.latitude,
             longitude: this.longitude,
           });
@@ -321,13 +257,14 @@ export class AuthPage {
           this.password = '';
           this.confirm = '';
           this.current = '';
-          this.message = 'Password changed. Please sign in again.';
+          this.message = 'Password changed. Sign in with your new password.';
           break;
       }
     } catch (error) {
       this.error = error instanceof Error ? error.message : 'Please try again.';
     } finally {
       this.busy = false;
+      this.changeDetector.markForCheck();
     }
   }
 
@@ -335,11 +272,12 @@ export class AuthPage {
     this.error = '';
     try {
       await this.auth.logout();
-      await this.router.navigateByUrl('/login');
     } catch (error) {
       this.message = `Your local session was cleared, but server sign out failed: ${
         error instanceof Error ? error.message : 'Please try again.'
       }`;
+    } finally {
+      await this.router.navigateByUrl('/login');
     }
   }
 }

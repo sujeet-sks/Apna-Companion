@@ -1,1 +1,28 @@
-.preview-label{font-size:11px;color:#947134;background:#fff3dc;border-radius:20px;padding:7px 10px}.booking-info{min-width:0}.booking-info span{line-height:1.5}.booking-info .map-link{font-size:11px;color:#2e604d;text-decoration:underline;width:max-content}
+.booking-info{min-width:0}.booking-info span{line-height:1.5}.booking-info .map-link{font-size:11px;color:#2e604d;text-decoration:underline;width:max-content}
+
+.journey-actions{display:flex;grid-column:2/-1;grid-row:2;flex-wrap:wrap;align-items:flex-end;gap:9px;min-width:0}
+.journey-primary,.journey-secondary,.journey-pagination button{border:1px solid #245b79;border-radius:5px;padding:8px 11px;font-size:11px;cursor:pointer}
+.journey-primary{background:#245b79;color:#fff}
+.journey-secondary,.journey-pagination button{background:#edf4f7;color:#245b79}
+.journey-primary:disabled,.journey-secondary:disabled,.journey-pagination button:disabled{opacity:.55;cursor:wait}
+.otp-form{display:grid;gap:5px}
+.otp-form label{color:#526d7b;font-size:10px}
+.otp-hint{margin:0;color:#647986;font-size:10px}
+.otp-controls{display:flex;flex-wrap:wrap;gap:6px}
+.otp-controls input{width:125px;border:1px solid #cbd6db;border-radius:5px;padding:8px;font:inherit;font-size:11px}
+.journey-error{flex-basis:100%;margin:0;color:#973d2c;font-size:11px}
+.booking-details{grid-column:2/-1;grid-row:3;min-width:0;padding:12px;background:#f2f6f7;border-radius:5px}
+.journey-details-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0}
+.journey-details-grid dt{margin-bottom:3px;color:#647986;font-size:10px}
+.journey-details-grid dd{margin:0;color:#263d4b;font-size:11px;overflow-wrap:anywhere}
+.journey-pagination{display:flex;justify-content:center;align-items:center;gap:12px;padding:14px 0;color:#526d7b;font-size:11px}
+.collection-summary{margin:0 0 24px;padding:14px 16px;border:1px solid #d5e4d7;border-radius:7px;background:#f1f8f1;color:#294c38}
+.collection-summary h2{margin:0 0 5px;font-size:15px}
+.collection-summary>p{margin:0 0 10px;color:#526d7b;font-size:11px}
+.collection-summary article{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:10px 0;border-top:1px solid #d5e4d7}
+.collection-summary article p{margin:4px 0 0;color:#526d7b;font-size:11px}
+.collection-summary article .collection-error{color:#973d2c}
+.collection-amount{color:#245b79;white-space:nowrap}
+.collection-summary article button{border:0;background:transparent;color:#526d7b;font-size:10px;text-decoration:underline;cursor:pointer}
+
+@media(max-width:700px){.journey-actions{grid-row:3}.booking-details{grid-row:4}.otp-controls input{width:110px}}

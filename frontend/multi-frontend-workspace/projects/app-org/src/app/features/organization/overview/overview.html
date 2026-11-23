@@ -1,0 +1,40 @@
+<app-sidebar active="dashboard" />
+<main>
+  <header>
+    <button type="button" (click)="logout()">Sign out</button>
+  </header>
+  <div class="content">
+    <h1>Organization dashboard</h1>
+    <p class="dashboard-note">
+  
+    </p>
+
+    <section aria-labelledby="services-heading">
+      <h2 id="services-heading">Services</h2>
+      <dl>
+        <div>
+          <dt>Services in progress</dt>
+          <dd [class.loading]="counts.servicesInProgress === undefined">{{ counts.servicesInProgress ?? 'Loading…' }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section aria-labelledby="staffing-heading">
+      <h2 id="staffing-heading">Staffing</h2>
+      <dl class="staffing">
+        <div>
+          <dt>Companions employed</dt>
+          <dd [class.loading]="counts.companionsEmployed === undefined">{{ counts.companionsEmployed ?? 'Loading…' }}</dd>
+        </div>
+        <div>
+          <dt>Busy</dt>
+          <dd [class.loading]="counts.companionsBusy === undefined">{{ counts.companionsBusy ?? 'Loading…' }}</dd>
+        </div>
+        <div>
+          <dt>Available</dt>
+          <dd [class.loading]="counts.companionsAvailable === undefined">{{ counts.companionsAvailable ?? 'Loading…' }}</dd>
+        </div>
+      </dl>
+    </section>
+  </div>
+</main>

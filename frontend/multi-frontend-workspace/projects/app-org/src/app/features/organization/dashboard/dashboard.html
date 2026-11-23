@@ -1,12 +1,8 @@
-<app-sidebar [preview]="isPreview" [active]="activeNavigation" />
+<app-sidebar active="bookings" />
 <main class="dashboard">
   <header class="topbar">
     <div class="top-actions">
-      @if (isPreview) {
-        <span class="preview-label">Preview mode</span>
-      } @else {
-        <button type="button" class="quiet-button" (click)="logout()">Sign out</button>
-      }
+      <button type="button" class="quiet-button" (click)="logout()">Sign out</button>
     </div>
   </header>
 
@@ -14,9 +10,6 @@
     <div class="heading-row">
       <div>
         <h1>{{ profile?.organization_name || 'Your dashboard' }}</h1>
-        @if (isPreview) {
-          <p class="subheading">Showing sample data.</p>
-        }
       </div>
       <button type="button" class="refresh-button" (click)="refresh()" [disabled]="loading">
         {{ loading ? 'Refreshing…' : 'Refresh' }}
@@ -72,6 +65,12 @@
                 <strong>{{ booking.service_name }} · {{ booking.customer_name }}</strong>
                 <span>{{ booking.scheduled_at | date: 'medium' }} · {{ booking.duration }} min · ₹{{ booking.price_inr }}</span>
                 <span>{{ booking.pickup_address || 'No pickup address provided' }}</span>
+                @if (booking.status === 'completed' && booking.customer_comment) {
+                  <section class="customer-feedback" aria-label="Customer comment">
+                    <strong>Customer comment</strong>
+                    <p>{{ booking.customer_comment }}</p>
+                  </section>
+                }
                 @if (booking.latitude !== null && booking.longitude !== null) {
                   <a
                     class="map-link"

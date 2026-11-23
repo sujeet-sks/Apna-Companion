@@ -1,12 +1,8 @@
-<app-sidebar [preview]="isPreview" [active]="activeNavigation" />
+<app-sidebar active="dashboard" />
 <main class="dashboard">
   <header class="topbar">
     <div class="top-actions">
-      @if (isPreview) {
-        <span class="preview-label">Preview mode</span>
-      } @else {
-        <button type="button" class="quiet-button" (click)="logout()">Sign out</button>
-      }
+      <button type="button" class="quiet-button" (click)="logout()">Sign out</button>
     </div>
   </header>
 
@@ -14,11 +10,8 @@
     <div class="heading-row">
       <div>
         <h1>My schedule</h1>
-        @if (isPreview) {
-          <p class="subheading">Showing sample data.</p>
-        }
       </div>
-      <button type="button" class="refresh-button" (click)="refresh()" [disabled]="loading">
+      <button type="button" class="refresh-button" (click)="refreshAll()" [disabled]="loading">
         {{ loading ? 'Refreshing…' : 'Refresh' }}
       </button>
     </div>
@@ -26,8 +19,43 @@
     @if (error) {
       <div class="alert error" role="alert">
         <span>{{ error }}</span>
-        <button type="button" class="retry-button" (click)="refresh()">Try again</button>
+        <button type="button" class="retry-button" (click)="refreshAll()">Try again</button>
       </div>
+    }
+
+    @if (collectionSummaries.length) {
+      <section class="collection-summary" aria-label="Manual collection amounts" aria-live="polite">
+        <h2>Manual collection amounts</h2>
+        <p>Collect manually; payment is not recorded in the portal.</p>
+        @for (summary of collectionSummaries; track summary.bookingId) {
+          <article>
+            <div>
+              <strong>Journey #{{ summary.bookingId }} · {{ summary.serviceName }}</strong>
+              @if (summary.amount) {
+                <p>
+                  {{ summary.elapsedMinutes }} actual minutes ·
+                  {{ summary.bookingDurationMinutes }} booked minutes.
+                  Billing uses the longer duration, rounded up to
+                  {{ summary.billableHours }} billable
+                  {{ summary.billableHours === 1 ? 'hour' : 'hours' }}
+                  × {{ summary.hourlyRate }} per hour
+                </p>
+              } @else {
+                <p class="collection-error" role="alert">
+                  Journey completed, but the amount could not be calculated:
+                  {{ summary.calculationError }}
+                </p>
+              }
+            </div>
+            @if (summary.amount) {
+              <strong class="collection-amount">Collect {{ summary.amount }}</strong>
+            }
+            <button type="button" (click)="dismissCollectionSummary(summary.bookingId)">
+              Dismiss
+            </button>
+          </article>
+        }
+      </section>
     }
 
     <div class="stats">
@@ -35,25 +63,34 @@
         <p>Active journeys</p>
         <strong>{{ loading ? '—' : summary?.active_count }}</strong>
       </article>
-      <article class="stat-card">
-        <p>Past journeys</p>
-        <strong>{{ loading ? '—' : summary?.past_count }}</strong>
+      <article class="stat-card earnings-card">
+        <p>Estimated earnings · all time</p>
+        @if (earningsLoading) {
+          <strong>Loading…</strong>
+        } @else if (earningsError) {
+          <strong>Unavailable</strong>
+          <button type="button" class="earnings-retry" (click)="loadEstimatedEarnings()">
+            Try again
+          </button>
+        } @else {
+          <strong>{{ formatEstimatedEarnings() }}</strong>
+        }
       </article>
     </div>
 
     <section class="panel" id="journeys">
       <div class="panel-heading">
         <div>
-          <h2>Assigned journeys</h2>
+          <h2>Current journeys</h2>
         </div>
-        <span class="count">{{ bookings.length }} journeys</span>
+        <span class="count">{{ activeBookingTotal }} active journeys</span>
       </div>
 
       @if (loading && !bookings.length) {
         <p class="empty">Loading your journeys…</p>
       } @else if (!loading && !bookings.length) {
         <div class="empty-state">
-          <h3>No assigned journeys</h3>
+          <h3>No current journeys</h3>
           <p>New assignments from your organization will appear here.</p>
         </div>
       } @else {
@@ -66,10 +103,12 @@
                 <span>{{ booking.scheduled_at | date: 'MMM' }}</span>
               </div>
               <div class="booking-info">
-                <strong>{{ booking.service_name }} · {{ booking.customer_name }}</strong>
+                <strong>{{ booking.service_name }}</strong>
+                <span>Pickup contact: {{ booking.pickup_contact_name || 'Not provided' }}</span>
+                <span>Pickup phone: {{ booking.pickup_contact_phone || 'Not provided' }}</span>
                 <span>{{ booking.scheduled_at | date: 'shortTime' }} · {{ booking.duration }} min</span>
                 <span>{{ booking.pickup_address || 'Pickup address not provided' }}</span>
-                <span>{{ booking.organization_name }} · ₹{{ booking.price_inr }}</span>
+                <span>{{ booking.organization_name }} · Booking price: ₹{{ booking.price_inr }}</span>
                 @if (booking.service_notes) {
                   <span class="service-notes">{{ booking.service_notes }}</span>
                 }
@@ -83,9 +122,145 @@
                 }
               </div>
               <span class="status" [attr.data-status]="booking.status">{{ booking.status.replace('_', ' ') }}</span>
+              <div class="journey-actions">
+                <button
+                  type="button"
+                  class="journey-secondary"
+                  [disabled]="loading || busyBookingId !== null"
+                  [attr.aria-expanded]="expandedBookingId === booking.id"
+                  [attr.aria-controls]="expandedBookingId === booking.id ? 'booking-details-' + booking.id : null"
+                  (click)="toggleBookingDetails(booking)"
+                >
+                  {{ expandedBookingId === booking.id ? 'Hide details' : 'View details' }}
+                </button>
+                @if (booking.status === 'assigned') {
+                  <button
+                    type="button"
+                    class="journey-primary"
+                    [disabled]="loading || busyBookingId !== null"
+                    (click)="updateBookingStatus(booking, 'on_the_way')"
+                  >
+                    {{ busyBookingId === booking.id ? 'Updating…' : 'On the way' }}
+                  </button>
+                } @else if (booking.status === 'on_the_way') {
+                  <button
+                    type="button"
+                    class="journey-primary"
+                    [disabled]="loading || busyBookingId !== null"
+                    (click)="updateBookingStatus(booking, 'arrived')"
+                  >
+                    {{ busyBookingId === booking.id ? 'Updating…' : 'I’ve arrived' }}
+                  </button>
+                } @else if (booking.status === 'arrived') {
+                  <form class="otp-form" (ngSubmit)="startBooking(booking)">
+                    <label [for]="'start-code-' + booking.id">Customer start code</label>
+                    <div class="otp-controls">
+                      <input
+                        [id]="'start-code-' + booking.id"
+                        [name]="'start-code-' + booking.id"
+                        [(ngModel)]="startCodes[booking.id]"
+                        type="text"
+                        inputmode="numeric"
+                        autocomplete="one-time-code"
+                        maxlength="6"
+                        pattern="[0-9]{6}"
+                        placeholder="6-digit code"
+                        required
+                      >
+                      <button
+                        type="submit"
+                        class="journey-primary"
+                        [disabled]="loading || busyBookingId !== null"
+                      >
+                        {{ busyBookingId === booking.id ? 'Verifying…' : 'Start service' }}
+                      </button>
+                    </div>
+                    <p class="otp-hint">Enter the six-digit code provided by the customer.</p>
+                  </form>
+                } @else if (booking.status === 'in_progress') {
+                  <form class="otp-form" (ngSubmit)="completeBooking(booking)">
+                    <label [for]="'end-code-' + booking.id">Customer end code</label>
+                    <div class="otp-controls">
+                      <input
+                        [id]="'end-code-' + booking.id"
+                        [name]="'end-code-' + booking.id"
+                        [(ngModel)]="endCodes[booking.id]"
+                        type="text"
+                        inputmode="numeric"
+                        autocomplete="one-time-code"
+                        maxlength="6"
+                        pattern="[0-9]{6}"
+                        placeholder="6-digit code"
+                        required
+                      >
+                      <button
+                        type="submit"
+                        class="journey-primary"
+                        [disabled]="loading || busyBookingId !== null"
+                      >
+                        {{ busyBookingId === booking.id ? 'Verifying…' : 'Complete journey' }}
+                      </button>
+                    </div>
+                    <p class="otp-hint">Enter the six-digit code provided by the customer.</p>
+                  </form>
+                }
+                @if (actionErrors[booking.id]) {
+                  <p class="journey-error" role="alert">{{ actionErrors[booking.id] }}</p>
+                }
+              </div>
+              @if (expandedBookingId === booking.id) {
+                <section
+                  class="booking-details"
+                  [id]="'booking-details-' + booking.id"
+                  [attr.aria-label]="'Journey ' + booking.id + ' details'"
+                >
+                  @if (detailsLoading) {
+                    <p role="status">Loading journey details…</p>
+                  } @else if (detailsError) {
+                    <p class="journey-error" role="alert">
+                      {{ detailsError }}
+                      <button type="button" class="journey-secondary" (click)="loadBookingDetails(booking.id)">
+                        Try again
+                      </button>
+                    </p>
+                  } @else if (bookingDetails; as details) {
+                    <dl class="journey-details-grid">
+                      <div><dt>Customer</dt><dd>{{ details.customer_name }}</dd></div>
+                      <div><dt>Service ID</dt><dd>{{ details.service_id }}</dd></div>
+                      <div><dt>Assigned</dt><dd>{{ details.assigned_at ? (details.assigned_at | date: 'medium') : 'Not available' }}</dd></div>
+                      <div><dt>Started</dt><dd>{{ details.started_at ? (details.started_at | date: 'medium') : 'Not started' }}</dd></div>
+                      @if (details.status === 'completed') {
+                        <div>
+                          <dt>Customer rating</dt>
+                          <dd>{{ details.companion_rating != null ? details.companion_rating + '/5' : 'Not rated' }}</dd>
+                        </div>
+                        <div>
+                          <dt>Customer comment</dt>
+                          <dd>{{ details.customer_comment || 'No comment provided' }}</dd>
+                        </div>
+                      }
+                    </dl>
+                  }
+                </section>
+              }
             </article>
           }
         </div>
+        @if (activeBookingTotal > bookingPageSize) {
+          <nav class="journey-pagination" aria-label="Current journey pages">
+            <button
+              type="button"
+              [disabled]="loading || busyBookingId !== null || bookingPage <= 1"
+              (click)="changeBookingPage(bookingPage - 1)"
+            >Previous</button>
+            <span>Page {{ bookingPage }} of {{ bookingPageCount }}</span>
+            <button
+              type="button"
+              [disabled]="loading || busyBookingId !== null || bookingPage >= bookingPageCount"
+              (click)="changeBookingPage(bookingPage + 1)"
+            >Next</button>
+          </nav>
+        }
       }
     </section>
   </section>

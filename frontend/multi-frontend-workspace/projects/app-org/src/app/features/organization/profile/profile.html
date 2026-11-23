@@ -1,23 +1,15 @@
-<app-sidebar [preview]="isPreview" active="profile" />
+<app-sidebar active="profile" />
 <main class="profile-page">
   <header class="topbar">
     <nav class="profile-actions" aria-label="Profile actions">
-      @if (isPreview) {
-        <span class="preview-password" title="Sign in to change your password">Change password · Sign in required</span>
-      } @else {
-        <a class="back-link" routerLink="/change-password">Change password</a>
-      }
-      <a class="back-link" [routerLink]="isPreview ? '/dashboard-preview' : '/dashboard'">Back to dashboard</a>
+      <a class="back-link" routerLink="/change-password">Change password</a>
+      <a class="back-link" routerLink="/dashboard">Back to dashboard</a>
     </nav>
   </header>
   <section class="content">
     <p class="eyebrow">ORGANIZATION PORTAL</p>
     <h1>Organization profile</h1>
-    @if (isPreview) {
-      <p class="subheading">Sample profile · not connected to the backend.</p>
-    } @else {
-      <p class="subheading">Organization details submitted during registration.</p>
-    }
+    <p class="subheading">Organization details submitted during registration.</p>
     @if (loading) {
       <p class="notice">Loading profile…</p>
     } @else if (error) {
@@ -34,13 +26,37 @@
         <dl>
           <div><dt>Organization ID</dt><dd>{{ profile.organization_id }}</dd></div>
           <div><dt>Email</dt><dd>{{ profile.email }}</dd></div>
+          <div>
+            <dt>Organization rating</dt>
+            <dd class="rating-display">
+              @if (ratingLoading) {
+                <span>Loading ratings…</span>
+              } @else if (ratingError) {
+                <span class="rating-error" role="alert">{{ ratingError }}</span>
+                <button type="button" (click)="loadRatings()">Try again</button>
+              } @else if (organizationRatingAverage !== null) {
+                <strong>{{ organizationRatingAverage }}/5</strong>
+                <span>{{ organizationRatingCount }} {{ organizationRatingCount === 1 ? 'review' : 'reviews' }}</span>
+              } @else {
+                <span>No customer ratings yet</span>
+              }
+            </dd>
+          </div>
           <div><dt>Address</dt><dd><input aria-label="Organization address" [(ngModel)]="address"></dd></div>
           <div>
             <dt>Logo</dt>
             <dd class="logo-field">
-              <input aria-label="Organization logo URL" [(ngModel)]="logoUrl">
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                aria-label="Choose organization logo"
+                [disabled]="readingLogo || saving"
+                (change)="selectLogo($event)"
+              >
+              <span>PNG, JPEG, or WebP up to 1 MB</span>
               @if (logoUrl) {
                 <img class="logo-preview" [src]="logoUrl" [alt]="profile.organization_name + ' logo'">
+                <button type="button" [disabled]="readingLogo || saving" (click)="logoUrl = ''">Remove logo</button>
               } @else {
                 <span>No logo provided</span>
               }
@@ -75,7 +91,7 @@
         @if (saveMessage) {
           <p class="notice success" role="status">{{ saveMessage }}</p>
         }
-        <button class="save-button" type="button" [disabled]="saving" (click)="save()">
+        <button class="save-button" type="button" [disabled]="saving || readingLogo" (click)="save()">
           {{ saving ? 'Saving…' : 'Save changes' }}
         </button>
       </section>

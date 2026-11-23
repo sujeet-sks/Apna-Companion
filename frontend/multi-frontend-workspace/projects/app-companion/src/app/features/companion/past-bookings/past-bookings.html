@@ -1,1 +1,60 @@
-<h1>Companion Past Bookings</h1>
+<app-sidebar active="journeys" />
+<main>
+  <h1>Past journeys</h1>
+
+  @if (loading()) {
+    <p role="status">Loading past journeys…</p>
+  }
+  @if (error()) {
+    <p role="alert">{{ error() }}</p>
+    @if (!history()) {
+      <button type="button" (click)="load(1)">Try again</button>
+    }
+  }
+
+  @if (history(); as result) {
+    @if (!result.items.length) {
+      <p>No completed or cancelled journeys yet.</p>
+    } @else {
+      <ul>
+        @for (journey of result.items; track journey.id) {
+          <li>
+            <div>
+              <strong>{{ journey.service_name }}</strong>
+              <time [attr.datetime]="journey.scheduled_at">{{ journey.scheduled_at | date: 'medium' }}</time>
+              @if (journey.cancellation_reason) {
+                <p>{{ journey.cancellation_reason }}</p>
+              }
+              @if (
+                journey.status === 'completed' &&
+                (journey.companion_rating !== undefined || journey.customer_comment !== undefined)
+              ) {
+                <section class="customer-review" aria-label="Customer feedback">
+                  <strong>Customer feedback</strong>
+                  @if (journey.companion_rating !== null && journey.companion_rating !== undefined) {
+                    <p>Rating: {{ journey.companion_rating }}/5</p>
+                  }
+                  @if (journey.customer_comment) {
+                    <p>Comment: {{ journey.customer_comment }}</p>
+                  }
+                  @if (journey.companion_rating == null && !journey.customer_comment) {
+                    <p>No review submitted.</p>
+                  }
+                </section>
+              }
+            </div>
+            <span class="status">{{ journey.status }}</span>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (result.total > result.page_size) {
+      <nav aria-label="Past journey pages">
+        <button type="button" [disabled]="loading() || result.page <= 1" (click)="load(result.page - 1)">Previous</button>
+        <span>Page {{ result.page }}</span>
+        <button type="button" [disabled]="loading() || result.page * result.page_size >= result.total" (click)="load(result.page + 1)">Next</button>
+      </nav>
+    }
+  }
+</main>

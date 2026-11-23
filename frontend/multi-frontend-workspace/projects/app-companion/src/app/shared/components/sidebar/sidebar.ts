@@ -11,14 +11,17 @@ export type CompanionNavigationItem = 'dashboard' | 'journeys' | 'profile';
   styleUrl: './sidebar.css',
 })
 export class Sidebar {
-  @Input() preview = false;
   @Input() active: CompanionNavigationItem = 'dashboard';
 
   get dashboardPath(): string {
-    return this.preview ? '/dashboard-preview' : '/dashboard';
+    return '/dashboard';
+  }
+
+  get pastJourneysPath(): string {
+    return '/past-journeys';
   }
 
   get profilePath(): string {
-    return this.preview ? '/profile-preview' : '/profile';
+    return '/profile';
   }
 }

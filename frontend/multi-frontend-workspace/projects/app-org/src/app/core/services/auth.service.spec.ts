@@ -57,7 +57,7 @@ describe('Organization authentication', () => {
       confirm_password: 'password123',
       address: 'Example address',
       document_type: 'registration_certificate',
-      document_url: 'https://example.com/document.pdf',
+      document_url: 'https://example.com/registration-document-placeholder.pdf',
       latitude: 37.77493,
       longitude: -122.419416,
     });
@@ -72,7 +72,7 @@ describe('Organization authentication', () => {
       confirm_password: 'password123',
       address: 'Example address',
       document_type: 'registration_certificate',
-      document_url: 'https://example.com/document.pdf',
+      document_url: 'https://example.com/registration-document-placeholder.pdf',
       latitude: 37.77493,
       longitude: -122.419416,
     });
@@ -114,6 +114,31 @@ describe('Organization authentication', () => {
       { status: 503, statusText: 'Service Unavailable' },
     );
     await expect(logout).rejects.toThrow();
+    expect(auth.signedIn).toBe(false);
+    expect(localStorage.getItem(AUTH_TOKEN_STORAGE_KEY)).toBeNull();
+  });
+
+  it('treats an unauthorized logout as an already-ended session', async () => {
+    const login = auth.login('org@example.com', 'password123');
+    http.expectOne('http://localhost:8000/api/v1/org/login/').flush({
+      status_code: 200,
+      data: { access_token: 'org-token', expires_in: 43200, organization_id: 'org-id' },
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    http.expectOne('http://localhost:8000/api/v1/org/me/').flush({
+      status_code: 200,
+      data: { email: 'org@example.com', organization_id: 'org-id', approval_status: 'pending' },
+    });
+    await login;
+
+    const logout = auth.logout();
+    const request = http.expectOne('http://localhost:8000/api/v1/org/logout/');
+    expect(request.request.headers.get('Authorization')).toBe('Bearer org-token');
+    request.flush(
+      { detail: 'Unauthorized' },
+      { status: 401, statusText: 'Unauthorized' },
+    );
+    await expect(logout).resolves.toBeUndefined();
     expect(auth.signedIn).toBe(false);
     expect(localStorage.getItem(AUTH_TOKEN_STORAGE_KEY)).toBeNull();
   });
