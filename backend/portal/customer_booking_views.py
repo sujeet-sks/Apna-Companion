@@ -5,7 +5,7 @@ from datetime import datetime
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from math import asin, cos, radians, sin, sqrt
 from zoneinfo import ZoneInfo
-SERVICE_RADIUS_KM = 10.0
+SERVICE_RADIUS_KM = 50.0
 EARTH_RADIUS_KM = 6371.0
 
 from django.conf import settings
