@@ -36,7 +36,7 @@
 
 .quiet-button {
   color: #496678;
-  font-size: 12px;
+  font-size: 14.784px;
 }
 
 .content {
@@ -57,7 +57,7 @@
   margin: 0;
   color: #233746;
   font:
-    400 38px/1.15 Georgia,
+    400 46.816px/1.15 Georgia,
     serif;
   letter-spacing: -0.5px;
 }
@@ -65,7 +65,7 @@
 .subheading {
   margin: 9px 0 0;
   color: #647986;
-  font-size: 13px;
+  font-size: 16.016px;
 }
 
 .refresh-button {
@@ -74,7 +74,7 @@
   border-radius: 6px;
   background: #245b79;
   color: #fff;
-  font-size: 12px;
+  font-size: 14.784px;
   cursor: pointer;
 }
 
@@ -102,12 +102,12 @@
 .stat-card p {
   margin: 0 0 8px;
   color: #647986;
-  font-size: 12px;
+  font-size: 14.784px;
 }
 
 .stat-card strong {
   color: #245b79;
-  font-size: 28px;
+  font-size: 34.496px;
   font-weight: 600;
 }
 
@@ -115,7 +115,7 @@
   display: block;
   margin-top: 8px;
   color: #647986;
-  font-size: 10px;
+  font-size: 12.32px;
   line-height: 1.4;
 }
 
@@ -126,7 +126,7 @@
   padding: 0;
   background: transparent;
   color: #245b79;
-  font-size: 11px;
+  font-size: 13.552px;
   text-decoration: underline;
   cursor: pointer;
 }
@@ -146,14 +146,14 @@
 .panel-heading h2 {
   margin: 0;
   color: #233746;
-  font-size: 20px;
+  font-size: 24.64px;
   font-weight: 600;
 }
 
 .count {
   flex: 0 0 auto;
   color: #526d7b;
-  font-size: 11px;
+  font-size: 13.552px;
 }
 
 .booking-row {
@@ -179,13 +179,13 @@
 }
 
 .journey-date span {
-  font-size: 9px;
+  font-size: 11.088px;
   font-weight: 700;
   letter-spacing: 0.5px;
 }
 
 .journey-date strong {
-  font-size: 21px;
+  font-size: 25.872px;
   line-height: 1.1;
 }
 
@@ -199,14 +199,14 @@
 
 .booking-info strong {
   color: #263d4b;
-  font-size: 13px;
+  font-size: 16.016px;
   font-weight: 600;
   overflow-wrap: anywhere;
 }
 
 .booking-info span {
   color: #647986;
-  font-size: 11px;
+  font-size: 13.552px;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
@@ -220,7 +220,7 @@
 .booking-info .map-link {
   width: max-content;
   color: #245b79;
-  font-size: 11px;
+  font-size: 13.552px;
   text-decoration: underline;
 }
 
@@ -232,7 +232,7 @@
   border-radius: 5px;
   background: #eaf3f6;
   color: #37677f;
-  font-size: 10px;
+  font-size: 12.32px;
   text-transform: capitalize;
 }
 
@@ -245,7 +245,7 @@
 .empty-state {
   padding: 28px 12px;
   color: #647986;
-  font-size: 13px;
+  font-size: 16.016px;
   text-align: center;
 }
 
@@ -256,12 +256,12 @@
 .empty-state h3 {
   margin: 4px 0 7px;
   color: #263d4b;
-  font-size: 14px;
+  font-size: 17.248px;
 }
 
 .empty-state p {
   margin: 0;
-  font-size: 12px;
+  font-size: 14.784px;
 }
 
 .alert {
@@ -272,7 +272,7 @@
   margin-bottom: 18px;
   padding: 13px 15px;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 16.016px;
 }
 
 .error {
@@ -310,7 +310,7 @@
   }
 
   .heading-row h1 {
-    font-size: 28px;
+    font-size: 34.496px;
   }
 
   .stat-card {
@@ -318,7 +318,7 @@
   }
 
   .stat-card strong {
-    font-size: 25px;
+    font-size: 30.8px;
   }
 
   .booking-row {
@@ -335,6 +335,6 @@
     grid-row: 2;
     justify-self: start;
     padding: 5px 7px;
-    font-size: 9px;
+    font-size: 11.088px;
   }
 }

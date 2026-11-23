@@ -99,7 +99,6 @@
                       </span>
                     </button>
                   </h3>
-                  <p>{{ companion.companion_id }}</p>
                 </div>
                 <span class="status" [attr.data-status]="companion.availability_status">
                   {{ companion.availability_status }}
@@ -145,7 +144,7 @@
                       <div><dt>Speciality</dt><dd>{{ details.speciality || 'Not provided' }}</dd></div>
                       <div><dt>Experience</dt><dd>{{ details.experience_years === null ? 'Not provided' : details.experience_years + ' years' }}</dd></div>
                       <div><dt>Languages</dt><dd>{{ details.languages_known.length ? details.languages_known.join(', ') : 'Not provided' }}</dd></div>
-                      <div><dt>Service IDs</dt><dd>{{ details.service_ids.length ? details.service_ids.join(', ') : 'None assigned' }}</dd></div>
+                      <div><dt>Services</dt><dd>{{ details.service_names.join(', ') || 'None assigned' }}</dd></div>
                     </dl>
                   }
                 </section>

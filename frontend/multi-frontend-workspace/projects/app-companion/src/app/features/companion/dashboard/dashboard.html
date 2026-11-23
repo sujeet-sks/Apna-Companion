@@ -33,8 +33,8 @@
               <strong>Journey #{{ summary.bookingId }} · {{ summary.serviceName }}</strong>
               @if (summary.amount) {
                 <p>
-                  {{ summary.elapsedMinutes }} actual minutes ·
-                  {{ summary.bookingDurationMinutes }} booked minutes.
+                  {{ summary.elapsedMinutes | duration }} actual ·
+                  {{ summary.bookingDurationMinutes | duration }} booked.
                   Billing uses the longer duration, rounded up to
                   {{ summary.billableHours }} billable
                   {{ summary.billableHours === 1 ? 'hour' : 'hours' }}
@@ -106,7 +106,7 @@
                 <strong>{{ booking.service_name }}</strong>
                 <span>Pickup contact: {{ booking.pickup_contact_name || 'Not provided' }}</span>
                 <span>Pickup phone: {{ booking.pickup_contact_phone || 'Not provided' }}</span>
-                <span>{{ booking.scheduled_at | date: 'shortTime' }} · {{ booking.duration }} min</span>
+                <span>{{ booking.scheduled_at | date: 'shortTime' }} · {{ booking.duration | duration }}</span>
                 <span>{{ booking.pickup_address || 'Pickup address not provided' }}</span>
                 <span>{{ booking.organization_name }} · Booking price: ₹{{ booking.price_inr }}</span>
                 @if (booking.service_notes) {

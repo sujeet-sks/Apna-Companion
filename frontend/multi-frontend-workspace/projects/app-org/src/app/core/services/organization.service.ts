@@ -69,6 +69,7 @@ export interface OrganizationCompanionDetails extends OrganizationCompanion {
   speciality: string | null;
   experience_years: number | null;
   service_ids: number[];
+  service_names: string[];
 }
 
 export interface OrganizationCompanionPage {
@@ -215,10 +216,13 @@ export class OrganizationService {
   }
 
   async services(): Promise<OrganizationServiceOption[]> {
-    const response = await this.get<{ items: OrganizationServiceOption[] }>(
-      `${API_BASE_URL}/org/services/?page=1&page_size=50`,
+    return (await this.servicePage(1)).items;
+  }
+
+  private servicePage(page: number) {
+    return this.get<{ items: OrganizationServiceOption[]; total: number; page_size: number }>(
+      `${API_BASE_URL}/org/services/?page=${page}&page_size=50`,
     );
-    return response.items;
   }
 
   createService(input: CreateOrganizationServiceInput): Promise<{
@@ -272,10 +276,25 @@ export class OrganizationService {
     return result;
   }
 
-  companionDetails(companionId: string): Promise<OrganizationCompanionDetails> {
-    return this.get(
+  async companionDetails(companionId: string): Promise<OrganizationCompanionDetails> {
+    const details = await this.get<Omit<OrganizationCompanionDetails, 'service_names'>>(
       `${API_BASE_URL}/org/companions/${encodeURIComponent(companionId)}/`,
     );
+    const remainingIds = new Set(details.service_ids);
+    const namesById = new Map<number, string>();
+    for (let page = 1; remainingIds.size; page++) {
+      const result = await this.servicePage(page);
+      for (const service of result.items) {
+        if (remainingIds.delete(service.id)) {
+          namesById.set(service.id, service.name);
+        }
+      }
+      if (page * result.page_size >= result.total) break;
+    }
+    return {
+      ...details,
+      service_names: details.service_ids.map((id) => namesById.get(id) ?? 'Unknown service'),
+    };
   }
 
   createCompanion(input: CreateCompanionInput, photo: File | null = null): Promise<{

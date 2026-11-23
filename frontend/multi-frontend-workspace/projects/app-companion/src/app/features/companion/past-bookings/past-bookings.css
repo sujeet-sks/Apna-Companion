@@ -16,7 +16,7 @@ main {
 
 h1 {
   margin: 0 0 20px;
-  font: 400 38px/1.15 Georgia, serif;
+  font: 400 46.816px/1.15 Georgia, serif;
 }
 
 ul {
@@ -37,7 +37,7 @@ time, li p {
   display: block;
   margin: 6px 0 0;
   color: #465c67;
-  font-size: 14px;
+  font-size: 17.248px;
 }
 
 .customer-review {
@@ -49,7 +49,7 @@ time, li p {
 
 .customer-review > strong {
   color: #263d4b;
-  font-size: 12px;
+  font-size: 14.784px;
 }
 
 .customer-review p {
@@ -58,7 +58,7 @@ time, li p {
 
 .status {
   color: #245b79;
-  font-size: 14px;
+  font-size: 17.248px;
   text-transform: capitalize;
 }
 

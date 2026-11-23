@@ -63,7 +63,7 @@
               <div class="booking-mark">#{{ booking.id }}</div>
               <div class="booking-info">
                 <strong>{{ booking.service_name }} · {{ booking.customer_name }}</strong>
-                <span>{{ booking.scheduled_at | date: 'medium' }} · {{ booking.duration }} min · ₹{{ booking.price_inr }}</span>
+                <span>{{ booking.scheduled_at | date: 'medium' }} · {{ booking.duration | duration }} · ₹{{ booking.price_inr }}</span>
                 <span>{{ booking.pickup_address || 'No pickup address provided' }}</span>
                 @if (booking.status === 'completed' && booking.customer_comment) {
                   <section class="customer-feedback" aria-label="Customer comment">
