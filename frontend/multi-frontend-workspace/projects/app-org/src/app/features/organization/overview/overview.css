@@ -1,0 +1,97 @@
+:host {
+  display: flex;
+  min-height: 100vh;
+  background: #f4f6f5;
+  color: #243b36;
+  font-family: Arial, sans-serif;
+}
+
+main {
+  flex: 1;
+  min-width: 0;
+}
+
+header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 60px;
+  padding-inline: 24px;
+  border-bottom: 1px solid #dbe2de;
+  background: #fff;
+}
+
+button {
+  padding: 8px 12px;
+  border: 1px solid #b9c8bf;
+  border-radius: 4px;
+  background: #fff;
+  color: #243b36;
+  font: inherit;
+  cursor: pointer;
+}
+
+.content {
+  max-width: 1020px;
+  margin-inline: auto;
+  padding: 36px 24px;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(32.032px, 4.928vw, 44.352px);
+}
+
+.dashboard-note {
+  margin: 8px 0 28px;
+  color: #52675a;
+  font-size: 17.248px;
+}
+
+section + section {
+  margin-top: 24px;
+}
+
+h2 {
+  margin: 0 0 10px;
+  font-size: 22.176px;
+}
+
+dl {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  border: 1px solid #dbe2de;
+  background: #dbe2de;
+}
+
+.staffing {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 145px), 1fr));
+}
+
+dl > div {
+  padding: 16px;
+  background: #fff;
+}
+
+dt {
+  font-size: 17.248px;
+}
+
+dd {
+  margin: 8px 0 0;
+  font-size: 39.424px;
+  font-weight: 600;
+}
+
+dd.loading {
+  color: #52675a;
+  font-size: 17.248px;
+  font-weight: 400;
+}
+
+@media (max-width: 760px) {
+  :host {
+    display: block;
+  }
+}
