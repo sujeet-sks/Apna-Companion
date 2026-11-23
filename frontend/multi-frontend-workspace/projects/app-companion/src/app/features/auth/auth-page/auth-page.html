@@ -1,10 +1,12 @@
 <div class="layout">
   <header>
-    <a class="brand" [routerLink]="page === 'password' && !message ? '/profile' : '/login'">Apna Companion</a>
+    <a class="brand" [routerLink]="page === 'password' && !message ? '/profile' : '/login'">
+      <img class="brand-logo" src="branding/bharat-companion-logo.svg" alt="Bharat Companion" width="408" height="136" />
+    </a>
   </header>
   <main>
     <section>
-      <p class="portal">Companion portal</p>
+      <p class="portal" [class.prominent-portal]="page === 'login' || page === 'password'">Companion portal</p>
       <h1>{{ title }}</h1>
       @if (page !== 'login') {
         <p class="description">{{ description }}</p>
@@ -73,9 +75,6 @@
           </button>
         </form>
 
-        @if (page === 'login') {
-          <p class="below">Your organization creates your account.<br />Contact them if you need access.</p>
-        }
         @if (page === 'password') {
           @if (!message && !busy) {
             <a class="back" routerLink="/profile">Back to profile</a>

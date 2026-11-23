@@ -12,15 +12,25 @@
 }
 
 .brand {
-  color: inherit;
-  font-size: 19.712px;
-  font-weight: 700;
-  text-decoration: none;
+  display: inline-block;
+}
+
+.brand-logo {
+  display: block;
+  width: 168px;
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
 }
 
 .portal {
   font-size: 16.016px;
   margin: 0 0 12px;
+}
+
+.portal.prominent-portal {
+  font-size: 1.5rem;
+  font-weight: 700;
 }
 
 :host {
