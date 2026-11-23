@@ -1,0 +1,68 @@
+<main class="pending-requests-page">
+  <h1>Pending request</h1>
+
+  <section class="requests-card" aria-label="Pending client requests">
+    @if (isLoading()) {
+      <div class="requests-loading" role="status">
+        <span class="loading-spinner" aria-hidden="true"></span>
+        <span>Loading pending requests...</span>
+      </div>
+    } @else if (errorMessage()) {
+      <p class="requests-message requests-message--error" role="alert">
+        {{ errorMessage() }}
+      </p>
+    } @else if (pendingRequests().length === 0) {
+      <p class="requests-message" role="status">No pending requests found.</p>
+    } @else {
+      <div class="table-scroll">
+        <table class="requests-table">
+          <thead>
+            <tr>
+              <th scope="col">Organization name</th>
+              <th scope="col">Organization type</th>
+              <th scope="col">Submitted</th>
+              <th scope="col">Email</th>
+              <th scope="col">Status</th>
+              <th scope="col"><span class="visually-hidden">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (request of paginatedRequests(); track request.id) {
+              <tr>
+                <th scope="row">{{ request.client }}</th>
+                <td>{{ request.type }}</td>
+                <td>{{ request.submitted }}</td>
+                <td>{{ request.email }}</td>
+                <td>
+                  <span class="status-badge">{{ request.status }}</span>
+                </td>
+                <td>
+                  <a class="review-button" [routerLink]="[request.id]">Review</a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      @if (totalPages() > 1) {
+        <nav class="pagination" aria-label="Pending requests pagination">
+          <button
+            type="button"
+            [disabled]="currentPage() === 1"
+            (click)="goToPage(currentPage() - 1)"
+          >
+            Previous
+          </button>
+          <span>Page {{ currentPage() }} of {{ totalPages() }}</span>
+          <button
+            type="button"
+            [disabled]="currentPage() === totalPages()"
+            (click)="goToPage(currentPage() + 1)"
+          >
+            Next
+          </button>
+        </nav>
+      }
+    }
+  </section>
+</main>

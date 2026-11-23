@@ -1,0 +1,183 @@
+<main class="address-page">
+  <button class="add-address" type="button" (click)="openAddForm()">
+    <span class="add-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 5v14M5 12h14" />
+      </svg>
+    </span>
+    <span class="add-copy">
+      <strong>Add a new address</strong>
+      <small>Home, parents' place, office...</small>
+    </span>
+  </button>
+
+  @if (addressStatus()) {
+    <p class="address-status" role="status">{{ addressStatus() }}</p>
+  }
+
+  @if (isLoadingAddresses()) {
+    <div class="data-loading" role="status" aria-live="polite">
+      <span class="data-loading-spinner" aria-hidden="true"></span>
+      <span>Loading saved addresses...</span>
+    </div>
+  }
+
+  @if (formOpen) {
+    <section class="address-form" aria-label="Address details">
+      <div class="form-heading">
+        <h2>{{ editingId === null ? 'Add a new address' : 'Edit address' }}</h2>
+        <button class="close-button" type="button" aria-label="Close form" [disabled]="isSavingAddress()" (click)="closeForm()">×</button>
+      </div>
+
+      @if (editingId === null) {
+        <section class="location-options" aria-label="Choose how to set your location">
+          <button
+            class="location-option"
+            type="button"
+            (click)="useCurrentLocation()"
+            [disabled]="isFetchingLocation()"
+          >
+            <span class="location-option-icon current-location-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="7" />
+                <circle cx="12" cy="12" r="2" />
+                <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+              </svg>
+            </span>
+            <span class="location-option-copy">
+              <strong>{{ isFetchingLocation() ? 'Fetching location...' : 'Use my current location' }}</strong>
+              <small>Uses your phone's GPS</small>
+            </span>
+          </button>
+
+          <button class="location-option map-location-option" type="button" disabled>
+            <span class="location-option-icon map-location-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3z" />
+                <path d="M9 3v15M15 6v15" />
+              </svg>
+            </span>
+            <span class="location-option-copy">
+              <strong>Pick on map</strong>
+              <small>Drag the pin to the exact spot</small>
+            </span>
+            <span class="map-location-arrow" aria-hidden="true">›</span>
+          </button>
+
+          @if (isFetchingLocation()) {
+            <p class="location-status" role="status">Fetching location...</p>
+          } @else if (locationStatus()) {
+            <p class="location-status" role="status">{{ locationStatus() }}</p>
+          }
+        </section>
+      }
+
+      <label>
+        Address label
+        <select [(ngModel)]="label">
+          <option value="HOME">Home</option>
+          <option value="PARENTS">Parents</option>
+          <option value="WORK">Office</option>
+        </select>
+      </label>
+
+      <div class="address-form-grid">
+        <label>
+          House / flat no.
+          <input [(ngModel)]="houseNo" required />
+        </label>
+
+        <label>
+          Building / street
+          <input [(ngModel)]="buildingStreet" required />
+        </label>
+
+        <label>
+          Area / locality
+          <input [(ngModel)]="areaLocality" />
+        </label>
+
+        <label>
+          Landmark
+          <input [(ngModel)]="landmark" />
+        </label>
+
+        <label>
+          City
+          <input [(ngModel)]="city" required />
+        </label>
+
+        <label>
+          State
+          <input [(ngModel)]="state" required />
+        </label>
+
+        <label>
+          Pincode
+          <input [(ngModel)]="pincode" inputmode="numeric" maxlength="6" required />
+        </label>
+
+        <label>
+          Country
+          <input [(ngModel)]="country" required />
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <button class="cancel-button" type="button" [disabled]="isSavingAddress()" (click)="closeForm()">Cancel</button>
+        <button class="save-button" type="button" (click)="saveAddress()" [disabled]="!canSaveAddress() || isSavingAddress()">
+          {{ isSavingAddress() ? 'Finding location...' : editingId === null ? 'Save address' : 'Edit address' }}
+        </button>
+      </div>
+    </section>
+  }
+
+  @if (!isLoadingAddresses()) {
+  <h2 class="saved-heading">SAVED ({{ addresses().length }})</h2>
+
+  <section class="address-list" aria-label="Saved addresses">
+    @for (item of addresses(); track item.addressId) {
+      <article class="address-card">
+        <div class="address-details">
+          <span class="address-icon" [class.parents]="item.label === 'PARENTS'" [class.office]="item.label === 'WORK'" aria-hidden="true">
+            @if (item.label === 'HOME') {
+              <svg viewBox="0 0 24 24">
+                <path d="m3 11 9-7 9 7M5.5 10v9h13v-9M9.5 19v-6h5v6" />
+              </svg>
+            } @else if (item.label === 'PARENTS') {
+              <svg viewBox="0 0 24 24">
+                <circle cx="9" cy="8" r="3" />
+                <circle cx="17" cy="10" r="2" />
+                <path d="M3.5 19c.5-4 2.3-6 5.5-6s5 2 5.5 6M14.5 19c.2-2.4 1.1-4 2.5-4 1.8 0 3 1.6 3.5 4" />
+              </svg>
+            } @else {
+              <svg viewBox="0 0 24 24">
+                <rect x="3" y="7" width="18" height="12" rx="1" />
+                <path d="M9 7V4h6v3M3 12h18M10 12v2h4v-2" />
+              </svg>
+            }
+          </span>
+
+          <div class="address-copy">
+            <div class="title-row">
+              <h3>{{ getLabelTitle(item.label) }}</h3>
+              @if (item.isDefault) {
+                <span class="default-badge">DEFAULT</span>
+              }
+            </div>
+            <p>{{ getFullAddress(item) }}</p>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <button class="edit-button" type="button" (click)="openEditForm(item)">Edit</button>
+          <button class="delete-button" type="button" (click)="deleteAddress(item.addressId)">Delete</button>
+          @if (!item.isDefault) {
+            <button class="default-button" type="button" (click)="setDefault(item.addressId)">Set as default</button>
+          }
+        </div>
+      </article>
+    }
+  </section>
+  }
+</main>

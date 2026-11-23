@@ -4,13 +4,7 @@ CREATE TABLE organizations (
     organization_id VARCHAR(36) PRIMARY KEY,
     organization_name VARCHAR(150) NOT NULL,
     organization_type VARCHAR(50) NOT NULL
-        CHECK (organization_type IN (
-            'bank', 'hospital', 'rto', 'ngo', 'municipal_corporation',
-            'district_collector_office', 'pension_office', 'passport_seva_kendra',
-            'aadhaar_seva_kendra', 'post_office', 'electricity_board_office',
-            'water_supply_office', 'gas_distribution_office', 'school',
-            'college_university', 'police_station', 'court_legal_aid_centre', 'others'
-        )),
+        CHECK (organization_type IN ('bank', 'hospital', 'ngo', 'rto', 'others')),
     email VARCHAR(255) NOT NULL,
     address TEXT NOT NULL,
     approval_status VARCHAR(20) NOT NULL DEFAULT 'pending'
@@ -84,6 +78,8 @@ CREATE TABLE bookings (
     latitude NUMERIC(9,6) CHECK (latitude BETWEEN -90 AND 90),
     longitude NUMERIC(9,6) CHECK (longitude BETWEEN -180 AND 180),
     pickup_address TEXT,
+    pickup_contact_name VARCHAR(100),
+    pickup_contact_phone VARCHAR(16),
     duration INTEGER NOT NULL CHECK (duration > 0),
     status VARCHAR(20) NOT NULL DEFAULT 'pending'
         CHECK (status IN ('pending', 'accepted', 'rejected', 'assigned',
@@ -93,6 +89,10 @@ CREATE TABLE bookings (
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     price_inr NUMERIC(10,2) NOT NULL CHECK (price_inr >= 0),
+    customer_rating SMALLINT CHECK (customer_rating BETWEEN 1 AND 5),
+    companion_rating SMALLINT CHECK (companion_rating BETWEEN 1 AND 5),
+    customer_comment TEXT,
+    reviewed_at TIMESTAMPTZ,
     cancelled_at TIMESTAMPTZ,
     cancelled_by VARCHAR(20) CHECK (cancelled_by IN ('customer', 'organization')),
     cancellation_reason TEXT,

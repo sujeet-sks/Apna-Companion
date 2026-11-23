@@ -1,0 +1,271 @@
+<div class="auth-page register-page">
+  <section class="auth-card" aria-labelledby="register-title">
+    <img
+      class="company-logo"
+      src="/assets/bharat-companion-logo.svg"
+      alt="Bharat Companion"
+    />
+
+    <div class="auth-heading">
+      <h1 id="register-title">Create your account</h1>
+      <p>Enter your details and verify your email and mobile number to register.</p>
+    </div>
+
+    @if (!otpSent()) {
+      <form [formGroup]="registrationForm" (ngSubmit)="sendOtp()" novalidate>
+      <label for="register-name">Full name</label>
+      <input
+        id="register-name"
+        formControlName="fullName"
+        type="text"
+        placeholder="Your full name"
+        required
+        aria-describedby="register-name-error"
+      />
+      @if (
+        registrationForm.controls.fullName.touched &&
+        registrationForm.controls.fullName.invalid
+      ) {
+        <p id="register-name-error" class="field-error" role="alert">Enter your full name.</p>
+      }
+
+      <label for="register-dob">Date of birth</label>
+      <input
+        id="register-dob"
+        formControlName="dob"
+        type="date"
+        [max]="latestDateOfBirth"
+        required
+        aria-describedby="register-dob-error"
+      />
+      @if (
+        registrationForm.controls.dob.touched &&
+        registrationForm.controls.dob.invalid
+      ) {
+        <p id="register-dob-error" class="field-error" role="alert">
+          Enter your date of birth.
+        </p>
+      }
+
+      <label for="register-gender">Gender</label>
+      <select
+        id="register-gender"
+        formControlName="gender"
+        required
+        aria-describedby="register-gender-error"
+      >
+        <option value="" disabled>Select your gender</option>
+        <option value="female">Female</option>
+        <option value="male">Male</option>
+        <option value="prefer-not-to-say">Prefer not to say</option>
+      </select>
+      @if (
+        registrationForm.controls.gender.touched &&
+        registrationForm.controls.gender.invalid
+      ) {
+        <p id="register-gender-error" class="field-error" role="alert">Select your gender.</p>
+      }
+
+      <label for="register-email">Email address</label>
+      <input
+        id="register-email"
+        formControlName="email"
+        type="email"
+        autocomplete="email"
+        placeholder="you@example.com"
+        required
+        aria-describedby="register-email-error"
+      />
+      @if (
+        registrationForm.controls.email.touched &&
+        registrationForm.controls.email.invalid
+      ) {
+        <p id="register-email-error" class="field-error" role="alert">
+          @if (registrationForm.controls.email.hasError('required')) {
+            Enter your email address.
+          } @else {
+            Enter a valid email address.
+          }
+        </p>
+      }
+
+      <label for="register-mobile">Mobile number</label>
+      <div class="mobile-number-input">
+        <span class="mobile-country-code" aria-hidden="true">+91</span>
+        <input
+          id="register-mobile"
+          formControlName="mobile"
+          type="tel"
+          inputmode="numeric"
+          autocomplete="tel-national"
+          placeholder="10-digit mobile number"
+          maxlength="10"
+          required
+          aria-label="Mobile number"
+          aria-describedby="register-mobile-error"
+        />
+      </div>
+      @if (
+        registrationForm.controls.mobile.touched &&
+        registrationForm.controls.mobile.invalid
+      ) {
+        <p id="register-mobile-error" class="field-error" role="alert">
+          @if (registrationForm.controls.mobile.hasError('required')) {
+            Enter your mobile number.
+          } @else {
+            Enter a valid mobile number.
+          }
+        </p>
+      }
+
+      <label for="register-password">Password</label>
+      <div class="password-input">
+        <input
+          id="register-password"
+          formControlName="password"
+          [type]="showPassword ? 'text' : 'password'"
+          autocomplete="new-password"
+          placeholder="Create a password"
+          required
+          aria-describedby="register-password-error"
+        />
+        <button
+          class="password-toggle"
+          type="button"
+          [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+          [attr.aria-pressed]="showPassword"
+          (click)="showPassword = !showPassword"
+        >
+          {{ showPassword ? 'Hide' : 'Show' }}
+        </button>
+      </div>
+      @if (
+        registrationForm.controls.password.touched &&
+        registrationForm.controls.password.invalid
+      ) {
+        <p id="register-password-error" class="field-error" role="alert">
+          Enter a password.
+        </p>
+      }
+
+      <label for="register-confirm-password">Confirm password</label>
+      <div class="password-input">
+        <input
+          id="register-confirm-password"
+          formControlName="confirm_password"
+          [type]="showConfirmPassword ? 'text' : 'password'"
+          autocomplete="new-password"
+          placeholder="Re-enter your password"
+          required
+          aria-describedby="register-confirm-password-error"
+        />
+        <button
+          class="password-toggle"
+          type="button"
+          [attr.aria-label]="
+            showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'
+          "
+          [attr.aria-pressed]="showConfirmPassword"
+          (click)="showConfirmPassword = !showConfirmPassword"
+        >
+          {{ showConfirmPassword ? 'Hide' : 'Show' }}
+        </button>
+      </div>
+      @if (
+        registrationForm.controls.confirm_password.touched &&
+        (registrationForm.controls.confirm_password.invalid ||
+          registrationForm.hasError('passwordMismatch'))
+      ) {
+        <p id="register-confirm-password-error" class="field-error" role="alert">
+          @if (registrationForm.controls.confirm_password.hasError('required')) {
+            Confirm your password.
+          } @else if (registrationForm.hasError('passwordMismatch')) {
+            Passwords do not match.
+          }
+        </p>
+      }
+
+        <button
+          class="primary-button"
+          type="submit"
+          [disabled]="
+            registrationForm.invalid ||
+            isSendingOtp() ||
+            isCompletingRegistration()
+          "
+        >
+          {{ isSendingOtp() ? 'Sending OTP…' : otpSent() ? 'Resend OTP' : 'Send OTP' }}
+        </button>
+      </form>
+    }
+
+    @if (otpSent()) {
+      <p class="form-message" role="status">
+        Verification codes were sent to your email address and mobile number.
+      </p>
+      <form
+        [formGroup]="otpForm"
+        (ngSubmit)="completeRegistration()"
+        novalidate
+      >
+        <label for="register-email-code">Email verification code</label>
+        <input
+          id="register-email-code"
+          formControlName="email_code"
+          type="text"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          placeholder="Enter the email code"
+          maxlength="6"
+          required
+          aria-describedby="register-email-code-error"
+        />
+        @if (
+          otpForm.controls.email_code.touched &&
+          otpForm.controls.email_code.invalid
+        ) {
+          <p id="register-email-code-error" class="field-error" role="alert">
+            Enter the 6-digit email code.
+          </p>
+        }
+
+        <label for="register-mobile-code">Mobile verification code</label>
+        <input
+          id="register-mobile-code"
+          formControlName="mobile_code"
+          type="text"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          placeholder="Enter the mobile code"
+          maxlength="6"
+          required
+          aria-describedby="register-mobile-code-error"
+        />
+        @if (
+          otpForm.controls.mobile_code.touched &&
+          otpForm.controls.mobile_code.invalid
+        ) {
+          <p id="register-mobile-code-error" class="field-error" role="alert">
+            Enter the 6-digit mobile code.
+          </p>
+        }
+
+        <button
+          class="primary-button"
+          type="submit"
+          [disabled]="!canCompleteRegistration"
+        >
+          {{ isCompletingRegistration() ? 'Registering…' : 'Verify and register' }}
+        </button>
+      </form>
+    }
+
+    @if (errorMessage()) {
+      <p class="field-error form-error" role="alert">{{ errorMessage() }}</p>
+    }
+
+    <p class="auth-footer">
+      Already have an account? <a routerLink="/login">Log in</a>
+    </p>
+  </section>
+</div>
