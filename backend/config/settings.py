@@ -36,16 +36,22 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:4200",
-    "http://127.0.0.1:4200",
-    "http://localhost:4201",
-    "http://127.0.0.1:4201",
-    "http://localhost:4202",
-    "http://127.0.0.1:4202",
-    "http://localhost:4203",
-    "http://127.0.0.1:4203",
-]
+if DEBUG:
+    CORS_ALLOWED_ORIGIN_REGEXES = [
+        r"^http://localhost:\d+$",
+        r"^http://127\.0\.0\.1:\d+$",
+    ]
+else:
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:4200",
+        "http://127.0.0.1:4200",
+        "http://localhost:4201",
+        "http://127.0.0.1:4201",
+        "http://localhost:4202",
+        "http://127.0.0.1:4202",
+        "http://localhost:4203",
+        "http://127.0.0.1:4203",
+    ]
 
 INSTALLED_APPS = [
     "rest_framework",

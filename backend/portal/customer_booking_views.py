@@ -3,7 +3,10 @@ import hashlib
 import hmac
 from datetime import datetime
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from math import asin, cos, radians, sin, sqrt
 from zoneinfo import ZoneInfo
+SERVICE_RADIUS_KM = 10.0
+EARTH_RADIUS_KM = 6371.0
 
 from django.conf import settings
 from django.db import transaction
@@ -164,10 +167,16 @@ def get_organization_details(request):
     purpose = str(request.data.get("purpose") or "").strip().lower()
     if purpose not in ORGANIZATION_TYPES:
         return _error("Choose bank, hospital, ngo, rto, or others for purpose.")
+    try:
+        latitude = _coordinate(request.data.get("latitude"), 90)
+        longitude = _coordinate(request.data.get("longitude"), 180)
+    except ValueError as exc:
+        return _error(str(exc))
 
     organizations = list(
         Organization.objects.filter(
             organization_type=purpose, approval_status="approved", is_active=True,
+            latitude__isnull=False, longitude__isnull=False,
         )
         .prefetch_related(Prefetch(
             "service_set",
@@ -176,7 +185,10 @@ def get_organization_details(request):
         ))
         .order_by("organization_name", "organization_id")
     )
-    organizations = [org for org in organizations if org.active_services]
+    organizations = [
+        org for org in organizations
+        if org.active_services and _within_service_radius(latitude, longitude, org)
+    ]
     stats = _organization_stats({org.organization_id for org in organizations})
     items = []
     for org in organizations:
@@ -214,6 +226,26 @@ def _coordinate(value, limit):
         return coordinate.quantize(Decimal("0.000001"))
     except (InvalidOperation, TypeError, ValueError) as exc:
         raise ValueError("Enter valid pickup coordinates.") from exc
+
+
+def _within_service_radius(pickup_latitude, pickup_longitude, organization):
+    if organization.latitude is None or organization.longitude is None:
+        return False
+
+    pickup_latitude = radians(float(pickup_latitude))
+    pickup_longitude = radians(float(pickup_longitude))
+    organization_latitude = radians(float(organization.latitude))
+    organization_longitude = radians(float(organization.longitude))
+
+    latitude_gap = organization_latitude - pickup_latitude
+    longitude_gap = organization_longitude - pickup_longitude
+    arc = (
+        sin(latitude_gap / 2) ** 2
+        + cos(pickup_latitude) * cos(organization_latitude)
+        * sin(longitude_gap / 2) ** 2
+    )
+    distance_km = 2 * EARTH_RADIUS_KM * asin(min(1.0, sqrt(arc)))
+    return distance_km <= SERVICE_RADIUS_KM
 
 
 @api_view(["POST"])
@@ -260,6 +292,9 @@ def request_booking(request):
     ).first()
     if service is None:
         return _error("This organization does not offer the selected active service.", 422)
+
+    if not _within_service_radius(latitude, longitude, service.organization):
+        return _error("Pickup location is outside this organization's service area.", 422)
 
     with transaction.atomic():
         booking = Booking.objects.create(
