@@ -17,32 +17,16 @@
 }
 
 .brand {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 4px 8px 32px;
-  color: #233746;
-  text-decoration: none;
-  font-size: 19.712px;
-  font-weight: 700;
+  display: block;
+  padding: 4px 8px 24px;
 }
 
-.mark {
-  box-sizing: border-box;
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: #245b79;
-  color: #fff;
-  font-size: 20.944px;
-  letter-spacing: -3px;
-  padding-right: 3px;
-}
-
-.mark span {
-  color: #e4b966;
+.brand-logo {
+  display: block;
+  width: 180px;
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
 }
 
 .nav-caption {
