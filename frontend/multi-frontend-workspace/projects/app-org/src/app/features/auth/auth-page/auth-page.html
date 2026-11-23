@@ -1,7 +1,9 @@
 <div class="layout">
   <aside>
-    <a class="brand" [routerLink]="page === 'password' && !message ? passwordBackPath : '/login'">Apna Companion</a>
-    <p class="portal">Organization portal</p>
+    <a class="brand" [routerLink]="page === 'password' && !message ? passwordBackPath : '/login'">
+      <img class="brand-logo" src="branding/bharat-companion-logo.svg" alt="Bharat Companion" width="408" height="136" />
+  </a>
+    <p class="portal" [class.prominent-portal]="page === 'login' || page === 'password'">Organization portal</p>
   </aside>
   <main>
     <section>
@@ -152,7 +154,7 @@
         </form>
 
         @if (page === 'login') {
-          <p class="below">New to Apna Companion? <a routerLink="/register">Register your organization</a></p>
+          <p class="below">New to Bharat Companion? <a routerLink="/register">Register your organization</a></p>
         }
         @if (page === 'password') {
           @if (!message && !busy) {
