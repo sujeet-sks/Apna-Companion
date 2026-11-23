@@ -17,6 +17,11 @@ describe('LandingPage', () => {
     const element = fixture.nativeElement as HTMLElement;
     expect(element.querySelector<HTMLImageElement>('.dashboard-header img')?.getAttribute('src'))
       .toBe('/assets/bharat-companion-logo.svg');
+    expect(element.querySelector('.avatar svg')).toBeTruthy();
+    expect(element.querySelector('.avatar')?.textContent?.trim()).toBe('');
+    expect(element.querySelector('.avatar')?.getAttribute('aria-label')).toBe(
+      'Open your profile',
+    );
     expect(element.querySelectorAll('.main-nav .nav-link')).toHaveLength(3);
     expect(element.querySelector('.main-nav a[routerLink="/home"]')).toBeTruthy();
     expect(element.querySelector('.main-nav a[routerLink="/bookings"]')).toBeTruthy();

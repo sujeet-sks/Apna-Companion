@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Component, inject, signal } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -8,7 +9,25 @@ import {
   ValidatorFn,
   Validators,
 } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
+
+interface CustomerLoginResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  customer: {
+    customer_id: number;
+    full_name: string;
+    email_id: string;
+    mobile_number: string;
+    dob: string;
+    gender: string;
+    account_status: string;
+    created_at: string;
+    updated_at: string;
+  };
+}
 
 const emailOrMobileValidator: ValidatorFn = (
   control: AbstractControl,
@@ -35,7 +54,14 @@ const emailOrMobileValidator: ValidatorFn = (
   templateUrl: './login.html',
 })
 export class Login {
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly loginApiUrl = '/api/customer/login/';
+
   protected submitted = false;
+  protected showPassword = false;
+  protected readonly isSubmitting = signal(false);
+  protected readonly errorMessage = signal('');
   protected readonly loginForm = new FormGroup({
     username: new FormControl('', {
       nonNullable: true,
@@ -54,7 +80,35 @@ export class Login {
     }
 
     const { username, password } = this.loginForm.getRawValue();
-    console.log('Login submitted:', { username, password });
-    this.submitted = true;
+    this.errorMessage.set('');
+    this.isSubmitting.set(true);
+    this.http
+      .post<CustomerLoginResponse>(this.loginApiUrl, {
+        identifier: username.trim(),
+        password,
+      })
+      .pipe(finalize(() => this.isSubmitting.set(false)))
+      .subscribe({
+        next: (response) => {
+          if (!response.access_token || !response.customer?.customer_id) {
+            this.errorMessage.set('The login response was incomplete. Please try again.');
+            return;
+          }
+
+          sessionStorage.setItem('access_token', response.access_token);
+          sessionStorage.setItem('customer_id', String(response.customer.customer_id));
+          sessionStorage.setItem('full_name', response.customer.full_name ?? '');
+          sessionStorage.setItem('email_id', response.customer.email_id ?? '');
+          sessionStorage.setItem('mobile_number', response.customer.mobile_number ?? '');
+          this.submitted = true;
+          void this.router.navigate(['/home']);
+        },
+        error: (error: HttpErrorResponse) => {
+          this.errorMessage.set(
+            error.error?.message ??
+              'Unable to log in. Check your details and try again.',
+          );
+        },
+      });
   }
 }
