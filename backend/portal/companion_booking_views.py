@@ -106,6 +106,8 @@ def companion_booking_history(request):
             "cancelled_at": booking.cancelled_at,
             "cancelled_by": booking.cancelled_by,
             "cancellation_reason": booking.cancellation_reason,
+            "companion_rating": booking.companion_rating,
+            "customer_comment": booking.customer_comment,
         }
         for booking in bookings[start:start + page_size]
     ]
@@ -149,6 +151,8 @@ def companion_booking_detail(request, booking_id):
         "completed_at": booking.completed_at,
         "assigned_at": booking.assigned_at,
         "cancelled_by": booking.cancelled_by,
+        "companion_rating": booking.companion_rating,
+        "customer_comment": booking.customer_comment,
     })
 
 

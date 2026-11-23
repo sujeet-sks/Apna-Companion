@@ -61,6 +61,8 @@ def org_bookings(request):
             "longitude": float(booking.longitude) if booking.longitude is not None else None,
             "companion_id": booking.companion_id,
             "companion_name": booking.companion.name if booking.companion_id else None,
+            "organization_rating": booking.customer_rating,
+            "customer_comment": booking.customer_comment,
         }
         for booking in bookings[start:start + page_size]
     ]
@@ -103,6 +105,8 @@ def org_booking_detail(request, booking_id):
         "started_at": booking.started_at,
         "completed_at": booking.completed_at,
         "rejected_at": booking.rejected_at,
+        "organization_rating": booking.customer_rating,
+        "customer_comment": booking.customer_comment,
     })
 
 
