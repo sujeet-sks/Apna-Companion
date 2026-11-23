@@ -69,7 +69,7 @@ describe('OrganizationService', () => {
     await expect(requestPromise).resolves.toEqual([booking(1), booking(2)]);
   });
 
-  it('fetches a companion detail using the encoded ID and bearer token', async () => {
+  it('fetches companion details and resolves assigned service names across pages', async () => {
     const requestPromise = organizations.companionDetails('companion/1');
     const request = http.expectOne(
       'http://localhost:8000/api/v1/org/companions/companion%2F1/',
@@ -91,6 +91,19 @@ describe('OrganizationService', () => {
       },
     });
 
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    http.expectOne('http://localhost:8000/api/v1/org/services/?page=1&page_size=50').flush({
+      data: { items: [], total: 51, page_size: 50 },
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    http.expectOne('http://localhost:8000/api/v1/org/services/?page=2&page_size=50').flush({
+      data: {
+        items: [{ id: 4, name: 'First aid', price_inr: '100', is_active: false }],
+        total: 51,
+        page_size: 50,
+      },
+    });
+
     await expect(requestPromise).resolves.toEqual({
       companion_id: 'companion/1',
       name: 'Sam Example',
@@ -103,6 +116,7 @@ describe('OrganizationService', () => {
       is_active: true,
       availability_status: 'available',
       service_ids: [4],
+      service_names: ['First aid'],
     });
   });
 });

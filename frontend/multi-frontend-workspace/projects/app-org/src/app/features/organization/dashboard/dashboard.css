@@ -26,14 +26,14 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 18px;
+  font-size: 22.176px;
 }
 .mark {
   background: #2e604d;
   color: white;
   border-radius: 10px;
   padding: 6px;
-  font-size: 24px;
+  font-size: 29.568px;
   letter-spacing: -5px;
   width: 39px;
 }
@@ -49,7 +49,7 @@
 .quiet-button {
   color: #496758;
   text-decoration: none;
-  font-size: 12px;
+  font-size: 14.784px;
 }
 .quiet-button,
 .retry-button {
@@ -71,14 +71,14 @@
 }
 .heading-row h1 {
   font-family: inherit;
-  font-size: 38px;
+  font-size: 46.816px;
   letter-spacing: -0.7px;
   font-weight: 400;
   margin: 0;
 }
 .subheading {
   color: #77827a;
-  font-size: 14px;
+  font-size: 17.248px;
   margin: 10px 0 0;
 }
 .refresh-button {
@@ -87,7 +87,7 @@
   border: 0;
   border-radius: 7px;
   padding: 11px 18px;
-  font-size: 12px;
+  font-size: 14.784px;
   cursor: pointer;
 }
 .refresh-button:disabled {
@@ -113,13 +113,13 @@
 }
 .stat-card p {
   color: #77827a;
-  font-size: 12px;
+  font-size: 14.784px;
   margin: 0 0 7px;
 }
 .stat-card strong {
   font-family: inherit;
   font-weight: 400;
-  font-size: 32px;
+  font-size: 39.424px;
   color: #294a3d;
 }
 .panel {
@@ -134,11 +134,11 @@
 .panel-heading h2 {
   font-family: inherit;
   font-weight: 400;
-  font-size: 24px;
+  font-size: 29.568px;
   margin: 0;
 }
 .count {
-  font-size: 11px;
+  font-size: 13.552px;
   color: #78857b;
   background: #f1f4ef;
   padding: 7px 10px;
@@ -159,7 +159,7 @@
   place-items: center;
   background: #f2f5ef;
   color: #496b56;
-  font-size: 12px;
+  font-size: 14.784px;
   font-weight: 700;
 }
 .booking-info {
@@ -168,11 +168,11 @@
   flex: 1;
 }
 .booking-info strong {
-  font-size: 13px;
+  font-size: 16.016px;
   font-weight: 600;
 }
 .booking-info span {
-  font-size: 11px;
+  font-size: 13.552px;
   color: #849087;
 }
 .status {
@@ -180,7 +180,7 @@
   padding: 6px 10px;
   background: #f2f4ef;
   color: #68776c;
-  font-size: 10px;
+  font-size: 12.32px;
   text-transform: capitalize;
 }
 .status[data-status='pending'] {
@@ -197,7 +197,7 @@
 .empty-state {
   text-align: center;
   color: #7a857c;
-  font-size: 13px;
+  font-size: 16.016px;
   padding: 32px 12px;
 }
 .empty-state {
@@ -206,11 +206,11 @@
 .empty-state h3 {
   margin: 8px 0;
   color: #3a5146;
-  font-size: 14px;
+  font-size: 17.248px;
 }
 .empty-state p {
   margin: 0;
-  font-size: 12px;
+  font-size: 14.784px;
 }
 .alert {
   display: flex;
@@ -219,7 +219,7 @@
   border-radius: 8px;
   padding: 13px 15px;
   margin-bottom: 18px;
-  font-size: 13px;
+  font-size: 16.016px;
 }
 .error {
   background: #fff0ec;
@@ -232,7 +232,7 @@
 .org-meta {
   text-align: right;
   color: #8a948c;
-  font-size: 11px;
+  font-size: 13.552px;
   margin: 18px 2px 0;
 }
 @media (max-width: 760px) {
@@ -259,7 +259,7 @@
     gap: 18px;
   }
   .heading-row h1 {
-    font-size: 30px;
+    font-size: 36.96px;
   }
   .stats {
     grid-template-columns: 1fr;
@@ -271,7 +271,7 @@
     margin: 0 0 4px;
   }
   .stat-card strong {
-    font-size: 27px;
+    font-size: 33.264px;
   }
   .panel {
     padding: 19px 16px;
@@ -280,7 +280,7 @@
     gap: 10px;
   }
   .status {
-    font-size: 9px;
+    font-size: 11.088px;
     padding: 6px 8px;
   }
 }

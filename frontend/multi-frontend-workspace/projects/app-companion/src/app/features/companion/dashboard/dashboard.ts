@@ -1,4 +1,5 @@
 import { DatePipe } from '@angular/common';
+import { DurationPipe } from '../../../../../../shared/duration.pipe';
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -33,7 +34,7 @@ const INR_FORMATTER = new Intl.NumberFormat('en-IN', {
 @Component({
   selector: 'app-companion-dashboard',
   standalone: true,
-  imports: [DatePipe, FormsModule, Sidebar],
+  imports: [DatePipe, DurationPipe, FormsModule, Sidebar],
   templateUrl: './dashboard.html',
   styleUrls: [
     './dashboard.css',

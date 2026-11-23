@@ -13,13 +13,13 @@
 
 .brand {
   color: inherit;
-  font-size: 16px;
+  font-size: 19.712px;
   font-weight: 700;
   text-decoration: none;
 }
 
 .portal {
-  font-size: 13px;
+  font-size: 16.016px;
   margin: 0 0 12px;
 }
 
@@ -49,14 +49,14 @@ section {
 }
 h1 {
   font-family: Georgia, serif;
-  font-size: 36px;
+  font-size: 44.352px;
   font-weight: 400;
   letter-spacing: -1px;
   margin: 0 0 24px;
 }
 .description {
   color: #526359;
-  font-size: 13px;
+  font-size: 16.016px;
   line-height: 1.8;
   margin-bottom: 28px;
 }
@@ -66,7 +66,7 @@ form {
 }
 label {
   display: block;
-  font-size: 12px;
+  font-size: 14.784px;
   font-weight: 600;
 }
 input,
@@ -106,7 +106,7 @@ textarea:focus {
   border: 0;
   background: transparent;
   color: #546d5d;
-  font-size: 11px;
+  font-size: 13.552px;
   cursor: pointer;
 }
 .primary,
@@ -130,11 +130,11 @@ a {
   text-underline-offset: 4px;
 }
 .forgot {
-  font-size: 12px;
+  font-size: 14.784px;
   text-align: right;
 }
 .below {
-  font-size: 12px;
+  font-size: 14.784px;
   line-height: 1.8;
   text-align: center;
   color: #56655d;
@@ -142,12 +142,12 @@ a {
 }
 .back {
   display: block;
-  font-size: 12px;
+  font-size: 14.784px;
   margin-top: 25px;
   text-align: center;
 }
 .hint {
-  font-size: 11px;
+  font-size: 13.552px;
   color: #56655d;
   margin: 0;
   line-height: 1.6;
@@ -156,7 +156,7 @@ a {
   background: #eaf3ea;
   padding: 13px;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 16.016px;
   line-height: 1.7;
   margin-bottom: 20px;
 }
@@ -165,7 +165,7 @@ a {
   color: #973d2c;
 }
 .account {
-  font-size: 14px;
+  font-size: 17.248px;
   line-height: 1.8;
 }
 .badge {

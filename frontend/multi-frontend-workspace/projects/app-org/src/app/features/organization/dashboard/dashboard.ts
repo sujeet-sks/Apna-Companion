@@ -1,4 +1,5 @@
 import { DatePipe } from '@angular/common';
+import { DurationPipe } from '../../../../../../shared/duration.pipe';
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import {
@@ -14,7 +15,7 @@ import { Sidebar } from '../../../shared/components/sidebar/sidebar';
 @Component({
   selector: 'app-organization-dashboard',
   standalone: true,
-  imports: [DatePipe, Sidebar],
+  imports: [DatePipe, DurationPipe, Sidebar],
   templateUrl: './dashboard.html',
   styleUrls: [
     './dashboard.css',
