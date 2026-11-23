@@ -74,9 +74,6 @@ export class Home implements OnInit {
   selectedOption: string | null = null;
   readonly isFindingCompanion = signal(false);
   readonly companionStatus = signal('');
-  latitude: number | null = null;
-  longitude: number | null = null;
-  address = '';
   selectedServiceId: number | null = null;
   customerName = '';
   customerMobile = '';
@@ -245,15 +242,39 @@ export class Home implements OnInit {
   protected submitFindCompanionRequest(): void {
     if (this.selectedOption === null || this.isFindingCompanion()) return;
 
+    const defaultAddress = this.defaultAddress;
+    if (!defaultAddress) {
+      this.companionStatus.set('Set a default address before finding a companion.');
+      return;
+    }
+
+    const latitude = Number(defaultAddress.latitude);
+    const longitude = Number(defaultAddress.longitude);
+    if (
+      defaultAddress.latitude == null ||
+      String(defaultAddress.latitude).trim() === '' ||
+      defaultAddress.longitude == null ||
+      String(defaultAddress.longitude).trim() === '' ||
+      !Number.isFinite(latitude) ||
+      Math.abs(latitude) > 90 ||
+      !Number.isFinite(longitude) ||
+      Math.abs(longitude) > 180
+    ) {
+      this.companionStatus.set(
+        '',
+      );
+      return;
+    }
+
     this.organizations.set([]);
     this.companionStatus.set('');
     this.isFindingCompanion.set(true);
     const requestPayload = {
       userID: this.getStoredUserIdentity(),
       purpose: this.bookingMode === 'formal' ? this.selectedOption : 'ngo',
-      latitude: this.latitude?.toString() ?? '',
-      longitude: this.longitude?.toString() ?? '',
-      address: this.getStoredAddress(),
+      latitude: latitude.toString(),
+      longitude: longitude.toString(),
+      address: this.getFullAddress(defaultAddress),
     };
 
     this.http.post<FindCompanionResponse>(this.findCompanionApiUrl, requestPayload).subscribe({
@@ -290,32 +311,6 @@ export class Home implements OnInit {
       window.sessionStorage.getItem('userId') ??
       ''
     );
-  }
-
-  private getStoredAddress(): string {
-    if (typeof window === 'undefined') return '';
-
-    const storedAddress =
-      window.localStorage.getItem('defaultAddress') ??
-      window.localStorage.getItem('address') ??
-      '';
-    if (!storedAddress) return '';
-
-    try {
-      const address = JSON.parse(storedAddress) as Record<string, unknown>;
-      return [
-        address['houseNo'],
-        address['buildingStreet'],
-        address['areaLocality'],
-        address['landmark'],
-        address['city'],
-        address['state'],
-        address['pincode'],
-        address['country'],
-      ].filter((value): value is string => typeof value === 'string' && value.trim().length > 0).join(', ');
-    } catch {
-      return storedAddress;
-    }
   }
 
   get visibleOptions(): string[] {

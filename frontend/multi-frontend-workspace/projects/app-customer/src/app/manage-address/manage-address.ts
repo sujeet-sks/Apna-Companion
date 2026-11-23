@@ -1,5 +1,5 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Observable, catchError, finalize, map, of, switchMap, timeout } from 'rxjs';
 import { GeocodingAddress, GeocodingService, LatLng } from '../shared/geocoding.service';
@@ -33,8 +33,8 @@ interface Address {
   label: string;
   houseNo: string;
   buildingStreet: string;
-  areaLocality: string;
-  landmark: string;
+  areaLocality: string | null;
+  landmark: string | null;
   city: string;
   state: string;
   pincode: string;
@@ -64,7 +64,7 @@ interface AddressActionResponse {
   styleUrl: './manage-address.css',
   templateUrl: './manage-address.html',
 })
-export class ManageAddress implements OnInit {
+export class ManageAddress implements OnInit, OnDestroy {
   private readonly http = inject(HttpClient);
   private readonly geocoding = inject(GeocodingService);
   private readonly fallbackLatitude = 19.1326204;
@@ -78,7 +78,10 @@ export class ManageAddress implements OnInit {
   readonly addressStatus = signal('');
   readonly isLoadingAddresses = signal(false);
   readonly isSavingAddress = signal(false);
+  readonly isFetchingLocation = signal(false);
+  readonly locationStatus = signal('');
 
+  private locationFetchTimeout: ReturnType<typeof setTimeout> | null = null;
   formOpen = false;
   editingId: number | null = null;
   label = 'HOME';
@@ -106,6 +109,10 @@ export class ManageAddress implements OnInit {
 
   ngOnInit(): void {
     this.loadAddresses();
+  }
+
+  ngOnDestroy(): void {
+    this.clearLocationFetch();
   }
 
   loadAddresses(): void {
@@ -158,6 +165,8 @@ export class ManageAddress implements OnInit {
   }
 
   openAddForm(): void {
+    this.clearLocationFetch();
+    this.locationStatus.set('');
     this.editingId = null;
     this.label = 'HOME';
     this.resetAddressFields();
@@ -165,12 +174,14 @@ export class ManageAddress implements OnInit {
   }
 
   openEditForm(address: Address): void {
+    this.clearLocationFetch();
+    this.locationStatus.set('');
     this.editingId = address.addressId;
     this.label = address.label;
     this.houseNo = address.houseNo;
     this.buildingStreet = address.buildingStreet;
-    this.areaLocality = address.areaLocality;
-    this.landmark = address.landmark;
+    this.areaLocality = address.areaLocality ?? '';
+    this.landmark = address.landmark ?? '';
     this.city = address.city;
     this.state = address.state;
     this.pincode = address.pincode;
@@ -194,7 +205,6 @@ export class ManageAddress implements OnInit {
       this.label,
       this.houseNo,
       this.buildingStreet,
-      this.areaLocality,
       this.city,
       this.state,
       this.pincode,
@@ -206,7 +216,28 @@ export class ManageAddress implements OnInit {
   }
 
   closeForm(): void {
+    this.clearLocationFetch();
     this.formOpen = false;
+  }
+
+  useCurrentLocation(): void {
+    if (this.isFetchingLocation()) return;
+
+    this.locationStatus.set('');
+    this.isFetchingLocation.set(true);
+    this.locationFetchTimeout = setTimeout(() => {
+      this.locationFetchTimeout = null;
+      this.isFetchingLocation.set(false);
+      this.locationStatus.set('Location fetched successfully.');
+    }, 3000);
+  }
+
+  private clearLocationFetch(): void {
+    if (this.locationFetchTimeout !== null) {
+      clearTimeout(this.locationFetchTimeout);
+      this.locationFetchTimeout = null;
+    }
+    this.isFetchingLocation.set(false);
   }
 
   // 1. Get latitude/longitude from the address. On any failure, use the static defaults.

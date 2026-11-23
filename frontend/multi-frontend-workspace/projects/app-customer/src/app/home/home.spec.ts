@@ -18,6 +18,8 @@ const savedAddress = {
   state: 'Karnataka',
   pincode: '560038',
   country: 'India',
+  latitude: 12.9716,
+  longitude: 77.5946,
   isDefault: true,
 };
 
@@ -69,7 +71,7 @@ describe('Home', () => {
     httpTesting.expectOne('/api/v1/customer/getAllSavedAddress/').flush({
       success: 200,
       message: 'Addresses fetched',
-      data: [],
+      data: [savedAddress],
     });
     fixture.detectChanges();
     expect(element.querySelector('.organization-results')).toBeNull();
@@ -85,9 +87,10 @@ describe('Home', () => {
     expect(request.request.body).toEqual({
       userID: '42',
       purpose: 'Hospitals',
-      latitude: '',
-      longitude: '',
-      address: '',
+      latitude: '12.9716',
+      longitude: '77.5946',
+      address:
+        'B-205, Shanti Apartments, MG Road, Indiranagar, Opposite Metro Station, Bengaluru, Karnataka, 560038, India',
     });
     request.flush({
       success: 200,
@@ -111,6 +114,29 @@ describe('Home', () => {
 
     expect(element.querySelector('.organization-results')).not.toBeNull();
     expect(element.textContent).toContain('Sahara Care Foundation');
+  });
+
+  it('does not search without a default address with valid coordinates', () => {
+    const fixture = TestBed.createComponent(Home);
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+    const httpTesting = TestBed.inject(HttpTestingController);
+
+    httpTesting.expectOne('/api/v1/customer/getAllSavedAddress/').flush({
+      success: 200,
+      message: 'Addresses fetched',
+      data: [],
+    });
+    fixture.detectChanges();
+
+    fixture.componentInstance.selectOption('hospital');
+    element.querySelector<HTMLButtonElement>('.find-companion-button')!.click();
+    fixture.detectChanges();
+
+    expect(element.textContent).toContain(
+      'Set a default address before finding a companion.',
+    );
+    httpTesting.expectNone('/api/v1/customer/getOrganizationDetails/');
   });
 
   it('loads the default address using the session customer ID', () => {
