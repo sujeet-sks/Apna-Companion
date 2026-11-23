@@ -1,0 +1,88 @@
+<div class="layout">
+  <header>
+    <a class="brand" [routerLink]="page === 'password' && !message ? '/profile' : '/login'">
+      <img class="brand-logo" src="branding/bharat-companion-logo.svg" alt="Bharat Companion" width="408" height="136" />
+    </a>
+  </header>
+  <main>
+    <section>
+      <p class="portal" [class.prominent-portal]="page === 'login' || page === 'password'">Companion portal</p>
+      <h1>{{ title }}</h1>
+      @if (page !== 'login') {
+        <p class="description">{{ description }}</p>
+      }
+
+      @if (error) { <div class="alert error" role="alert">{{ error }}</div> }
+      @if (message) { <div class="alert" role="status">{{ message }} <a routerLink="/login">Back to login</a></div> }
+
+      @if (page === 'account') {
+        <div class="account">
+          <strong>{{ auth.session()?.email }}</strong>
+          <p>Your companion account is linked to organization {{ auth.session()?.organization_id }}.</p>
+          <a routerLink="/change-password">Change password →</a>
+          <button class="secondary" type="button" (click)="logout()">Sign out</button>
+        </div>
+      } @else {
+        <form #form="ngForm" (ngSubmit)="submit(form)">
+          @if (['login', 'forgot'].includes(page)) {
+            <label>Email address
+              <input #emailField="ngModel" type="email" name="email" [(ngModel)]="email" required email autocomplete="email" placeholder="you@example.com" [attr.aria-invalid]="emailField.invalid && (emailField.touched || form.submitted)" aria-describedby="email-error" />
+            </label>
+            @if (emailField.invalid && (emailField.touched || form.submitted)) {
+              <span class="field-error" id="email-error" role="alert">
+                @if (emailField.errors?.['required']) { Enter your email address. }
+                @else if (emailField.errors?.['email']) { Enter a valid email address, such as name@example.com. }
+              </span>
+            }
+          }
+
+          @if (page === 'reset') {
+            <label>Email verification code
+              <input name="code" [(ngModel)]="code" required pattern="[0-9]{6}" maxlength="6" inputmode="numeric" autocomplete="one-time-code" placeholder="000000" />
+            </label>
+          }
+
+          @if (page === 'password') {
+            <label>Current password
+              <input type="password" name="current" [(ngModel)]="current" required autocomplete="current-password" />
+            </label>
+          }
+
+          @if (['login', 'reset', 'password'].includes(page)) {
+            <label>{{ page === 'login' ? 'Password' : 'New password' }}
+              <div class="password">
+                <input #passwordField="ngModel" [type]="show ? 'text' : 'password'" name="password" [(ngModel)]="password" required minlength="8" maxlength="128" [autocomplete]="page === 'login' ? 'current-password' : 'new-password'" [attr.aria-invalid]="passwordField.invalid && (passwordField.touched || form.submitted)" aria-describedby="password-error" />
+                <button type="button" (click)="show = !show" [attr.aria-label]="show ? 'Hide password' : 'Show password'">{{ show ? 'Hide' : 'Show' }}</button>
+              </div>
+            </label>
+            @if (passwordField.invalid && (passwordField.touched || form.submitted)) {
+              <span class="field-error" id="password-error" role="alert">
+                @if (passwordField.errors?.['required']) { Enter your password. }
+                @else if (passwordField.errors?.['minlength']) { Password must be at least 8 characters. }
+              </span>
+            }
+          }
+
+          @if (['reset', 'password'].includes(page)) {
+            <label>Confirm password
+              <input type="password" name="confirm" [(ngModel)]="confirm" required minlength="8" maxlength="128" autocomplete="new-password" />
+            </label>
+          }
+
+          @if (page === 'login') { <a class="forgot" routerLink="/forgot-password">Forgot password?</a> }
+          <button class="primary" type="submit" [disabled]="busy">
+            {{ busy ? 'Please wait…' : page === 'login' ? 'Sign in' : page === 'forgot' ? 'Send reset code →' : 'Update password' }}
+          </button>
+        </form>
+
+        @if (page === 'password') {
+          @if (!message && !busy) {
+            <a class="back" routerLink="/profile">Back to profile</a>
+          }
+        } @else if (page !== 'login') {
+          <a class="back" routerLink="/login">← Back to login</a>
+        }
+      }
+    </section>
+  </main>
+</div>
