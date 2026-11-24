@@ -26,7 +26,6 @@ export class OrganizationCompanionForm implements OnInit {
   error = '';
   success = '';
   serviceFeedback = '';
-  createdCompanionId = '';
   languageInput = '';
   newService: { name: string; priceInr: string | number | null } = {
     name: '',
@@ -159,8 +158,7 @@ export class OrganizationCompanionForm implements OnInit {
 
     this.submitting = true;
     try {
-      const result = await this.organizations.createCompanion(input, this.photo);
-      this.createdCompanionId = result.companion_id;
+      await this.organizations.createCompanion(input);
       this.success = 'Companion created. A temporary password was sent to their email address.';
     } catch (error) {
       this.error = error instanceof Error ? error.message : 'Could not create the companion.';

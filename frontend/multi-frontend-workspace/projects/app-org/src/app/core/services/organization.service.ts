@@ -297,24 +297,12 @@ export class OrganizationService {
     };
   }
 
-  createCompanion(input: CreateCompanionInput, photo: File | null = null): Promise<{
+  createCompanion(input: CreateCompanionInput): Promise<{
     companion_id: string;
     email: string;
     message: string;
   }> {
-    const url = `${API_BASE_URL}/org/companions/`;
-    if (!photo) {
-      return this.post(url, input);
-    }
-
-    const body = new FormData();
-    for (const [name, value] of Object.entries(input)) {
-      if (value !== undefined) {
-        body.set(name, Array.isArray(value) ? JSON.stringify(value) : String(value));
-      }
-    }
-    body.set('photo', photo);
-    return this.post(url, body);
+    return this.post(`${API_BASE_URL}/org/companions/`, input);
   }
 
   private async post<T>(url: string, body: object | null = null): Promise<T> {
