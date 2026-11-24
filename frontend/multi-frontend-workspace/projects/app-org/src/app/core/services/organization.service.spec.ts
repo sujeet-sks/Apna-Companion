@@ -119,4 +119,38 @@ describe('OrganizationService', () => {
       service_names: ['First aid'],
     });
   });
+
+  it('creates companions with JSON array fields and no photo upload', async () => {
+    const requestPromise = organizations.createCompanion({
+      name: 'Sam Example',
+      email: 'sam@example.com',
+      mobile: '+919876543210',
+      service_ids: [4, 7],
+      languages_known: ['Hindi', 'English'],
+    });
+    const request = http.expectOne('http://localhost:8000/api/v1/org/companions/');
+
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({
+      name: 'Sam Example',
+      email: 'sam@example.com',
+      mobile: '+919876543210',
+      service_ids: [4, 7],
+      languages_known: ['Hindi', 'English'],
+    });
+    expect(request.request.body instanceof FormData).toBe(false);
+    request.flush({
+      data: {
+        companion_id: 'companion-1',
+        email: 'sam@example.com',
+        message: 'Companion created',
+      },
+    });
+
+    await expect(requestPromise).resolves.toEqual({
+      companion_id: 'companion-1',
+      email: 'sam@example.com',
+      message: 'Companion created',
+    });
+  });
 });

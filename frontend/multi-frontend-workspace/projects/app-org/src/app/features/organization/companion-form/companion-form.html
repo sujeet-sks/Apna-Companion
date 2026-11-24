@@ -18,12 +18,7 @@
       <div class="notice error" role="alert">{{ error }}</div>
     }
     @if (success) {
-      <div class="notice success" role="status">
-        {{ success }}
-        @if (createdCompanionId) {
-          <span> Companion ID: {{ createdCompanionId }}</span>
-        }
-      </div>
+      <div class="notice success" role="status">{{ success }}</div>
     }
 
     @if (loading) {
