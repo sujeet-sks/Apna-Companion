@@ -6,7 +6,7 @@ Apna Companion helps organizations arrange in-person assistance for customers. O
 
 ### 1. Install the required tools
 
-Install Git, Python 3.13, and Node.js 22.22.3 or later within the Node.js 22 release line. Node.js includes npm. The commands below use Git Bash on Windows. Install VS Code if you want to open the project with `code .`.
+Install Git Python 3.13, and Node.js 22.22.3 or later within the Node.js 22 release line. Node.js includes npm. The commands below use Git Bash on Windows. Install VS Code if you want to open the project with `code .`.
 
 Open Git Bash and check your tools.
 
