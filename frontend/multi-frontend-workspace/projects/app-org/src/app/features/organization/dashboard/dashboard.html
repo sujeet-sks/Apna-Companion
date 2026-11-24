@@ -1,0 +1,122 @@
+<app-sidebar active="bookings" />
+<main class="dashboard">
+  <header class="topbar">
+    <div class="top-actions">
+      <button type="button" class="quiet-button" (click)="logout()">Sign out</button>
+    </div>
+  </header>
+
+  <section class="content">
+    <div class="heading-row">
+      <div>
+        <h1>{{ profile?.organization_name || 'Your dashboard' }}</h1>
+      </div>
+      <button type="button" class="refresh-button" (click)="refresh()" [disabled]="loading">
+        {{ loading ? 'Refreshing…' : 'Refresh' }}
+      </button>
+    </div>
+
+    @if (error) {
+      <div class="alert error" role="alert">
+        <span>{{ error }}</span>
+        <button type="button" class="retry-button" (click)="refresh()">Try again</button>
+      </div>
+    }
+    @if (actionError) {
+      <div class="alert error" role="alert">{{ actionError }}</div>
+    }
+
+    <div class="stats">
+      <article class="stat-card">
+        <p>Companions</p>
+        <strong>{{ loading ? '—' : summary?.companions_total }}</strong>
+      </article>
+      <article class="stat-card">
+        <p>Pending bookings</p>
+        <strong>{{ loading ? '—' : summary?.pending_bookings }}</strong>
+      </article>
+      <article class="stat-card">
+        <p>Active bookings</p>
+        <strong>{{ loading ? '—' : summary?.active_bookings }}</strong>
+      </article>
+    </div>
+
+    <section class="panel" id="bookings">
+      <div class="panel-heading">
+        <div>
+          <h2>Bookings to review and assign</h2>
+        </div>
+        <span class="count">{{ bookings.length }} shown</span>
+      </div>
+
+      @if (loading && !bookings.length) {
+        <p class="empty">Loading your bookings…</p>
+      } @else if (!loading && !bookings.length) {
+        <div class="empty-state">
+          <h3>No bookings yet</h3>
+          <p>New customer bookings will appear here.</p>
+        </div>
+      } @else {
+        <div class="booking-list">
+          @for (booking of bookings; track booking.id) {
+            <article class="booking-row">
+              <div class="booking-mark">#{{ booking.id }}</div>
+              <div class="booking-info">
+                <strong>{{ booking.service_name }} · {{ booking.customer_name }}</strong>
+                <span>{{ booking.scheduled_at | date: 'medium' }} · {{ booking.duration | duration }} · ₹{{ booking.price_inr }}</span>
+                <span>{{ booking.pickup_address || 'No pickup address provided' }}</span>
+                @if (booking.status === 'completed' && booking.customer_comment) {
+                  <section class="customer-feedback" aria-label="Customer comment">
+                    <strong>Customer comment</strong>
+                    <p>{{ booking.customer_comment }}</p>
+                  </section>
+                }
+                @if (booking.latitude !== null && booking.longitude !== null) {
+                  <a
+                    class="map-link"
+                    [href]="'https://www.google.com/maps?q=' + booking.latitude + ',' + booking.longitude"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >View location</a>
+                }
+                @if (booking.companion_name) {
+                  <span class="assigned-companion">Assigned to {{ booking.companion_name }}</span>
+                }
+              </div>
+              <span class="status" [attr.data-status]="booking.status">{{ booking.status.replace('_', ' ') }}</span>
+              <div class="booking-actions">
+                @if (booking.status === 'pending') {
+                  <button type="button" class="action-button" [disabled]="busyBookingId === booking.id" (click)="acceptBooking(booking)">
+                    {{ busyBookingId === booking.id ? 'Working…' : 'Accept' }}
+                  </button>
+                } @else if (booking.status === 'accepted' && !booking.companion_id) {
+                  @if (eligibleByBooking[booking.id]; as eligible) {
+                    @if (eligible.length) {
+                      <select [attr.aria-label]="'Choose companion for booking ' + booking.id" (change)="onCompanionSelected(booking.id, $event)">
+                        <option value="">Choose companion</option>
+                        @for (candidate of eligible; track candidate.companion_id) {
+                          <option [value]="candidate.companion_id">{{ candidate.name }}</option>
+                        }
+                      </select>
+                      <button type="button" class="action-button" [disabled]="busyBookingId === booking.id" (click)="assignBooking(booking)">Assign</button>
+                    } @else {
+                      <span class="no-companions">No eligible companions</span>
+                    }
+                  } @else {
+                    <button type="button" class="action-button secondary" [disabled]="busyBookingId === booking.id" (click)="loadEligibleCompanions(booking)">
+                      {{ busyBookingId === booking.id ? 'Loading…' : 'Find companion' }}
+                    </button>
+                  }
+                }
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+
+    @if (profile) {
+      <p class="org-meta">{{ profile.organization_type.replace('_', ' ') }} · {{ profile.email }}</p>
+    }
+  </section>
+</main>

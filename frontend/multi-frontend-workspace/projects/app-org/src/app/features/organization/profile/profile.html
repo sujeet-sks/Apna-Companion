@@ -1,0 +1,100 @@
+<app-sidebar active="profile" />
+<main class="profile-page">
+  <header class="topbar">
+    <nav class="profile-actions" aria-label="Profile actions">
+      <a class="back-link" routerLink="/change-password">Change password</a>
+      <a class="back-link" routerLink="/dashboard">Back to dashboard</a>
+    </nav>
+  </header>
+  <section class="content">
+    <p class="eyebrow">ORGANIZATION PORTAL</p>
+    <h1>Organization profile</h1>
+    <p class="subheading">Organization details submitted during registration.</p>
+    @if (loading) {
+      <p class="notice">Loading profile…</p>
+    } @else if (error) {
+      <div class="notice error" role="alert">{{ error }} <button type="button" (click)="load()">Try again</button></div>
+    } @else if (profile) {
+      <section class="profile-card">
+        <div class="title-row">
+          <div>
+            <h2>{{ profile.organization_name }}</h2>
+            <p>{{ profile.organization_type.replace('_', ' ') }}</p>
+          </div>
+          <span class="status">{{ profile.approval_status }}</span>
+        </div>
+        <dl>
+          <div><dt>Organization Name</dt><dd>{{ profile.organization_name }}</dd></div>
+          <div><dt>Email</dt><dd>{{ profile.email }}</dd></div>
+          <div>
+            <dt>Organization rating</dt>
+            <dd class="rating-display">
+              @if (ratingLoading) {
+                <span>Loading ratings…</span>
+              } @else if (ratingError) {
+                <span class="rating-error" role="alert">{{ ratingError }}</span>
+                <button type="button" (click)="loadRatings()">Try again</button>
+              } @else if (organizationRatingAverage !== null) {
+                <strong>{{ organizationRatingAverage }}/5</strong>
+                <span>{{ organizationRatingCount }} {{ organizationRatingCount === 1 ? 'review' : 'reviews' }}</span>
+              } @else {
+                <span>No customer ratings yet</span>
+              }
+            </dd>
+          </div>
+          <div><dt>Address</dt><dd><input aria-label="Organization address" [(ngModel)]="address"></dd></div>
+          <div>
+            <dt>Logo</dt>
+            <dd class="logo-field">
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                aria-label="Choose organization logo"
+                [disabled]="readingLogo || saving"
+                (change)="selectLogo($event)"
+              >
+              <span>PNG, JPEG, or WebP up to 1 MB</span>
+              @if (logoUrl) {
+                <img class="logo-preview" [src]="logoUrl" [alt]="profile.organization_name + ' logo'">
+                <button type="button" [disabled]="readingLogo || saving" (click)="logoUrl = ''">Remove logo</button>
+              } @else {
+                <span>No logo provided</span>
+              }
+            </dd>
+          </div>
+          <div>
+            <dt>Current location</dt>
+            <dd>
+              <button class="location-button" type="button" [disabled]="locating" (click)="useCurrentLocation()">
+                {{ locating ? 'Getting location…' : 'Use current location' }}
+              </button>
+              @if (latitude && longitude) {
+                <span class="coordinates">{{ latitude }}, {{ longitude }}</span>
+                <a [href]="'https://www.google.com/maps?q=' + latitude + ',' + longitude" target="_blank" rel="noopener noreferrer">
+                  View location on map
+                </a>
+              } @else {
+                <span class="location-empty">No location saved yet</span>
+              }
+            </dd>
+          </div>
+          <div><dt>Verification document</dt><dd>{{ profile.document_type }}</dd></div>
+          <div><dt>Approval status</dt><dd class="value-capitalize">{{ profile.approval_status }}</dd></div>
+          <div><dt>Account active</dt><dd>{{ profile.is_active ? 'Yes' : 'No' }}</dd></div>
+          @if (profile.approval_remarks) {
+            <div><dt>Review notes</dt><dd>{{ profile.approval_remarks }}</dd></div>
+          }
+        </dl>
+        @if (saveError) {
+          <p class="notice error" role="alert">{{ saveError }}</p>
+        }
+        @if (saveMessage) {
+          <p class="notice success" role="status">{{ saveMessage }}</p>
+        }
+        <button class="save-button" type="button" [disabled]="saving || readingLogo" (click)="save()">
+          {{ saving ? 'Saving…' : 'Save changes' }}
+        </button>
+      </section>
+    }
+  </section>
+</main>

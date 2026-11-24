@@ -1,0 +1,169 @@
+<div class="layout">
+  <aside>
+    <a class="brand" [routerLink]="page === 'password' && !message ? passwordBackPath : '/login'">
+      <img class="brand-logo" src="branding/bharat-companion-logo.svg" alt="Bharat Companion" width="408" height="136" />
+  </a>
+    <p class="portal" [class.prominent-portal]="page === 'login' || page === 'password'">Organization portal</p>
+  </aside>
+  <main>
+    <section>
+      <h1>{{ title }}</h1>
+      @if (page !== 'login') {
+        <p class="description">{{ description }}</p>
+      }
+
+      @if (error) { <div class="alert error" role="alert">{{ error }}</div> }
+      @if (message) { <div class="alert" role="status">{{ message }} <a routerLink="/login">Back to login</a></div> }
+
+      @if (page === 'approval' || page === 'account') {
+        <div class="account">
+          <strong>{{ auth.session()?.email }}</strong>
+          <p>Approval: <span class="badge">{{ approvalStatus }}</span></p>
+          @if (approvalStatus === 'pending') {
+            <p>Your registration is awaiting admin review. Profile viewing and password changes remain available.</p>
+          }
+          @if (approvalStatus === 'rejected') {
+            <p>Your registration needs corrections. Use the verified link in your review email to resubmit.</p>
+            <a routerLink="/resubmit">Resubmit details →</a>
+          }
+          @if (approvalStatus === 'approved') {
+            <p>Your organization is approved.</p>
+          }
+          <a routerLink="/change-password">Change password →</a>
+          <button class="secondary" type="button" (click)="logout()">Sign out</button>
+        </div>
+      } @else {
+        <form #form="ngForm" (ngSubmit)="submit(form)">
+          @if (page === 'register') {
+            <label>Organization name
+              <input name="name" [(ngModel)]="name" required maxlength="150" placeholder="e.g. Sunrise Hospital" />
+            </label>
+            <label>Organization type
+              <select name="type" [(ngModel)]="type" (ngModelChange)="onOrganizationTypeChange($event)" required>
+                <option value="" disabled>Select organization type</option>
+                @for (organizationType of organizationTypes; track organizationType.value) {
+                  <option [value]="organizationType.value">{{ organizationType.label }}</option>
+                }
+              </select>
+            </label>
+          }
+
+          @if (['login', 'register', 'forgot'].includes(page)) {
+            <label>Email address
+              <input #emailField="ngModel" type="email" name="email" [(ngModel)]="email" required email autocomplete="email" placeholder="you@example.com" [attr.aria-invalid]="emailField.invalid && (emailField.touched || form.submitted)" aria-describedby="email-error" />
+            </label>
+            @if (emailField.invalid && (emailField.touched || form.submitted)) {
+              <span class="field-error" id="email-error" role="alert">
+                @if (emailField.errors?.['required']) { Enter your email address. }
+                @else if (emailField.errors?.['email']) { Enter a valid email address, such as name@example.com. }
+              </span>
+            }
+          }
+
+          @if (page === 'resubmit') {
+            <label>Email resubmission token
+              <input name="token" [(ngModel)]="token" required placeholder="Token from your review email" />
+            </label>
+            <p class="hint">Organization name and type cannot be changed here.</p>
+          }
+
+          @if (page === 'register' || page === 'resubmit') {
+            <label>Address
+              <textarea name="address" [(ngModel)]="address" required placeholder="Street, city and location"></textarea>
+            </label>
+            @if (page === 'register') {
+              <label>Required document
+                <select name="documentType" [(ngModel)]="documentType" required [disabled]="!documentTypes.length">
+                  <option value="" disabled>Select a required document</option>
+                  @for (document of documentTypes; track document) {
+                    <option [value]="document">{{ document }}</option>
+                  }
+                </select>
+              </label>
+            } @else {
+              <label>Required document
+                <input name="documentType" [(ngModel)]="documentType" required />
+              </label>
+            }
+            @if (page === 'register') {
+              <label>Upload verification document
+                <input type="file" name="document" required (change)="selectDocument($event)" />
+              </label>
+            } @else {
+              <label>Verification document URL
+                <input type="url" name="documentUrl" [(ngModel)]="documentUrl" required placeholder="Paste your Google Drive share link" />
+              </label>
+              <p class="hint">Upload the document to Google Drive, set General access to “Anyone with the link” (Viewer), then paste the share link here.</p>
+            }
+            @if (page === 'register') {
+              <div class="location-field">
+                <label>Current location</label>
+                <button class="secondary location-button" type="button" (click)="fetchCurrentLocation()" [disabled]="locating">
+                  @if (locating) {
+                    Getting location…
+                  } @else if (latitude !== null && longitude !== null) {
+                    Latitude {{ latitude }} · Longitude {{ longitude }} · Refresh
+                  } @else {
+                    Use my current location
+                  }
+                </button>
+                @if (locationMessage) {
+                  <p class="field-error" role="alert">{{ locationMessage }}</p>
+                }
+              </div>
+            }
+          }
+
+          @if (page === 'verify' || page === 'reset') {
+            <label>Email verification code
+              <input name="code" [(ngModel)]="code" required pattern="[0-9]{6}" maxlength="6" inputmode="numeric" autocomplete="one-time-code" placeholder="000000" />
+            </label>
+          }
+
+          @if (page === 'password') {
+            <label>Current password
+              <input type="password" name="current" [(ngModel)]="current" required autocomplete="current-password" />
+            </label>
+          }
+
+          @if (['login', 'register', 'reset', 'password'].includes(page)) {
+            <label>{{ page === 'login' ? 'Password' : 'New password' }}
+              <div class="password">
+                <input #passwordField="ngModel" [type]="show ? 'text' : 'password'" name="password" [(ngModel)]="password" required minlength="8" maxlength="128" [autocomplete]="page === 'login' ? 'current-password' : 'new-password'" [attr.aria-invalid]="passwordField.invalid && (passwordField.touched || form.submitted)" aria-describedby="password-error" />
+                <button type="button" (click)="show = !show" [attr.aria-label]="show ? 'Hide password' : 'Show password'">{{ show ? 'Hide' : 'Show' }}</button>
+              </div>
+            </label>
+            @if (passwordField.invalid && (passwordField.touched || form.submitted)) {
+              <span class="field-error" id="password-error" role="alert">
+                @if (passwordField.errors?.['required']) { Enter your password. }
+                @else if (passwordField.errors?.['minlength']) { Password must be at least 8 characters. }
+              </span>
+            }
+          }
+
+          @if (['register', 'reset', 'password'].includes(page)) {
+            <label>Confirm password
+              <input type="password" name="confirm" [(ngModel)]="confirm" required minlength="8" maxlength="128" autocomplete="new-password" />
+            </label>
+          }
+
+          @if (page === 'login') { <a class="forgot" routerLink="/forgot-password">Forgot password?</a> }
+          <button class="primary" type="submit" [disabled]="busy">
+            {{ busy ? 'Please wait…' : page === 'login' ? 'Sign in' : page === 'register' ? 'Continue to email verification →' : page === 'verify' ? 'Verify email' : page === 'forgot' ? 'Send reset code →' : page === 'resubmit' ? 'Submit for review' : 'Update password' }}
+          </button>
+        </form>
+
+        @if (page === 'login') {
+          <p class="below">New to Bharat Companion? <a routerLink="/register">Register your organization</a></p>
+        }
+        @if (page === 'password') {
+          @if (!message && !busy) {
+            <a class="back" [routerLink]="passwordBackPath">{{ passwordBackLabel }}</a>
+          }
+        } @else if (page !== 'login') {
+          <a class="back" routerLink="/login">← Back to login</a>
+        }
+      }
+    </section>
+  </main>
+</div>

@@ -1,0 +1,15 @@
+<aside class="sidebar">
+  <a class="brand" [routerLink]="dashboardPath">
+    <img class="brand-logo" src="branding/bharat-companion-logo.svg" alt="Bharat Companion" width="408" height="136" />
+  </a>
+
+  <p class="nav-caption">COMPANION PORTAL</p>
+  <nav aria-label="Companion navigation">
+    <a [routerLink]="dashboardPath" [class.active]="active === 'dashboard'"> Dashboard </a>
+    <a [routerLink]="pastJourneysPath" [class.active]="active === 'journeys'">
+      Past journeys
+    </a>
+    <a [routerLink]="profilePath" [class.active]="active === 'profile'"> My profile </a>
+    <a routerLink="/change-password"> Change password </a>
+  </nav>
+</aside>

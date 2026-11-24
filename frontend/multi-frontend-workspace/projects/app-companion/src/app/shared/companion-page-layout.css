@@ -1,0 +1,11 @@
+.dashboard,
+.profile-page {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  :host {
+    display: block;
+  }
+}

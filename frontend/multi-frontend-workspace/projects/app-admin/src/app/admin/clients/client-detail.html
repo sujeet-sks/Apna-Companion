@@ -38,8 +38,9 @@
           <a
   class="download-button"
   [href]="clientDetails.documentUrl"
-  [attr.download]="getDownloadFileName(clientDetails)"
-  [attr.aria-label]="'Download ' + formatDocumentType(clientDetails.documentType)"
+  target="_blank"
+  rel="noopener noreferrer"
+  [attr.aria-label]="'Open ' + formatDocumentType(clientDetails.documentType) + ' in new tab'"
 >
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M12 3v12m0 0 4-4m-4 4-4-4" />

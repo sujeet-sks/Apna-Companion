@@ -139,25 +139,25 @@
         }
       }
     },
-    "app-client": {
+    "app-org": {
       "projectType": "application",
       "schematics": {},
-      "root": "projects/app-client",
-      "sourceRoot": "projects/app-client/src",
+      "root": "projects/app-org",
+      "sourceRoot": "projects/app-org/src",
       "prefix": "app",
       "architect": {
         "build": {
           "builder": "@angular/build:application",
           "options": {
-            "browser": "projects/app-client/src/main.ts",
-            "tsConfig": "projects/app-client/tsconfig.app.json",
+            "browser": "projects/app-org/src/main.ts",
+            "tsConfig": "projects/app-org/tsconfig.app.json",
             "assets": [
               {
                 "glob": "**/*",
-                "input": "projects/app-client/public"
+                "input": "projects/app-org/public"
               }
             ],
-            "styles": ["projects/app-client/src/styles.css"]
+            "styles": ["projects/app-org/src/styles.css"]
           },
           "configurations": {
             "production": {
@@ -187,10 +187,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "app-client:build:production"
+              "buildTarget": "app-org:build:production"
             },
             "development": {
-              "buildTarget": "app-client:build:development"
+              "buildTarget": "app-org:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -200,25 +200,25 @@
         }
       }
     },
-    "app-companioon": {
+    "app-companion": {
       "projectType": "application",
       "schematics": {},
-      "root": "projects/app-companioon",
-      "sourceRoot": "projects/app-companioon/src",
+      "root": "projects/app-companion",
+      "sourceRoot": "projects/app-companion/src",
       "prefix": "app",
       "architect": {
         "build": {
           "builder": "@angular/build:application",
           "options": {
-            "browser": "projects/app-companioon/src/main.ts",
-            "tsConfig": "projects/app-companioon/tsconfig.app.json",
+            "browser": "projects/app-companion/src/main.ts",
+            "tsConfig": "projects/app-companion/tsconfig.app.json",
             "assets": [
               {
                 "glob": "**/*",
-                "input": "projects/app-companioon/public"
+                "input": "projects/app-companion/public"
               }
             ],
-            "styles": ["projects/app-companioon/src/styles.css"]
+            "styles": ["projects/app-companion/src/styles.css"]
           },
           "configurations": {
             "production": {
@@ -248,10 +248,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "app-companioon:build:production"
+              "buildTarget": "app-companion:build:production"
             },
             "development": {
-              "buildTarget": "app-companioon:build:development"
+              "buildTarget": "app-companion:build:development"
             }
           },
           "defaultConfiguration": "development"

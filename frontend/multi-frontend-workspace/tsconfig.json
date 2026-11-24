@@ -34,16 +34,16 @@
       "path": "./projects/app-admin/tsconfig.spec.json"
     },
     {
-      "path": "./projects/app-client/tsconfig.app.json"
+      "path": "./projects/app-org/tsconfig.app.json"
     },
     {
-      "path": "./projects/app-client/tsconfig.spec.json"
+      "path": "./projects/app-org/tsconfig.spec.json"
     },
     {
-      "path": "./projects/app-companioon/tsconfig.app.json"
+      "path": "./projects/app-companion/tsconfig.app.json"
     },
     {
-      "path": "./projects/app-companioon/tsconfig.spec.json"
+      "path": "./projects/app-companion/tsconfig.spec.json"
     }
   ]
 }
